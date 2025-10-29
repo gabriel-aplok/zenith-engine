@@ -81,7 +81,7 @@ target_link_libraries(zenith-editor PRIVATE zenith-lib)
 copy_shaders(zenith-editor)
 
 # ---- Zenith Game Executable ----
-add_executable(zenith-game src/main.cpp)
+add_executable(zenith-game src/helloworld.cpp)
 
 target_include_directories(zenith-game PRIVATE ${ZENITH_INCLUDE_DIRS} )
 target_link_libraries(zenith-game PRIVATE zenith-lib)
