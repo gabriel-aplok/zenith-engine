@@ -5,9 +5,22 @@
     "glad",
     "glfw3",
     "glm",
-    "imgui",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental",
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
     "lodepng",
     "nlohmann-json",
-    "joltphysics"
+    {
+      "name": "joltphysics",
+      "features": [
+        "debugrenderer",
+        "profiler"
+      ]
+    }
   ]
 }

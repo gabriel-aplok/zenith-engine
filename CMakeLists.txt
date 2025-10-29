@@ -32,12 +32,13 @@ find_package(nlohmann_json CONFIG REQUIRED)
 
 # ---- Include Directories ----
 set(ZENITH_INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src # Yea, I will include the header files in the same location as the source code files.
 )
 
 # ---- Zenith Core Library ----
 add_library(zenith-lib
-    src/helloworld.cpp
+    src/engine/Window.cpp
+    src/engine/Application.cpp
 )
 
 target_include_directories(zenith-lib
@@ -74,41 +75,15 @@ function(copy_shaders TARGET_NAME)
 endfunction()
 
 # ---- Zenith Editor Executable ----
-add_executable(zenith-editor src/main.cpp)
+add_executable(zenith-editor src/editor_main.cpp)
 
 target_include_directories(zenith-editor PRIVATE ${ZENITH_INCLUDE_DIRS} )
 target_link_libraries(zenith-editor PRIVATE zenith-lib)
 copy_shaders(zenith-editor)
 
 # ---- Zenith Game Executable ----
-add_executable(zenith-game src/helloworld.cpp)
+add_executable(zenith-game )
 
 target_include_directories(zenith-game PRIVATE ${ZENITH_INCLUDE_DIRS} )
 target_link_libraries(zenith-game PRIVATE zenith-lib)
 copy_shaders(zenith-game)
-
-
-# Just testing if I can use this to fix the "The code execution cannot proceed because glfw3.dll was not found."
-# Bcuz the install is not copying glfw3.dll to the install folder, ill fix it later, DONT USE INSTALL, or copy the dll to the .exe parent folder
-if(WIN32)
-    function(copy_required_dlls TARGET_NAME)
-        add_custom_command(
-            TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_RUNTIME_DLLS:${TARGET_NAME}>
-                $<TARGET_FILE_DIR:${TARGET_NAME}>
-            COMMAND_EXPAND_LISTS
-        )
-    endfunction()
-
-    copy_required_dlls(zenith-editor)
-    copy_required_dlls(zenith-game)
-endif()
-
-install(TARGETS zenith-editor zenith-game zenith-lib
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-)
-
-install(DIRECTORY shader/ DESTINATION bin/shader)
