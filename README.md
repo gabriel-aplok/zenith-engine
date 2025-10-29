@@ -2,9 +2,11 @@
   <img src="https://github.com/gabriel-aplok.png" width=30% height=30%>
 </p>
 
-Zenith Engine is an modern **open-source high-level game engine** made with the speed and portability of C++, OpenGL and Jolt Physics. It allows you to build 3D experiences with minimal effort, and our intuitive interface will quickly launch you into the development world.
+**Zenith Engine** is a **modern, open-source, high-level game engine** built for speed, portability, and developer productivity. Powered by C++, OpenGL, GLFW, and the high-performance Jolt Physics engine, Zenith enables you to create stunning 3D games and interactive experiences with minimal boilerplate.
 
-**Give a :star: if you find the project useful! Your support helps the project to keep innovating and delivering exciting features.**
+Featuring an **intuitive editor**, **real-time debugging tools**, and a **modular architecture**, Zenith gets you from idea to prototype — fast.
+
+**Give a :star: if you find the project useful!** Your support fuels innovation and helps us deliver powerful new features.
 
 ![GitHub contributors](https://img.shields.io/github/contributors/kolpa-engine/kolpa?style=for-the-badge)
 [![GitHub issues](https://img.shields.io/github/issues/kolpa-engine/kolpa?style=for-the-badge)](https://github.com/kolpa-engine/kolpa/issues)
@@ -19,15 +21,19 @@ Zenith Engine is an modern **open-source high-level game engine** made with the 
 ![vcpkg](https://img.shields.io/badge/vcpkg-managed-orange.svg?style=for-the-badge)
 ![Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg?style=for-the-badge) -->
 
-Lit Engine is in active development. Contributions and feedback are highly appreciated!
+> Zenith Engine is under active development..
+> Contributions, bug reports, and feedback are highly encouraged and appreciated!
 
 ## Features
 
-- C++ and C
-- OpenGL (GLFW)
-- Dear ImGui UI (Editor and Debug interface)
-- Jolt Physics
-- Editor, Game and Library modules
+- **C++/C API** – High-performance core with modern C++ and clean C bindings.
+- **OpenGL + GLFW** – Fast, lightweight rendering and windowing.
+- **Dear ImGui UI** – Built-in editor and debug interface with docking and real-time tools.
+- **Jolt Physics** – Deterministic, multi-threaded physics with debug renderer and profiler. -** Modular Design** – Separate Editor, Game, and Library modules for flexibility
+- **Hot-Reloading** – Shaders and assets update live during development.
+- **Entity-Component System** – Simple, hierarchical scenes with runtime serialization.
+
+> Actively evolving — Audio, scripting, and Vulkan support on the roadmap.
 
 ## Prerequisites
 
