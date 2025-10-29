@@ -1,0 +1,64 @@
+# ==== CMake Generated Files ====
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+CMakeUserPresets.json
+cmake-build-*/
+
+# ==== Visual Studio ====
+.vs/
+*.vcxproj.user
+*.sln
+*.suo
+*.opensdf
+*.sdf
+ipch/
+*.ilk
+*.obj
+*.pch
+*.pdb
+*.tlog
+*.log
+*.lastbuildstate
+
+# ==== Build Output (Multi-Config: Debug, Release, etc.) ====
+out/
+build/
+bin/
+x64/
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
+
+# ==== vcpkg Integration ====
+# vcpkg downloads & builds — NEVER commit
+vcpkg_installed/
+
+# ==== CLion / JetBrains ====
+# See: https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# ==== macOS ====
+.DS_Store
+*.swp
+*~
+
+# ==== Windows ====
+Thumbs.db
+Desktop.ini
+
+# ==== Logs & Temp ====
+*.log
+*.tmp
+*.temp
