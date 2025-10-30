@@ -37,8 +37,8 @@ set(ZENITH_INCLUDE_DIRS
 
 # ---- Zenith Core Library ----
 add_library(zenith-lib
-    src/engine/Window.cpp
-    src/engine/Application.cpp
+    "src/engine/window.cpp"
+    "src/engine/application.cpp"
 )
 
 target_include_directories(zenith-lib
@@ -75,14 +75,14 @@ function(copy_shaders TARGET_NAME)
 endfunction()
 
 # ---- Zenith Editor Executable ----
-add_executable(zenith-editor src/editor_main.cpp)
+add_executable(zenith-editor "src/editor/editor.cpp")
 
 target_include_directories(zenith-editor PRIVATE ${ZENITH_INCLUDE_DIRS} )
 target_link_libraries(zenith-editor PRIVATE zenith-lib)
 copy_shaders(zenith-editor)
 
 # ---- Zenith Game Executable ----
-add_executable(zenith-game )
+add_executable(zenith-game "src/runtime/game.cpp")
 
 target_include_directories(zenith-game PRIVATE ${ZENITH_INCLUDE_DIRS} )
 target_link_libraries(zenith-game PRIVATE zenith-lib)
