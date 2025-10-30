@@ -22,30 +22,30 @@ namespace Zenith {
             bool resizable = true;
         };
 
-        explicit Window(const Config& config = {});
+        explicit Window(const Config &config = {});
         ~Window();
 
         // Delete copy
-        Window(const Window&) = delete;
-        Window& operator=(const Window&) = delete;
+        Window(const Window &) = delete;
+        Window &operator=(const Window &) = delete;
 
         // Allow move
-        Window(Window&&) noexcept;
-        Window& operator=(Window&&) noexcept;
+        Window(Window &&) noexcept;
+        Window &operator=(Window &&) noexcept;
 
         void makeContextCurrent();
         void swapBuffers();
         bool shouldClose() const;
         void setShouldClose(bool close);
 
-        void setTitle(const std::string& title);
+        void setTitle(const std::string &title);
         void setVSync(bool enabled);
 
         glm::ivec2 getSize() const;
         glm::ivec2 getFramebufferSize() const;
         float getAspectRatio() const;
 
-        GLFWwindow* getHandle() const { return m_handle; }
+        GLFWwindow *getHandle() const { return m_handle; }
 
         void setResizeCallback(ResizeCallback callback);
 
@@ -55,10 +55,10 @@ namespace Zenith {
         glm::dvec2 getCursorPos() const;
 
     private:
-        static void glfwErrorCallback(int error, const char* description);
-        static void glfwFramebufferResizeCallback(GLFWwindow* window, int width, int height);
+        static void glfwErrorCallback(int error, const char *description);
+        static void glfwFramebufferResizeCallback(GLFWwindow *window, int width, int height);
 
-        GLFWwindow* m_handle = nullptr;
+        GLFWwindow *m_handle = nullptr;
         ResizeCallback m_resizeCallback;
     };
 

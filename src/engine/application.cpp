@@ -1,4 +1,5 @@
-#include "engine/Application.hpp"
+#include "engine/application.hpp"
+#include "engine/input_manager.hpp"
 #include <glad/glad.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -16,12 +17,13 @@ namespace Zenith {
         m_window = std::make_unique<Window>(config);
         m_window->setResizeCallback([this](int w, int h) {
             // Optional: forward to derived class
-            });
+        });
 
         // Setup Dear ImGui
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        ImGuiIO &io = ImGui::GetIO();
+        (void)io;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
@@ -43,21 +45,26 @@ namespace Zenith {
 
             glfwPollEvents();
 
-            // Start ImGui frame
+            InputManager::get().update();
+
+            onUpdate(deltaTime);
+            
+            // Rendering
+            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glEnable(GL_DEPTH_TEST);
+
+            onRender();
+
+            glDisable(GL_DEPTH_TEST);
+
+            // Render ImGui
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            onUpdate(deltaTime);
             onGui();
 
-            // Rendering
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            onRender();
-
-            // Render ImGui
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

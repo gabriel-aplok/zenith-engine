@@ -29,6 +29,7 @@ find_package(imgui CONFIG REQUIRED)
 find_package(Jolt CONFIG REQUIRED)
 find_package(lodepng CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 # ---- Include Directories ----
 set(ZENITH_INCLUDE_DIRS
@@ -38,7 +39,11 @@ set(ZENITH_INCLUDE_DIRS
 # ---- Zenith Core Library ----
 add_library(zenith-lib
     "src/engine/window.cpp"
+    "src/engine/renderer.cpp"
+    "src/engine/shader.cpp"
     "src/engine/application.cpp"
+    "src/engine/scene.cpp"
+    "src/engine/input_manager.cpp"
 )
 
 target_include_directories(zenith-lib
@@ -53,6 +58,7 @@ target_link_libraries(zenith-lib
 	PUBLIC Jolt::Jolt
 	PUBLIC lodepng
 	PUBLIC nlohmann_json::nlohmann_json
+    PUBLIC spdlog::spdlog
 )
 
 target_compile_definitions(zenith-lib PRIVATE GLM_ENABLE_EXPERIMENTAL)

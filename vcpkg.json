@@ -13,14 +13,17 @@
         "opengl3-binding"
       ]
     },
-    "lodepng",
-    "nlohmann-json",
+    "imgui-node-editor",
+    "imguizmo",
     {
       "name": "joltphysics",
       "features": [
         "debugrenderer",
         "profiler"
       ]
-    }
+    },
+    "lodepng",
+    "nlohmann-json",
+    "spdlog"
   ]
 }

@@ -1,10 +1,11 @@
 #include "engine/window.hpp"
+#include "engine/input_manager.hpp"
 #include <stdexcept>
 #include <iostream>
 
 namespace Zenith {
 
-    Window::Window(const Config& config) {
+    Window::Window(const Config &config) {
         // Set error callback
         glfwSetErrorCallback(glfwErrorCallback);
 
@@ -20,7 +21,7 @@ namespace Zenith {
         glfwWindowHint(GLFW_RESIZABLE, config.resizable ? GL_TRUE : GL_FALSE);
 
         // Create window
-        GLFWmonitor* monitor = config.fullscreen ? glfwGetPrimaryMonitor() : nullptr;
+        GLFWmonitor *monitor = config.fullscreen ? glfwGetPrimaryMonitor() : nullptr;
         m_handle = glfwCreateWindow(config.width, config.height, config.title.c_str(), monitor, nullptr);
         if (!m_handle) {
             glfwTerminate();
@@ -40,24 +41,37 @@ namespace Zenith {
         glfwSetWindowUserPointer(m_handle, this);
         glfwSetFramebufferSizeCallback(m_handle, glfwFramebufferResizeCallback);
 
+        auto &input = InputManager::get();
+        glfwSetKeyCallback(m_handle, [](GLFWwindow *w, int key, int sc, int action, int mods) {
+            if (action == GLFW_REPEAT) return;
+            InputManager::get().onKey(key, action);
+        });
+        glfwSetMouseButtonCallback(m_handle, [](GLFWwindow *w, int button, int action, int mods) {
+            InputManager::get().onMouseButton(button, action);
+        });
+        glfwSetCursorPosCallback(m_handle, [](GLFWwindow* w, double x, double y) {
+            InputManager::get().onCursorPos(x, y);
+        });
+
         setVSync(config.vsync);
     }
 
-    Window::~Window() {
+    Window::~Window()
+    {
         if (m_handle) {
             glfwDestroyWindow(m_handle);
         }
         glfwTerminate();
     }
 
-    Window::Window(Window&& other) noexcept
-        : m_handle(other.m_handle), m_resizeCallback(std::move(other.m_resizeCallback)) {
+    Window::Window(Window &&other) noexcept : m_handle(other.m_handle), m_resizeCallback(std::move(other.m_resizeCallback)) {
         other.m_handle = nullptr;
     }
 
-    Window& Window::operator=(Window&& other) noexcept {
+    Window &Window::operator=(Window &&other) noexcept {
         if (this != &other) {
-            if (m_handle) glfwDestroyWindow(m_handle);
+            if (m_handle)
+                glfwDestroyWindow(m_handle);
             m_handle = other.m_handle;
             m_resizeCallback = std::move(other.m_resizeCallback);
             other.m_handle = nullptr;
@@ -81,7 +95,7 @@ namespace Zenith {
         glfwSetWindowShouldClose(m_handle, close ? GLFW_TRUE : GLFW_FALSE);
     }
 
-    void Window::setTitle(const std::string& title) {
+    void Window::setTitle(const std::string &title)  {
         glfwSetWindowTitle(m_handle, title.c_str());
     }
 
@@ -124,12 +138,12 @@ namespace Zenith {
         return pos;
     }
 
-    void Window::glfwErrorCallback(int error, const char* description) {
+    void Window::glfwErrorCallback(int error, const char *description) {
         std::cerr << "GLFW Error " << error << ": " << description << std::endl;
     }
 
-    void Window::glfwFramebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+    void Window::glfwFramebufferResizeCallback(GLFWwindow *window, int width, int height) {
+        auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
         if (self && self->m_resizeCallback) {
             self->m_resizeCallback(width, height);
         }

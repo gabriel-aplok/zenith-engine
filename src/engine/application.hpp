@@ -12,8 +12,8 @@ namespace Zenith {
         virtual ~Application() = default;
 
         // Delete copy
-        Application(const Application&) = delete;
-        Application& operator=(const Application&) = delete;
+        Application(const Application &) = delete;
+        Application &operator=(const Application &) = delete;
 
         void run();
 
@@ -24,7 +24,7 @@ namespace Zenith {
         virtual void onGui() {}
         virtual void onShutdown() {}
 
-        Window& getWindow() { return *m_window; }
+        Window &getWindow() { return *m_window; }
 
     private:
         std::unique_ptr<Window> m_window;
