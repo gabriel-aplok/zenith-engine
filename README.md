@@ -96,10 +96,14 @@ This installs:
 - `glad`
 - `glfw3`
 - `glm`
+- `imgui-node-editor`
+- `imguizmo`
 - `imgui[docking-experimental, glfw-binding, opengl3-binding]`
 - `joltphysics[debugrenderer, profiler]`
 - `lodepng`
 - `nlohmann-json`
+- `spdlog`
+- `tinyobjloader`
 
 > Takes 5–15 minutes first time.
 

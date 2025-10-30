@@ -24,6 +24,7 @@
     },
     "lodepng",
     "nlohmann-json",
-    "spdlog"
+    "spdlog",
+    "tinyobjloader"
   ]
 }

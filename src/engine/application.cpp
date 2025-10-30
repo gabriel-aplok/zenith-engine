@@ -45,7 +45,7 @@ namespace Zenith {
 
             glfwPollEvents();
 
-            InputManager::get().update();
+            // InputManager::get().update();
 
             onUpdate(deltaTime);
             

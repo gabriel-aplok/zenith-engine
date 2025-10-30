@@ -30,6 +30,7 @@ find_package(Jolt CONFIG REQUIRED)
 find_package(lodepng CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
 
 # ---- Include Directories ----
 set(ZENITH_INCLUDE_DIRS
@@ -59,6 +60,7 @@ target_link_libraries(zenith-lib
 	PUBLIC lodepng
 	PUBLIC nlohmann_json::nlohmann_json
     PUBLIC spdlog::spdlog
+    PUBLIC tinyobjloader::tinyobjloader
 )
 
 target_compile_definitions(zenith-lib PRIVATE GLM_ENABLE_EXPERIMENTAL)
