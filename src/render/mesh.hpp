@@ -25,6 +25,17 @@ namespace Zenith::Render
         glm::vec4 tint{1.0f};
     };
 
+    struct Bounds
+    {
+        glm::vec3 center{0.0f};
+        glm::vec3 extents{0.5f};
+
+        float radius() const
+        {
+            return glm::length(extents);
+        }
+    };
+
     struct MeshHandle
     {
         uint32_t id = 0;
