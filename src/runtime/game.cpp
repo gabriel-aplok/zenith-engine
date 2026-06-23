@@ -4,6 +4,7 @@
 #include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
 #include "log/log.hpp"
+#include "resource/resource_manager.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
 #include "render/mesh_builder.hpp"
@@ -44,8 +45,34 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_scene.setMeshMetadataProvider(&m_meshCache);
-            const Render::MeshData cubeMeshData = MeshBuilder::makeCube();
-            m_cubeMesh = m_meshCache.acquireRef("demo/cube", cubeMeshData);
+            m_resources.registerLoader<Render::MeshData>([](const std::string &path) -> std::shared_ptr<Render::MeshData> {
+                if (path == "builtin://cube")
+                {
+                    return std::make_shared<Render::MeshData>(MeshBuilder::makeCube());
+                }
+
+                if (path == "builtin://pyramid")
+                {
+                    return std::make_shared<Render::MeshData>(MeshBuilder::makePyramid());
+                }
+
+                if (path == "builtin://plane")
+                {
+                    return std::make_shared<Render::MeshData>(MeshBuilder::makePlane());
+                }
+
+                return nullptr;
+            });
+
+            m_cubeMeshData = m_resources.load<Render::MeshData>("builtin://cube");
+            if (!m_cubeMeshData)
+            {
+                Log::Error("Failed to load demo cube resource");
+                requestQuit();
+                return;
+            }
+
+            m_cubeMesh = m_meshCache.acquireRef("demo/cube", *m_cubeMeshData);
             if (!m_cubeMesh)
             {
                 Log::Error("Failed to create demo meshes");
@@ -127,7 +154,9 @@ namespace Zenith
     private:
         std::unique_ptr<RenderContext> m_renderContext;
         std::unique_ptr<IRenderer> m_renderer;
+        ResourceManager m_resources;
         Render::RenderMeshCache m_meshCache;
+        ResourceHandle<Render::MeshData> m_cubeMeshData{};
         Render::MeshRef m_cubeMesh{};
         Scene m_scene{};
         RenderFrame m_frame{};

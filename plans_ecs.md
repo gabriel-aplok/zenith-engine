@@ -111,4 +111,4 @@ Notes:
 
 - Phase 1 is implemented in a first pass.
 - The current runtime uses one scene with a mesh-driven GameObject.
-- The next useful step is parent/child transform support or a camera component, depending on render needs.
+- The next prerequisite is a basic resource system so future ECS work can load assets through one path.
