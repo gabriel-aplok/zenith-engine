@@ -65,6 +65,14 @@ namespace Zenith::Render
         uint32_t indexCount = 0;
     };
 
+    struct RenderClearState
+    {
+        uint8_t flags = 0;
+        glm::vec4 color{0.08f, 0.09f, 0.11f, 1.0f};
+        float depth = 1.0f;
+        uint8_t stencil = 0;
+    };
+
     struct RenderViewState
     {
         glm::mat4 view{1.0f};

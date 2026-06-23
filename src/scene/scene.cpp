@@ -4,6 +4,32 @@
 
 namespace Zenith
 {
+    namespace
+    {
+        Render::RenderClearState buildClearState(const Components::Camera &camera)
+        {
+            Render::RenderClearState clear{};
+            clear.color = camera.backgroundColor();
+
+            switch (camera.clearFlags())
+            {
+            case Components::Camera::ClearFlags::Skybox:
+            case Components::Camera::ClearFlags::SolidColor:
+                clear.flags = 0x01 | 0x02;
+                break;
+            case Components::Camera::ClearFlags::DepthOnly:
+                clear.flags = 0x02;
+                break;
+            case Components::Camera::ClearFlags::Nothing:
+            default:
+                clear.flags = 0x00;
+                break;
+            }
+
+            return clear;
+        }
+    } // namespace
+
     GameObject &Scene::createGameObject(std::string name)
     {
         auto object = std::make_unique<GameObject>(std::move(name));
@@ -63,7 +89,7 @@ namespace Zenith
             {
                 if (object->get_component<Components::Camera>() == camera)
                 {
-                    frame.clearColor = camera->backgroundColor();
+                    frame.clear = buildClearState(*camera);
                     camera->buildViewState(object->transform().localToWorld(), framebufferSize, frame.view);
                     frame.commands.setView(frame.view);
                     break;

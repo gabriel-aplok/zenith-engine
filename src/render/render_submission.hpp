@@ -7,7 +7,7 @@ namespace Zenith
 {
     struct RenderFrame
     {
-        glm::vec4 clearColor{0.08f, 0.09f, 0.11f, 1.0f};
+        Render::RenderClearState clear{};
         Render::RenderViewState view{};
         Render::RenderCommandList commands{};
 

@@ -22,6 +22,9 @@ namespace Zenith::Render
 
     namespace
     {
+        constexpr uint8_t ClearColorFlag = 0x01;
+        constexpr uint8_t ClearDepthFlag = 0x02;
+        constexpr uint8_t ClearStencilFlag = 0x04;
 
         struct VertexGpu
         {
@@ -276,7 +279,11 @@ namespace Zenith::Render
         }
 
         const RenderViewState &view = frame.view;
-        bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, packColor(frame.clearColor), 1.0f, 0);
+        const uint64_t clearFlags =
+            ((frame.clear.flags & ClearColorFlag) != 0 ? BGFX_CLEAR_COLOR : 0u) |
+            ((frame.clear.flags & ClearDepthFlag) != 0 ? BGFX_CLEAR_DEPTH : 0u) |
+            ((frame.clear.flags & ClearStencilFlag) != 0 ? BGFX_CLEAR_STENCIL : 0u);
+        bgfx::setViewClear(0, clearFlags, packColor(frame.clear.color), frame.clear.depth, frame.clear.stencil);
         bgfx::setViewRect(0, 0, 0, static_cast<uint16_t>(m_framebufferSize.x), static_cast<uint16_t>(m_framebufferSize.y));
         bgfx::setViewTransform(0, glm::value_ptr(view.view), glm::value_ptr(view.projection));
         bgfx::touch(0);

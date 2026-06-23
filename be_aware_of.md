@@ -1,0 +1,1 @@
+- One limitation to be aware of in transformations: world scale preservation is handled with matrix decomposition and component-wise adjustment, so it is fine for the current simple hierarchy work but not a full non-uniform-scale solution under arbitrary rotation.
