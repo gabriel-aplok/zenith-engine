@@ -8,6 +8,7 @@
 #include "render/render_context.hpp"
 #include "render/render_submission.hpp"
 
+#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Zenith
@@ -41,7 +42,8 @@ namespace Zenith
             m_meshCache.setUploader(m_renderer.get());
             m_pyramidMesh = m_meshCache.acquire("demo/pyramid", MeshBuilder::makePyramid());
             m_cubeMesh = m_meshCache.acquire("demo/cube", MeshBuilder::makeCube());
-            if (m_pyramidMesh.id == 0 || m_cubeMesh.id == 0)
+            m_planeMesh = m_meshCache.acquire("demo/plane", MeshBuilder::makePlane());
+            if (m_pyramidMesh.id == 0 || m_cubeMesh.id == 0 || m_planeMesh.id == 0)
             {
                 Log::Error("Failed to create demo meshes");
                 requestQuit();
@@ -56,10 +58,12 @@ namespace Zenith
             }
 
             m_renderContext->beginFrame();
-            m_frame.begin(2);
+            m_frame.begin(3);
             m_frame.setView(makeViewState());
+            updateDynamicPlane();
             m_frame.submitMesh(m_pyramidMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{1.0f}});
             m_frame.submitMesh(m_cubeMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
+            m_frame.submitMesh(m_planeMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, -1.5f, 0.0f}), {.tint = glm::vec4{0.9f, 0.9f, 0.9f, 1.0f}});
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
         }
@@ -77,6 +81,26 @@ namespace Zenith
         }
 
     private:
+        void updateDynamicPlane()
+        {
+            m_phase += 0.02f;
+
+            Render::MeshData plane = MeshBuilder::makePlane();
+            const float xOffset = std::sin(m_phase) * 0.25f;
+            const float yOffset = std::cos(m_phase * 0.7f) * 0.1f;
+
+            for (auto &vertex : plane.vertices)
+            {
+                vertex.position.x += xOffset;
+                vertex.position.y += yOffset;
+            }
+
+            if (!m_meshCache.update("demo/plane", plane))
+            {
+                Log::Error("Failed to update dynamic plane mesh");
+            }
+        }
+
         Render::RenderViewState makeViewState() const
         {
             const glm::vec3 eye{0.0f, 2.5f, 6.0f};
@@ -97,7 +121,9 @@ namespace Zenith
         Render::RenderMeshCache m_meshCache;
         Render::MeshHandle m_pyramidMesh{};
         Render::MeshHandle m_cubeMesh{};
+        Render::MeshHandle m_planeMesh{};
         RenderFrame m_frame{};
+        float m_phase = 0.0f;
     };
 
 } // namespace Zenith

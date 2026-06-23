@@ -155,6 +155,62 @@ namespace Zenith::Render
         return Render::MeshHandle{meshId};
     }
 
+    bool BgfxRenderer::updateMesh(Render::MeshHandle meshHandle, const Render::MeshData &mesh)
+    {
+        if (!m_initialized || meshHandle.id == 0 || mesh.vertices.empty() || mesh.indices.empty())
+        {
+            return false;
+        }
+
+        const auto it = m_meshes.find(meshHandle.id);
+        if (it == m_meshes.end())
+        {
+            return false;
+        }
+
+        std::vector<VertexGpu> vertices;
+        vertices.reserve(mesh.vertices.size());
+        for (const auto &vertex : mesh.vertices)
+        {
+            vertices.push_back(VertexGpu{
+                .position = {vertex.position.x, vertex.position.y, vertex.position.z},
+                .color = packColor(vertex.color),
+            });
+        }
+
+        const bgfx::Memory *vertexMemory = bgfx::copy(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexGpu)));
+        const bgfx::Memory *indexMemory = bgfx::copy(mesh.indices.data(), static_cast<uint32_t>(mesh.indices.size() * sizeof(uint16_t)));
+
+        const bgfx::VertexBufferHandle vertexBuffer = bgfx::createVertexBuffer(vertexMemory, m_vertexLayout);
+        const bgfx::IndexBufferHandle indexBuffer = bgfx::createIndexBuffer(indexMemory);
+        if (!bgfx::isValid(vertexBuffer) || !bgfx::isValid(indexBuffer))
+        {
+            if (bgfx::isValid(vertexBuffer))
+            {
+                bgfx::destroy(vertexBuffer);
+            }
+            if (bgfx::isValid(indexBuffer))
+            {
+                bgfx::destroy(indexBuffer);
+            }
+            return false;
+        }
+
+        if (bgfx::isValid(it->second.vertexBuffer))
+        {
+            bgfx::destroy(it->second.vertexBuffer);
+        }
+        if (bgfx::isValid(it->second.indexBuffer))
+        {
+            bgfx::destroy(it->second.indexBuffer);
+        }
+
+        it->second.vertexBuffer = vertexBuffer;
+        it->second.indexBuffer = indexBuffer;
+        it->second.indexCount = static_cast<uint32_t>(mesh.indices.size());
+        return true;
+    }
+
     void BgfxRenderer::destroyMesh(Render::MeshHandle mesh)
     {
         const auto it = m_meshes.find(mesh.id);

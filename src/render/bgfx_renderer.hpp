@@ -20,6 +20,7 @@ namespace Zenith::Render
         void render(const RenderFrame &frame) override;
 
         Render::MeshHandle uploadMesh(const Render::MeshData &mesh) override;
+        bool updateMesh(Render::MeshHandle meshHandle, const Render::MeshData &mesh) override;
         void destroyMesh(Render::MeshHandle mesh) override;
 
     private:
