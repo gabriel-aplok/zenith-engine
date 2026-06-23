@@ -40,10 +40,10 @@ namespace Zenith
             }
 
             m_meshCache.setUploader(m_renderer.get());
-            m_pyramidMesh = m_meshCache.acquire("demo/pyramid", MeshBuilder::makePyramid());
-            m_cubeMesh = m_meshCache.acquire("demo/cube", MeshBuilder::makeCube());
-            m_planeMesh = m_meshCache.acquire("demo/plane", MeshBuilder::makePlane());
-            if (m_pyramidMesh.id == 0 || m_cubeMesh.id == 0 || m_planeMesh.id == 0)
+            m_pyramidMesh = m_meshCache.acquireRef("demo/pyramid", MeshBuilder::makePyramid());
+            m_cubeMesh = m_meshCache.acquireRef("demo/cube", MeshBuilder::makeCube());
+            m_planeMesh = m_meshCache.acquireRef("demo/plane", MeshBuilder::makePlane());
+            if (!m_pyramidMesh || !m_cubeMesh || !m_planeMesh)
             {
                 Log::Error("Failed to create demo meshes");
                 requestQuit();
@@ -61,9 +61,9 @@ namespace Zenith
             m_frame.begin(3);
             m_frame.setView(makeViewState());
             updateDynamicPlane();
-            m_frame.submitMesh(m_pyramidMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{1.0f}});
-            m_frame.submitMesh(m_cubeMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
-            m_frame.submitMesh(m_planeMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, -1.5f, 0.0f}), {.tint = glm::vec4{0.9f, 0.9f, 0.9f, 1.0f}});
+            m_frame.submitMesh(m_pyramidMesh.handle(), glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{1.0f}});
+            m_frame.submitMesh(m_cubeMesh.handle(), glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
+            m_frame.submitMesh(m_planeMesh.handle(), glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, -1.5f, 0.0f}), {.tint = glm::vec4{0.9f, 0.9f, 0.9f, 1.0f}});
             m_frame.finalize();
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
@@ -71,6 +71,9 @@ namespace Zenith
 
         void onShutdown() override
         {
+            m_planeMesh.reset();
+            m_cubeMesh.reset();
+            m_pyramidMesh.reset();
             if (m_renderer)
             {
                 m_meshCache.clear();
@@ -120,9 +123,9 @@ namespace Zenith
         std::unique_ptr<RenderContext> m_renderContext;
         std::unique_ptr<IRenderer> m_renderer;
         Render::RenderMeshCache m_meshCache;
-        Render::MeshHandle m_pyramidMesh{};
-        Render::MeshHandle m_cubeMesh{};
-        Render::MeshHandle m_planeMesh{};
+        Render::MeshRef m_pyramidMesh{};
+        Render::MeshRef m_cubeMesh{};
+        Render::MeshRef m_planeMesh{};
         RenderFrame m_frame{};
         float m_phase = 0.0f;
     };

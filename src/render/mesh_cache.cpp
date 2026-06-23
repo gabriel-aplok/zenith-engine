@@ -33,6 +33,11 @@ namespace Zenith::Render
         return entry.handle;
     }
 
+    MeshRef RenderMeshCache::acquireRef(const std::string &key, const MeshData &meshData)
+    {
+        return MeshRef{this, key, acquire(key, meshData)};
+    }
+
     bool RenderMeshCache::update(const std::string &key, const MeshData &meshData)
     {
         if (!m_uploader)
@@ -92,6 +97,48 @@ namespace Zenith::Render
     bool RenderMeshCache::has(const std::string &key) const
     {
         return m_entries.find(key) != m_entries.end();
+    }
+
+    MeshRef::MeshRef(RenderMeshCache *cache, std::string key, MeshHandle handle)
+        : m_cache(cache), m_key(std::move(key)), m_handle(handle)
+    {
+    }
+
+    MeshRef::~MeshRef()
+    {
+        reset();
+    }
+
+    MeshRef::MeshRef(MeshRef &&other) noexcept
+        : m_cache(other.m_cache), m_key(std::move(other.m_key)), m_handle(other.m_handle)
+    {
+        other.m_cache = nullptr;
+        other.m_handle = {};
+    }
+
+    MeshRef &MeshRef::operator=(MeshRef &&other) noexcept
+    {
+        if (this != &other)
+        {
+            reset();
+            m_cache = other.m_cache;
+            m_key = std::move(other.m_key);
+            m_handle = other.m_handle;
+            other.m_cache = nullptr;
+            other.m_handle = {};
+        }
+        return *this;
+    }
+
+    void MeshRef::reset()
+    {
+        if (m_cache && !m_key.empty())
+        {
+            m_cache->release(m_key);
+        }
+        m_cache = nullptr;
+        m_key.clear();
+        m_handle = {};
     }
 
 } // namespace Zenith::Render
