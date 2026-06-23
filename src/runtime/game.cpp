@@ -56,17 +56,10 @@ namespace Zenith
             }
 
             m_renderContext->beginFrame();
-            m_frame.commands.clear();
-            m_frame.commands.reserve(2);
-            m_frame.commands.setView(makeViewState());
-            m_frame.commands.bindMesh(m_pyramidMesh);
-            m_frame.commands.setTransform(glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}));
-            m_frame.commands.setMaterial({.tint = glm::vec4{1.0f}});
-            m_frame.commands.drawIndexed();
-            m_frame.commands.bindMesh(m_cubeMesh);
-            m_frame.commands.setTransform(glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}));
-            m_frame.commands.setMaterial({.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
-            m_frame.commands.drawIndexed();
+            m_frame.begin(2);
+            m_frame.setView(makeViewState());
+            m_frame.submitMesh(m_pyramidMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{1.0f}});
+            m_frame.submitMesh(m_cubeMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
         }

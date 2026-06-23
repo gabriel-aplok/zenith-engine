@@ -181,7 +181,7 @@ namespace Zenith::Render
             return;
         }
 
-        const RenderViewState &view = frame.commands.view();
+        const RenderViewState &view = frame.view;
         bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, packColor(frame.clearColor), 1.0f, 0);
         bgfx::setViewRect(0, 0, 0, static_cast<uint16_t>(m_framebufferSize.x), static_cast<uint16_t>(m_framebufferSize.y));
         bgfx::setViewTransform(0, glm::value_ptr(view.view), glm::value_ptr(view.projection));
