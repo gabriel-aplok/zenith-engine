@@ -1,5 +1,7 @@
 #include "engine/application.hpp"
 #include "engine/startup.hpp"
+#include "components/mesh_filter.hpp"
+#include "components/mesh_renderer.hpp"
 #include "log/log.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
@@ -7,8 +9,8 @@
 #include "render/mesh_cache.hpp"
 #include "render/render_context.hpp"
 #include "render/render_submission.hpp"
+#include "scene/scene.hpp"
 
-#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Zenith
@@ -40,14 +42,27 @@ namespace Zenith
             }
 
             m_meshCache.setUploader(m_renderer.get());
-            m_pyramidMesh = m_meshCache.acquireRef("demo/pyramid", MeshBuilder::makePyramid());
             m_cubeMesh = m_meshCache.acquireRef("demo/cube", MeshBuilder::makeCube());
-            m_planeMesh = m_meshCache.acquireRef("demo/plane", MeshBuilder::makePlane());
-            if (!m_pyramidMesh || !m_cubeMesh || !m_planeMesh)
+            if (!m_cubeMesh)
             {
                 Log::Error("Failed to create demo meshes");
                 requestQuit();
+                return;
             }
+
+            GameObject &cube = m_scene.createGameObject("Cube");
+            cube.transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
+
+            auto &filter = cube.add_component<Components::MeshFilter>();
+            filter.setMesh(m_cubeMesh.handle());
+
+            auto &renderer = cube.add_component<Components::MeshRenderer>();
+            renderer.setMaterial({.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
+        }
+
+        void onUpdate(float deltaTime) override
+        {
+            m_scene.update(deltaTime);
         }
 
         void onRender() override
@@ -58,12 +73,9 @@ namespace Zenith
             }
 
             m_renderContext->beginFrame();
-            m_frame.begin(3);
+            m_frame.begin();
             m_frame.setView(makeViewState());
-            updateDynamicPlane();
-            m_frame.submitMesh(m_pyramidMesh.handle(), glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{1.0f}});
-            m_frame.submitMesh(m_cubeMesh.handle(), glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
-            m_frame.submitMesh(m_planeMesh.handle(), glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, -1.5f, 0.0f}), {.tint = glm::vec4{0.9f, 0.9f, 0.9f, 1.0f}});
+            m_scene.render(m_frame);
             m_frame.finalize();
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
@@ -71,9 +83,8 @@ namespace Zenith
 
         void onShutdown() override
         {
-            m_planeMesh.reset();
+            m_scene.clear();
             m_cubeMesh.reset();
-            m_pyramidMesh.reset();
             if (m_renderer)
             {
                 m_meshCache.clear();
@@ -85,26 +96,6 @@ namespace Zenith
         }
 
     private:
-        void updateDynamicPlane()
-        {
-            m_phase += 0.02f;
-
-            Render::MeshData plane = MeshBuilder::makePlane();
-            const float xOffset = std::sin(m_phase) * 0.25f;
-            const float yOffset = std::cos(m_phase * 0.7f) * 0.1f;
-
-            for (auto &vertex : plane.vertices)
-            {
-                vertex.position.x += xOffset;
-                vertex.position.y += yOffset;
-            }
-
-            if (!m_meshCache.update("demo/plane", plane))
-            {
-                Log::Error("Failed to update dynamic plane mesh");
-            }
-        }
-
         Render::RenderViewState makeViewState() const
         {
             const glm::vec3 eye{0.0f, 2.5f, 6.0f};
@@ -123,11 +114,9 @@ namespace Zenith
         std::unique_ptr<RenderContext> m_renderContext;
         std::unique_ptr<IRenderer> m_renderer;
         Render::RenderMeshCache m_meshCache;
-        Render::MeshRef m_pyramidMesh{};
         Render::MeshRef m_cubeMesh{};
-        Render::MeshRef m_planeMesh{};
+        Scene m_scene{};
         RenderFrame m_frame{};
-        float m_phase = 0.0f;
     };
 
 } // namespace Zenith

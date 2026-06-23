@@ -49,7 +49,9 @@ set(ZENITH_SHADER_OUTPUTS
 add_custom_command(
 	OUTPUT ${ZENITH_SHADER_OUTPUTS}
 	COMMAND ${CMAKE_COMMAND} -E make_directory "${ZENITH_GENERATED_SHADER_DIR}"
-	COMMAND powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${CMAKE_CURRENT_SOURCE_DIR}/tools/build_bgfx_shaders.ps1" -ShaderDir "${ZENITH_SHADER_SOURCE_DIR}" -OutputDir "${ZENITH_GENERATED_SHADER_DIR}"
+	COMMAND powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+		"${CMAKE_CURRENT_SOURCE_DIR}/tools/build_bgfx_shaders.ps1" -ShaderDir
+		"${ZENITH_SHADER_SOURCE_DIR}" -OutputDir "${ZENITH_GENERATED_SHADER_DIR}"
 	DEPENDS
 		"${CMAKE_CURRENT_SOURCE_DIR}/tools/build_bgfx_shaders.ps1"
 		"${ZENITH_SHADER_SOURCE_DIR}/mesh_vs.sc"
@@ -91,6 +93,12 @@ add_library(zenith-lib
 	"src/render/mesh_builder.cpp"
 	"src/log/log.cpp"
 	"src/engine/input.cpp"
+	"src/scene/component.cpp"
+	"src/scene/game_object.cpp"
+	"src/scene/transform.cpp"
+	"src/scene/scene.cpp"
+	"src/components/mesh_filter.cpp"
+	"src/components/mesh_renderer.cpp"
 )
 
 target_include_directories(zenith-lib
