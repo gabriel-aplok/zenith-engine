@@ -28,6 +28,12 @@ namespace Zenith
 
         Transform &transform() { return m_transform; }
         const Transform &transform() const { return m_transform; }
+        GameObject *parent() const { return m_parent; }
+        const std::vector<GameObject *> &children() const { return m_children; }
+
+        bool setParent(GameObject *parent);
+        bool addChild(GameObject &child);
+        bool isDescendantOf(const GameObject &other) const;
 
         template <typename T, typename... Args>
         T &add_component(Args &&...args)
@@ -93,6 +99,8 @@ namespace Zenith
     private:
         std::string m_name;
         Transform m_transform;
+        GameObject *m_parent = nullptr;
+        std::vector<GameObject *> m_children;
         std::vector<std::unique_ptr<Component>> m_components;
     };
 } // namespace Zenith

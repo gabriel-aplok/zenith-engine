@@ -62,8 +62,12 @@ namespace Zenith
             camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
             camera.setBackgroundColor(glm::vec4{0.08f, 0.09f, 0.11f, 1.0f});
 
+            m_pivotObject = &m_scene.createGameObject("Pivot");
+            m_pivotObject->transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
+
             GameObject &cube = m_scene.createGameObject("Cube");
-            cube.transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
+            cube.setParent(m_pivotObject);
+            cube.transform().setPosition(glm::vec3{1.75f, 0.0f, 0.0f});
 
             auto &filter = cube.add_component<Components::MeshFilter>();
             filter.setMesh(m_cubeMesh.handle());
@@ -74,6 +78,11 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
+            if (m_pivotObject != nullptr)
+            {
+                m_pivotObject->transform().rotateEulerDegrees(glm::vec3{0.0f, 45.0f * deltaTime, 0.0f});
+            }
+
             m_scene.update(deltaTime);
         }
 
@@ -113,6 +122,7 @@ namespace Zenith
         Render::MeshRef m_cubeMesh{};
         Scene m_scene{};
         RenderFrame m_frame{};
+        GameObject *m_pivotObject = nullptr;
     };
 
 } // namespace Zenith
