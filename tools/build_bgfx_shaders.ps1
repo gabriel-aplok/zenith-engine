@@ -53,6 +53,22 @@ function Resolve-BgfxCommonDir {
     $roots += (Join-Path $env:USERPROFILE "vcpkg")
 
     foreach ($root in ($roots | Where-Object { $_ -and (Test-Path $_) })) {
+        $matches = Get-ChildItem -Path $root -Recurse -File -Filter "common.sh" -ErrorAction SilentlyContinue
+        if ($matches) {
+            return $matches[0].Directory.FullName
+        }
+    }
+
+    return $null
+}
+
+function Resolve-BgfxShaderDir {
+    $roots = @()
+    if ($env:VCPKG_ROOT) { $roots += $env:VCPKG_ROOT }
+    $roots += "C:\vcpkg"
+    $roots += (Join-Path $env:USERPROFILE "vcpkg")
+
+    foreach ($root in ($roots | Where-Object { $_ -and (Test-Path $_) })) {
         $matches = Get-ChildItem -Path $root -Recurse -File -Filter "bgfx_shader.sh" -ErrorAction SilentlyContinue
         if ($matches) {
             return $matches[0].Directory.FullName
@@ -72,6 +88,11 @@ if (-not $BgfxCommonDir) {
     throw "bgfx_shader.sh not found. Make sure the bgfx source tree is installed with vcpkg."
 }
 
+$BgfxShaderDir = Resolve-BgfxShaderDir
+if (-not $BgfxShaderDir) {
+    throw "bgfx_shader.sh not found. Make sure the bgfx source tree is installed with vcpkg."
+}
+
 if (-not (Test-Path $ShaderDir)) {
     throw "Shader source directory not found: $ShaderDir"
 }
@@ -84,7 +105,7 @@ if (-not (Test-Path $OutputDir)) {
     New-Item -ItemType Directory -Path $OutputDir | Out-Null
 }
 
-$commonIncludeArgs = @("-i", $ShaderDir, "-i", $BgfxCommonDir)
+$commonIncludeArgs = @("-i", $ShaderDir, "-i", $BgfxCommonDir, "-i", $BgfxShaderDir)
 
 & $Shaderc @commonIncludeArgs -f $vertexSource -o (Join-Path $OutputDir "mesh_vs.bin.h") --type v --platform windows -p s_5_0 --varyingdef $varying --bin2c mesh_vs_dx11
 & $Shaderc @commonIncludeArgs -f $fragmentSource -o (Join-Path $OutputDir "mesh_fs.bin.h") --type f --platform windows -p s_5_0 --varyingdef $varying --bin2c mesh_fs_dx11

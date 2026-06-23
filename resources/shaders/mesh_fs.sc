@@ -1,5 +1,6 @@
-#include <bgfx_shader.sh>
-#include "varying.def.sc"
+$input v_color0
+
+#include <common.sh>
 
 void main()
 {

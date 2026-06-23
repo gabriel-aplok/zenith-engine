@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "*.sc": "glsl"
+  },
+  "[glsl]": {
+    "editor.formatOnSave": false
+  }
+}
