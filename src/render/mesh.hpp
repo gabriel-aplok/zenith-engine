@@ -14,17 +14,6 @@ namespace Zenith::Render
         glm::vec4 color{1.0f};
     };
 
-    struct MeshData
-    {
-        std::vector<MeshVertex> vertices;
-        std::vector<uint16_t> indices;
-    };
-
-    struct MaterialState
-    {
-        glm::vec4 tint{1.0f};
-    };
-
     struct Bounds
     {
         glm::vec3 center{0.0f};
@@ -34,6 +23,18 @@ namespace Zenith::Render
         {
             return glm::length(extents);
         }
+    };
+
+    struct MeshData
+    {
+        std::vector<MeshVertex> vertices;
+        std::vector<uint16_t> indices;
+        Bounds bounds{};
+    };
+
+    struct MaterialState
+    {
+        glm::vec4 tint{1.0f};
     };
 
     struct MeshHandle

@@ -43,7 +43,8 @@ namespace Zenith
             }
 
             m_meshCache.setUploader(m_renderer.get());
-            m_cubeMesh = m_meshCache.acquireRef("demo/cube", MeshBuilder::makeCube());
+            const Render::MeshData cubeMeshData = MeshBuilder::makeCube();
+            m_cubeMesh = m_meshCache.acquireRef("demo/cube", cubeMeshData);
             if (!m_cubeMesh)
             {
                 Log::Error("Failed to create demo meshes");
@@ -71,6 +72,7 @@ namespace Zenith
 
             auto &filter = cube.add_component<Components::MeshFilter>();
             filter.setMesh(m_cubeMesh.handle());
+            filter.setBounds(cubeMeshData.bounds);
 
             auto &renderer = cube.add_component<Components::MeshRenderer>();
             renderer.setMaterial({.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});

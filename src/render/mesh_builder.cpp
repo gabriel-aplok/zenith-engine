@@ -1,11 +1,34 @@
 #include "render/mesh_builder.hpp"
 
+#include <limits>
+
 namespace Zenith::MeshBuilder
 {
+    Render::Bounds computeBounds(const std::vector<Render::MeshVertex> &vertices)
+    {
+        if (vertices.empty())
+        {
+            return {};
+        }
+
+        glm::vec3 minPoint{std::numeric_limits<float>::max()};
+        glm::vec3 maxPoint{std::numeric_limits<float>::lowest()};
+        for (const auto &vertex : vertices)
+        {
+            minPoint = glm::min(minPoint, vertex.position);
+            maxPoint = glm::max(maxPoint, vertex.position);
+        }
+
+        Render::Bounds bounds{};
+        bounds.center = (minPoint + maxPoint) * 0.5f;
+        bounds.extents = (maxPoint - minPoint) * 0.5f;
+        return bounds;
+    }
 
     Render::MeshData makeMesh(std::vector<Render::MeshVertex> vertices, std::vector<uint16_t> indices)
     {
         Render::MeshData mesh;
+        mesh.bounds = computeBounds(vertices);
         mesh.vertices = std::move(vertices);
         mesh.indices = std::move(indices);
         return mesh;
