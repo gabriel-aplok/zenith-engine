@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 
+#include "resource/resource_id.hpp"
+
 namespace Zenith
 {
     template <typename T>
@@ -25,6 +27,7 @@ namespace Zenith
 
         const std::string &path() const { return m_path; }
         std::shared_ptr<T> shared() const { return m_resource; }
+        ResourceId id() const { return ResourceId{m_path}; }
 
         void reset()
         {

@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "resource/resource_handle.hpp"
+#include "resource/resource_id.hpp"
 
 namespace Zenith
 {
@@ -19,7 +20,8 @@ namespace Zenith
         template <typename T>
         void registerLoader(Loader<T> loader)
         {
-            m_loaders[typeid(T)] = [loader = std::move(loader)](const std::string &path) -> std::shared_ptr<void> {
+            m_loaders[typeid(T)] = [loader = std::move(loader)](const std::string &path) -> std::shared_ptr<void>
+            {
                 return loader ? loader(path) : nullptr;
             };
         }
@@ -27,6 +29,13 @@ namespace Zenith
         template <typename T>
         ResourceHandle<T> load(const std::string &path)
         {
+            return load<T>(ResourceId{path});
+        }
+
+        template <typename T>
+        ResourceHandle<T> load(const ResourceId &id)
+        {
+            const std::string &path = id.path();
             auto &cache = m_entries[typeid(T)];
             const auto it = cache.resources.find(path);
             if (it != cache.resources.end())
@@ -56,11 +65,18 @@ namespace Zenith
         template <typename T>
         ResourceHandle<T> store(const std::string &path, std::shared_ptr<T> resource)
         {
+            return store<T>(ResourceId{path}, std::move(resource));
+        }
+
+        template <typename T>
+        ResourceHandle<T> store(const ResourceId &id, std::shared_ptr<T> resource)
+        {
             if (!resource)
             {
                 return {};
             }
 
+            const std::string &path = id.path();
             auto &cache = m_entries[typeid(T)];
             cache.resources[path] = resource;
             return ResourceHandle<T>{std::move(resource), path};
@@ -69,6 +85,13 @@ namespace Zenith
         template <typename T>
         bool unload(const std::string &path)
         {
+            return unload<T>(ResourceId{path});
+        }
+
+        template <typename T>
+        bool unload(const ResourceId &id)
+        {
+            const std::string &path = id.path();
             const auto it = m_entries.find(typeid(T));
             if (it == m_entries.end())
             {
@@ -86,6 +109,13 @@ namespace Zenith
         template <typename T>
         bool has(const std::string &path) const
         {
+            return has<T>(ResourceId{path});
+        }
+
+        template <typename T>
+        bool has(const ResourceId &id) const
+        {
+            const std::string &path = id.path();
             const auto it = m_entries.find(typeid(T));
             if (it == m_entries.end())
             {
