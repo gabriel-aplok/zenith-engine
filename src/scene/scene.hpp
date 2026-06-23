@@ -1,14 +1,21 @@
 #pragma once
 
+#include <optional>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "components/camera.hpp"
 #include "scene/game_object.hpp"
+#include "render/mesh_cache.hpp"
 
 namespace Zenith
 {
+    namespace Components
+    {
+        class MeshFilter;
+    }
+
     class Scene
     {
     public:
@@ -20,6 +27,7 @@ namespace Zenith
 
         GameObject &createGameObject(std::string name = {});
         void clear();
+        void setMeshMetadataProvider(const Render::IMeshMetadataProvider *provider);
 
         void update(float deltaTime);
         bool buildRenderFrame(RenderFrame &frame, const glm::ivec2 &framebufferSize);
@@ -31,7 +39,9 @@ namespace Zenith
     private:
         Components::Camera *findCamera();
         const Components::Camera *findCamera() const;
+        std::optional<Render::Bounds> meshBoundsFor(const Components::MeshFilter &filter) const;
 
+        const Render::IMeshMetadataProvider *m_meshMetadataProvider = nullptr;
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
     };
 } // namespace Zenith

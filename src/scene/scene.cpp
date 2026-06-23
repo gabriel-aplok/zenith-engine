@@ -105,6 +105,11 @@ namespace Zenith
         m_gameObjects.clear();
     }
 
+    void Scene::setMeshMetadataProvider(const Render::IMeshMetadataProvider *provider)
+    {
+        m_meshMetadataProvider = provider;
+    }
+
     void Scene::update(float deltaTime)
     {
         for (auto &object : m_gameObjects)
@@ -143,6 +148,16 @@ namespace Zenith
         return const_cast<Scene *>(this)->findCamera();
     }
 
+    std::optional<Render::Bounds> Scene::meshBoundsFor(const Components::MeshFilter &filter) const
+    {
+        if (!m_meshMetadataProvider)
+        {
+            return std::nullopt;
+        }
+
+        return m_meshMetadataProvider->meshBounds(filter.mesh());
+    }
+
     bool Scene::buildRenderFrame(RenderFrame &frame, const glm::ivec2 &framebufferSize)
     {
         if (auto *camera = findCamera())
@@ -173,9 +188,15 @@ namespace Zenith
             auto *renderer = object->get_component<Components::MeshRenderer>();
             if (filter != nullptr && renderer != nullptr)
             {
+                const std::optional<Render::Bounds> bounds = meshBoundsFor(*filter);
+                if (!bounds.has_value())
+                {
+                    continue;
+                }
+
                 const glm::mat4 &world = object->transform().localToWorld();
-                const glm::vec3 center = glm::vec3(world * glm::vec4(filter->bounds().center, 1.0f));
-                const float radius = filter->bounds().radius() * maxWorldScale(world);
+                const glm::vec3 center = glm::vec3(world * glm::vec4(bounds->center, 1.0f));
+                const float radius = bounds->radius() * maxWorldScale(world);
                 if (!sphereInFrustum(frustum, center, radius))
                 {
                     continue;

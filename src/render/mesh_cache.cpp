@@ -20,6 +20,7 @@ namespace Zenith::Render
         if (inserted || entry.handle.id == 0)
         {
             entry.handle = m_uploader->uploadMesh(meshData);
+            entry.bounds = meshData.bounds;
             entry.refCount = entry.handle.id != 0 ? 1u : 0u;
             if (entry.handle.id == 0)
             {
@@ -51,6 +52,7 @@ namespace Zenith::Render
             return false;
         }
 
+        it->second.bounds = meshData.bounds;
         return m_uploader->updateMesh(it->second.handle, meshData);
     }
 
@@ -97,6 +99,20 @@ namespace Zenith::Render
     bool RenderMeshCache::has(const std::string &key) const
     {
         return m_entries.find(key) != m_entries.end();
+    }
+
+    std::optional<Bounds> RenderMeshCache::meshBounds(MeshHandle meshHandle) const
+    {
+        for (const auto &entryPair : m_entries)
+        {
+            const Entry &entry = entryPair.second;
+            if (entry.handle.id == meshHandle.id)
+            {
+                return entry.bounds;
+            }
+        }
+
+        return std::nullopt;
     }
 
     MeshRef::MeshRef(RenderMeshCache *cache, std::string key, MeshHandle handle)

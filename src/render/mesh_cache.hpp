@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -10,6 +11,14 @@
 namespace Zenith::Render
 {
     class MeshRef;
+
+    class IMeshMetadataProvider
+    {
+    public:
+        virtual ~IMeshMetadataProvider() = default;
+
+        virtual std::optional<Bounds> meshBounds(MeshHandle meshHandle) const = 0;
+    };
 
     class IMeshUploader
     {
@@ -21,7 +30,7 @@ namespace Zenith::Render
         virtual void destroyMesh(MeshHandle meshHandle) = 0;
     };
 
-    class RenderMeshCache
+    class RenderMeshCache : public IMeshMetadataProvider
     {
     public:
         void setUploader(IMeshUploader *uploader);
@@ -33,12 +42,14 @@ namespace Zenith::Render
         void clear();
 
         bool has(const std::string &key) const;
+        std::optional<Bounds> meshBounds(MeshHandle meshHandle) const override;
 
     private:
         struct Entry
         {
             MeshHandle handle{};
             uint32_t refCount = 0;
+            Bounds bounds{};
         };
 
         IMeshUploader *m_uploader = nullptr;
