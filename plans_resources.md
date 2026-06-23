@@ -69,5 +69,6 @@ Notes:
 - Phase 1 is implemented in a first pass.
 - Builtin and file-backed mesh loading now both work through `ResourceManager`.
 - Resource registration is now centralized in `registerStandardResourceLoaders`.
-- Text assets can now be loaded through the same typed cache path.
+- Text sources can now be loaded through the same typed cache path.
+- The old duplicate `TextAsset` stub was removed so the resource layer only keeps one text-loading concept.
 - The next resource step is image/texture-backed asset types, not more ECS work.
