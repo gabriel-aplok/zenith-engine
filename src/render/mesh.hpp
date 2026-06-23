@@ -20,15 +20,30 @@ namespace Zenith::Render
         std::vector<uint16_t> indices;
     };
 
+    struct MaterialState
+    {
+        glm::vec4 tint{1.0f};
+    };
+
     struct MeshHandle
     {
         uint32_t id = 0;
     };
 
-    struct MeshDrawCommand
+    enum class RenderCommandType
     {
+        SetTransform,
+        SetMaterial,
+        BindMesh,
+        DrawIndexed,
+    };
+
+    struct RenderCommand
+    {
+        RenderCommandType type = RenderCommandType::DrawIndexed;
         MeshHandle mesh{};
         glm::mat4 transform{1.0f};
+        MaterialState material{};
         uint32_t firstIndex = 0;
         uint32_t indexCount = 0;
     };

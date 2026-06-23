@@ -60,6 +60,13 @@ namespace Zenith::Render
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
 
+        m_tintUniform = bgfx::createUniform("u_tint", bgfx::UniformType::Vec4);
+        if (!bgfx::isValid(m_tintUniform))
+        {
+            Log::Error("Failed to create bgfx tint uniform");
+            return false;
+        }
+
         const bgfx::ShaderHandle vertexShader = loadShader(mesh_vs_dx11, sizeof(mesh_vs_dx11));
         const bgfx::ShaderHandle fragmentShader = loadShader(mesh_fs_dx11, sizeof(mesh_fs_dx11));
         m_program = bgfx::createProgram(vertexShader, fragmentShader, true);
@@ -92,6 +99,12 @@ namespace Zenith::Render
         {
             bgfx::destroy(m_program);
             m_program = BGFX_INVALID_HANDLE;
+        }
+
+        if (bgfx::isValid(m_tintUniform))
+        {
+            bgfx::destroy(m_tintUniform);
+            m_tintUniform = BGFX_INVALID_HANDLE;
         }
 
         m_initialized = false;
@@ -175,26 +188,49 @@ namespace Zenith::Render
         bgfx::touch(0);
 
         const uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_CULL_CW;
-        for (const MeshDrawCommand &draw : frame.commands.meshDraws())
+        MeshHandle currentMesh{};
+        glm::mat4 currentTransform{1.0f};
+        MaterialState currentMaterial{};
+
+        for (const RenderCommand &command : frame.commands.commands())
         {
-            const auto meshIt = m_meshes.find(draw.mesh.id);
-            if (meshIt == m_meshes.end())
+            switch (command.type)
             {
-                continue;
-            }
-
-            const MeshResource &mesh = meshIt->second;
-            const uint32_t indexCount = draw.indexCount == 0 ? mesh.indexCount - draw.firstIndex : draw.indexCount;
-            if (indexCount == 0 || draw.firstIndex >= mesh.indexCount)
+            case RenderCommandType::BindMesh:
+                currentMesh = command.mesh;
+                break;
+            case RenderCommandType::SetTransform:
+                currentTransform = command.transform;
+                break;
+            case RenderCommandType::SetMaterial:
+                currentMaterial = command.material;
+                break;
+            case RenderCommandType::DrawIndexed:
             {
-                continue;
-            }
+                const auto meshIt = m_meshes.find(currentMesh.id);
+                if (meshIt == m_meshes.end())
+                {
+                    break;
+                }
 
-            bgfx::setTransform(glm::value_ptr(draw.transform));
-            bgfx::setVertexBuffer(0, mesh.vertexBuffer);
-            bgfx::setIndexBuffer(mesh.indexBuffer, static_cast<uint32_t>(draw.firstIndex), static_cast<uint32_t>(indexCount));
-            bgfx::setState(state);
-            bgfx::submit(0, m_program);
+                const MeshResource &mesh = meshIt->second;
+                const uint32_t firstIndex = command.firstIndex;
+                const uint32_t indexCount = command.indexCount == 0 ? mesh.indexCount - firstIndex : command.indexCount;
+                if (indexCount == 0 || firstIndex >= mesh.indexCount)
+                {
+                    break;
+                }
+
+                const float tint[4] = {currentMaterial.tint.r, currentMaterial.tint.g, currentMaterial.tint.b, currentMaterial.tint.a};
+                bgfx::setTransform(glm::value_ptr(currentTransform));
+                bgfx::setVertexBuffer(0, mesh.vertexBuffer);
+                bgfx::setIndexBuffer(mesh.indexBuffer, firstIndex, indexCount);
+                bgfx::setUniform(m_tintUniform, tint);
+                bgfx::setState(state);
+                bgfx::submit(0, m_program);
+                break;
+            }
+            }
         }
     }
 
