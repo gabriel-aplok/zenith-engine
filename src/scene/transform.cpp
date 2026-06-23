@@ -65,6 +65,28 @@ namespace Zenith
         rebuildMatrix();
     }
 
+    void Transform::lookAt(const glm::vec3 &target, const glm::vec3 &worldUp)
+    {
+        const glm::mat4 view = glm::lookAt(m_position, target, worldUp);
+        m_rotation = glm::normalize(glm::quat_cast(glm::inverse(view)));
+        rebuildMatrix();
+    }
+
+    glm::vec3 Transform::right() const
+    {
+        return glm::normalize(glm::vec3{m_localToWorld[0]});
+    }
+
+    glm::vec3 Transform::up() const
+    {
+        return glm::normalize(glm::vec3{m_localToWorld[1]});
+    }
+
+    glm::vec3 Transform::forward() const
+    {
+        return glm::normalize(glm::vec3{m_localToWorld[2]});
+    }
+
     void Transform::rebuildMatrix()
     {
         const glm::mat4 translation = glm::translate(glm::mat4{1.0f}, m_position);

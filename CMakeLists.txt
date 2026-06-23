@@ -97,6 +97,7 @@ add_library(zenith-lib
 	"src/scene/game_object.cpp"
 	"src/scene/transform.cpp"
 	"src/scene/scene.cpp"
+	"src/components/camera.cpp"
 	"src/components/mesh_filter.cpp"
 	"src/components/mesh_renderer.cpp"
 )

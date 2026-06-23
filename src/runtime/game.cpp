@@ -1,6 +1,7 @@
 #include "engine/application.hpp"
 #include "engine/startup.hpp"
 #include "components/mesh_filter.hpp"
+#include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
 #include "log/log.hpp"
 #include "render/bgfx_renderer.hpp"
@@ -50,6 +51,17 @@ namespace Zenith
                 return;
             }
 
+            GameObject &cameraObject = m_scene.createGameObject("Main Camera");
+            cameraObject.transform().setPosition(glm::vec3{0.0f, 2.5f, 6.0f});
+            cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+
+            auto &camera = cameraObject.add_component<Components::Camera>();
+            camera.setFieldOfView(45.0f);
+            camera.setNearClipPlane(0.1f);
+            camera.setFarClipPlane(100.0f);
+            camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
+            camera.setBackgroundColor(glm::vec4{0.08f, 0.09f, 0.11f, 1.0f});
+
             GameObject &cube = m_scene.createGameObject("Cube");
             cube.transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
 
@@ -74,8 +86,7 @@ namespace Zenith
 
             m_renderContext->beginFrame();
             m_frame.begin();
-            m_frame.setView(makeViewState());
-            m_scene.render(m_frame);
+            m_scene.render(m_frame, m_renderContext->framebufferSize());
             m_frame.finalize();
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
@@ -96,21 +107,6 @@ namespace Zenith
         }
 
     private:
-        Render::RenderViewState makeViewState() const
-        {
-            const glm::vec3 eye{0.0f, 2.5f, 6.0f};
-            const glm::vec3 target{0.0f, 0.0f, 0.0f};
-            const glm::vec3 up{0.0f, 1.0f, 0.0f};
-            const glm::ivec2 size = m_renderContext ? m_renderContext->framebufferSize() : glm::ivec2{1, 1};
-            const float aspect = size.y > 0 ? static_cast<float>(size.x) / static_cast<float>(size.y) : 1.0f;
-
-            Render::RenderViewState viewState{};
-            viewState.view = glm::lookAt(eye, target, up);
-            viewState.projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
-            viewState.projection[1][1] *= -1.0f;
-            return viewState;
-        }
-
         std::unique_ptr<RenderContext> m_renderContext;
         std::unique_ptr<IRenderer> m_renderer;
         Render::RenderMeshCache m_meshCache;

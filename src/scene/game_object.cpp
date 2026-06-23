@@ -13,7 +13,10 @@ namespace Zenith
     {
         for (auto &component : m_components)
         {
-            component->update(deltaTime);
+            if (component->enabled())
+            {
+                component->update(deltaTime);
+            }
         }
     }
 
@@ -21,7 +24,10 @@ namespace Zenith
     {
         for (auto &component : m_components)
         {
-            component->render(frame);
+            if (component->enabled())
+            {
+                component->render(frame);
+            }
         }
     }
 } // namespace Zenith

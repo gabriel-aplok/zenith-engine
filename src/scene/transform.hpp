@@ -25,9 +25,13 @@ namespace Zenith
         void rotateEulerRadians(const glm::vec3 &eulerRadians);
         void rotateEulerDegrees(const glm::vec3 &eulerDegrees);
         void rescale(const glm::vec3 &deltaScale);
+        void lookAt(const glm::vec3 &target, const glm::vec3 &worldUp = glm::vec3{0.0f, 1.0f, 0.0f});
 
         const glm::mat4 &localToWorld() const { return m_localToWorld; }
         const glm::mat4 &worldMatrix() const { return m_localToWorld; }
+        glm::vec3 forward() const;
+        glm::vec3 up() const;
+        glm::vec3 right() const;
 
     private:
         void rebuildMatrix();
