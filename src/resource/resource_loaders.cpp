@@ -7,13 +7,13 @@
 #include "render/mesh_builder.hpp"
 #include "resource/obj_mesh_loader.hpp"
 #include "resource/resource_manager.hpp"
-#include "resource/text_asset.hpp"
+#include "resource/text_source.hpp"
 
 namespace Zenith
 {
     namespace
     {
-        std::shared_ptr<TextAsset> loadTextAssetFile(const std::filesystem::path &path)
+        std::shared_ptr<TextSource> loadTextAssetFile(const std::filesystem::path &path)
         {
             std::ifstream file(path, std::ios::binary);
             if (!file)
@@ -21,8 +21,7 @@ namespace Zenith
                 return nullptr;
             }
 
-            auto asset = std::make_shared<TextAsset>();
-            asset->text.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+            auto asset = std::make_shared<TextSource>(std::string{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()}, path.string());
             return asset;
         }
     } // namespace
@@ -57,7 +56,7 @@ namespace Zenith
 
             return nullptr; });
 
-        resources.registerLoader<TextAsset>([](const std::string &path) -> std::shared_ptr<TextAsset>
+        resources.registerLoader<TextSource>([](const std::string &path) -> std::shared_ptr<TextSource>
                                             {
             const std::filesystem::path filePath = path;
             return loadTextAssetFile(filePath); });

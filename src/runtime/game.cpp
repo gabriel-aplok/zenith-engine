@@ -6,7 +6,7 @@
 #include "log/log.hpp"
 #include "resource/resource_loaders.hpp"
 #include "resource/resource_manager.hpp"
-#include "resource/text_asset.hpp"
+#include "resource/text_source.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
 #include "render/mesh_cache.hpp"
@@ -47,10 +47,10 @@ namespace Zenith
             m_scene.setMeshMetadataProvider(&m_meshCache);
             registerStandardResourceLoaders(m_resources);
 
-            m_vertexShaderSource = m_resources.load<TextAsset>("resources/shaders/mesh_vs.sc");
+            m_vertexShaderSource = m_resources.load<TextSource>("resources/shaders/mesh_vs.sc");
             if (m_vertexShaderSource)
             {
-                Log::Info("Loaded vertex shader source: {} bytes", m_vertexShaderSource->text.size());
+                Log::Info("Loaded vertex shader source: {} bytes", m_vertexShaderSource->data().size());
             }
 
             m_cubeMeshData = m_resources.load<Render::MeshData>("resources/models/obj/cube.obj");
@@ -150,7 +150,7 @@ namespace Zenith
         std::unique_ptr<IRenderer> m_renderer;
         ResourceManager m_resources;
         Render::RenderMeshCache m_meshCache;
-        ResourceHandle<TextAsset> m_vertexShaderSource{};
+        ResourceHandle<TextSource> m_vertexShaderSource{};
         ResourceHandle<Render::MeshData> m_cubeMeshData{};
         Render::MeshRef m_cubeMesh{};
         Scene m_scene{};
