@@ -4,17 +4,15 @@
 #include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
 #include "log/log.hpp"
-#include "resource/obj_mesh_loader.hpp"
+#include "resource/resource_loaders.hpp"
 #include "resource/resource_manager.hpp"
+#include "resource/text_asset.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
-#include "render/mesh_builder.hpp"
 #include "render/mesh_cache.hpp"
 #include "render/render_context.hpp"
-#include "render/render_submission.hpp"
 #include "scene/scene.hpp"
 
-#include <filesystem>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Zenith
@@ -47,33 +45,13 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_scene.setMeshMetadataProvider(&m_meshCache);
-            m_resources.registerLoader<Render::MeshData>([](const std::string &path) -> std::shared_ptr<Render::MeshData>
-                                                         {
-                if (path == "builtin://cube")
-                {
-                    return std::make_shared<Render::MeshData>(MeshBuilder::makeCube());
-                }
+            registerStandardResourceLoaders(m_resources);
 
-                if (path == "builtin://pyramid")
-                {
-                    return std::make_shared<Render::MeshData>(MeshBuilder::makePyramid());
-                }
-
-                if (path == "builtin://plane")
-                {
-                    return std::make_shared<Render::MeshData>(MeshBuilder::makePlane());
-                }
-
-                const std::filesystem::path filePath = path;
-                if (filePath.extension() == ".obj")
-                {
-                    if (auto loaded = loadObjMesh(filePath))
-                    {
-                        return std::make_shared<Render::MeshData>(std::move(*loaded));
-                    }
-                }
-
-                return nullptr; });
+            m_vertexShaderSource = m_resources.load<TextAsset>("resources/shaders/mesh_vs.sc");
+            if (m_vertexShaderSource)
+            {
+                Log::Info("Loaded vertex shader source: {} bytes", m_vertexShaderSource->text.size());
+            }
 
             m_cubeMeshData = m_resources.load<Render::MeshData>("resources/models/obj/cube.obj");
             if (!m_cubeMeshData)
@@ -172,6 +150,7 @@ namespace Zenith
         std::unique_ptr<IRenderer> m_renderer;
         ResourceManager m_resources;
         Render::RenderMeshCache m_meshCache;
+        ResourceHandle<TextAsset> m_vertexShaderSource{};
         ResourceHandle<Render::MeshData> m_cubeMeshData{};
         Render::MeshRef m_cubeMesh{};
         Scene m_scene{};
