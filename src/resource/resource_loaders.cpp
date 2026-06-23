@@ -6,10 +6,13 @@
 #include <vector>
 
 #include "render/mesh_builder.hpp"
+#include "resource/baked_mesh_asset.hpp"
 #include "resource/binary_source.hpp"
+#include "resource/image_source.hpp"
 #include "resource/mesh_source.hpp"
 #include "resource/obj_mesh_loader.hpp"
 #include "resource/resource_manager.hpp"
+#include "resource/texture_asset.hpp"
 #include "resource/text_source.hpp"
 
 namespace Zenith
@@ -71,6 +74,35 @@ namespace Zenith
             return nullptr;
         }
 
+        std::shared_ptr<BakedMeshAsset> loadBakedMeshAssetFromSource(const std::string &path)
+        {
+            auto source = loadBuiltinMeshSource(path);
+            if (!source)
+            {
+                const std::filesystem::path filePath = path;
+                if (filePath.extension() == ".obj")
+                {
+                    source = loadMeshSourceFile(filePath);
+                }
+            }
+
+            if (!source)
+            {
+                return nullptr;
+            }
+
+            auto asset = std::make_shared<BakedMeshAsset>();
+            asset->sourcePath = path;
+            asset->mesh.vertices.reserve(source->vertices.size());
+            for (const auto &vertex : source->vertices)
+            {
+                asset->mesh.vertices.push_back({vertex.position, vertex.color});
+            }
+            asset->mesh.indices = source->indices;
+            asset->mesh.bounds = {source->bounds.center, source->bounds.extents};
+            return asset;
+        }
+
         std::shared_ptr<TextSource> loadTextAssetFile(const std::filesystem::path &path)
         {
             std::ifstream file(path, std::ios::binary);
@@ -93,6 +125,34 @@ namespace Zenith
 
             std::vector<std::uint8_t> bytes{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
             return std::make_shared<BinarySource>(std::move(bytes), path.string());
+        }
+
+        std::shared_ptr<ImageSource> loadImageSourceFile(const std::filesystem::path &path)
+        {
+            std::ifstream file(path, std::ios::binary);
+            if (!file)
+            {
+                return nullptr;
+            }
+
+            std::vector<std::uint8_t> bytes{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+            ImageSourceData data;
+            data.bytes = std::move(bytes);
+            data.format = path.extension().string();
+            return std::make_shared<ImageSource>(std::move(data), path.string());
+        }
+
+        std::shared_ptr<TextureAsset> loadTextureAssetFile(const std::filesystem::path &path)
+        {
+            if (auto image = loadImageSourceFile(path))
+            {
+                TextureAsset asset;
+                asset.source = *image;
+                asset.sourcePath = path.string();
+                return std::make_shared<TextureAsset>(std::move(asset));
+            }
+
+            return nullptr;
         }
     } // namespace
 
@@ -147,6 +207,9 @@ namespace Zenith
 
             return nullptr; });
 
+        resources.registerLoader<BakedMeshAsset>([](const std::string &path) -> std::shared_ptr<BakedMeshAsset>
+                                                 { return loadBakedMeshAssetFromSource(path); });
+
         resources.registerLoader<TextSource>([](const std::string &path) -> std::shared_ptr<TextSource>
                                             {
             const std::filesystem::path filePath = path;
@@ -156,5 +219,37 @@ namespace Zenith
                                                 {
             const std::filesystem::path filePath = path;
             return loadBinaryAssetFile(filePath); });
+
+        resources.registerLoader<ImageSource>([](const std::string &path) -> std::shared_ptr<ImageSource>
+                                               {
+            const std::filesystem::path filePath = path;
+            if (!filePath.has_extension())
+            {
+                return nullptr;
+            }
+
+            const auto ext = filePath.extension().string();
+            if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".bmp" && ext != ".tga" && ext != ".gif" && ext != ".webp")
+            {
+                return nullptr;
+            }
+
+            return loadImageSourceFile(filePath); });
+
+        resources.registerLoader<TextureAsset>([](const std::string &path) -> std::shared_ptr<TextureAsset>
+                                                {
+            const std::filesystem::path filePath = path;
+            if (!filePath.has_extension())
+            {
+                return nullptr;
+            }
+
+            const auto ext = filePath.extension().string();
+            if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".bmp" && ext != ".tga" && ext != ".gif" && ext != ".webp")
+            {
+                return nullptr;
+            }
+
+            return loadTextureAssetFile(filePath); });
     }
 } // namespace Zenith

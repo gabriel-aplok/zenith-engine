@@ -59,6 +59,7 @@ Milestone:
 - texture source loading
 - baked resource loading
 - binary/raw resource loading
+- texture asset loading
 
 Notes:
 
@@ -73,5 +74,8 @@ Notes:
 - Resource registration is now centralized in `registerStandardResourceLoaders`.
 - Text sources can now be loaded through the same typed cache path.
 - Binary sources now use the same path, which is the right base layer for image decoding and other opaque assets.
+- Image sources now exist as typed encoded data, ready for a real decoder once one is added.
+- Texture assets now wrap encoded image sources as a runtime-facing type.
+- Baked mesh assets now exist as a separate runtime-facing type with source provenance.
 - The old duplicate `TextAsset` stub was removed so the resource layer only keeps one text-loading concept.
 - The next resource step is image/texture-backed asset types, not more ECS work.
