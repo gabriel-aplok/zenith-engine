@@ -7,6 +7,7 @@ namespace Zenith::Render
     {
         m_commands.clear();
         m_batches.clear();
+        m_stats = {};
         m_dirty = false;
     }
 
@@ -65,6 +66,7 @@ namespace Zenith::Render
         }
 
         m_batches.clear();
+        m_stats = {};
         MeshHandle currentMesh{};
         glm::mat4 currentTransform{1.0f};
         MaterialState currentMaterial{};
@@ -90,10 +92,14 @@ namespace Zenith::Render
                     .firstIndex = command.firstIndex,
                     .indexCount = command.indexCount,
                 });
+                ++m_stats.batchCount;
+                ++m_stats.drawCount;
+                m_stats.indexCount += command.indexCount;
                 break;
             }
         }
 
+        m_stats.commandCount = static_cast<uint32_t>(m_commands.size());
         m_dirty = false;
     }
 
@@ -110,6 +116,11 @@ namespace Zenith::Render
     const std::vector<RenderBatch> &RenderCommandList::batches() const
     {
         return m_batches;
+    }
+
+    const RenderStats &RenderCommandList::stats() const
+    {
+        return m_stats;
     }
 
 } // namespace Zenith::Render

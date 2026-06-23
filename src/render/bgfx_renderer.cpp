@@ -243,6 +243,9 @@ namespace Zenith::Render
         bgfx::setViewTransform(0, glm::value_ptr(view.view), glm::value_ptr(view.projection));
         bgfx::touch(0);
 
+        const RenderStats &stats = frame.commands.stats();
+        bgfx::dbgTextPrintf(0, 1, 0x0f, "frame: commands %u  batches %u  draws %u  indices %u", stats.commandCount, stats.batchCount, stats.drawCount, stats.indexCount);
+
         const uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_CULL_CW;
         for (const RenderBatch &batch : frame.commands.batches())
         {

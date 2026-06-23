@@ -57,6 +57,14 @@ namespace Zenith::Render
         uint32_t indexCount = 0;
     };
 
+    struct RenderStats
+    {
+        uint32_t commandCount = 0;
+        uint32_t batchCount = 0;
+        uint32_t drawCount = 0;
+        uint32_t indexCount = 0;
+    };
+
     struct RenderViewState
     {
         glm::mat4 view{1.0f};

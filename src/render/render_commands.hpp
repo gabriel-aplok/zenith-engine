@@ -26,6 +26,7 @@ namespace Zenith::Render
         const RenderViewState &view() const;
         const std::vector<RenderCommand> &commands() const;
         const std::vector<RenderBatch> &batches() const;
+        const RenderStats &stats() const;
 
     private:
         void markDirty();
@@ -33,6 +34,7 @@ namespace Zenith::Render
         RenderViewState m_view{};
         std::vector<RenderCommand> m_commands{};
         std::vector<RenderBatch> m_batches{};
+        RenderStats m_stats{};
         bool m_dirty = true;
     };
 

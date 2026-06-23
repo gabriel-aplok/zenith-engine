@@ -40,5 +40,10 @@ namespace Zenith
         {
             commands.drawIndexed(mesh, firstIndex, indexCount, transform, material);
         }
+
+        const Render::RenderStats &stats() const
+        {
+            return commands.stats();
+        }
     };
 } // namespace Zenith
