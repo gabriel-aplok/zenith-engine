@@ -21,13 +21,19 @@ namespace Zenith::Render
         void drawIndexed(uint32_t firstIndex = 0, uint32_t indexCount = 0);
         void drawIndexed(MeshHandle mesh, uint32_t firstIndex = 0, uint32_t indexCount = 0, const glm::mat4 &transform = glm::mat4{1.0f}, const MaterialState &material = MaterialState{});
         void drawMesh(MeshHandle mesh, const glm::mat4 &transform = glm::mat4{1.0f}) { drawIndexed(mesh, 0, 0, transform); }
+        void finalize();
 
         const RenderViewState &view() const;
         const std::vector<RenderCommand> &commands() const;
+        const std::vector<RenderBatch> &batches() const;
 
     private:
+        void markDirty();
+
         RenderViewState m_view{};
         std::vector<RenderCommand> m_commands{};
+        std::vector<RenderBatch> m_batches{};
+        bool m_dirty = true;
     };
 
 } // namespace Zenith::Render

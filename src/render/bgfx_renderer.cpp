@@ -244,49 +244,29 @@ namespace Zenith::Render
         bgfx::touch(0);
 
         const uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_CULL_CW;
-        MeshHandle currentMesh{};
-        glm::mat4 currentTransform{1.0f};
-        MaterialState currentMaterial{};
-
-        for (const RenderCommand &command : frame.commands.commands())
+        for (const RenderBatch &batch : frame.commands.batches())
         {
-            switch (command.type)
+            const auto meshIt = m_meshes.find(batch.mesh.id);
+            if (meshIt == m_meshes.end())
             {
-            case RenderCommandType::BindMesh:
-                currentMesh = command.mesh;
-                break;
-            case RenderCommandType::SetTransform:
-                currentTransform = command.transform;
-                break;
-            case RenderCommandType::SetMaterial:
-                currentMaterial = command.material;
-                break;
-            case RenderCommandType::DrawIndexed:
+                continue;
+            }
+
+            const MeshResource &mesh = meshIt->second;
+            const uint32_t firstIndex = batch.firstIndex;
+            const uint32_t indexCount = batch.indexCount == 0 ? mesh.indexCount - firstIndex : batch.indexCount;
+            if (indexCount == 0 || firstIndex >= mesh.indexCount)
             {
-                const auto meshIt = m_meshes.find(currentMesh.id);
-                if (meshIt == m_meshes.end())
-                {
-                    break;
-                }
-
-                const MeshResource &mesh = meshIt->second;
-                const uint32_t firstIndex = command.firstIndex;
-                const uint32_t indexCount = command.indexCount == 0 ? mesh.indexCount - firstIndex : command.indexCount;
-                if (indexCount == 0 || firstIndex >= mesh.indexCount)
-                {
-                    break;
-                }
-
-                const float tint[4] = {currentMaterial.tint.r, currentMaterial.tint.g, currentMaterial.tint.b, currentMaterial.tint.a};
-                bgfx::setTransform(glm::value_ptr(currentTransform));
-                bgfx::setVertexBuffer(0, mesh.vertexBuffer);
-                bgfx::setIndexBuffer(mesh.indexBuffer, firstIndex, indexCount);
-                bgfx::setUniform(m_tintUniform, tint);
-                bgfx::setState(state);
-                bgfx::submit(0, m_program);
-                break;
+                continue;
             }
-            }
+
+            const float tint[4] = {batch.material.tint.r, batch.material.tint.g, batch.material.tint.b, batch.material.tint.a};
+            bgfx::setTransform(glm::value_ptr(batch.transform));
+            bgfx::setVertexBuffer(0, mesh.vertexBuffer);
+            bgfx::setIndexBuffer(mesh.indexBuffer, firstIndex, indexCount);
+            bgfx::setUniform(m_tintUniform, tint);
+            bgfx::setState(state);
+            bgfx::submit(0, m_program);
         }
     }
 

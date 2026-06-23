@@ -64,6 +64,7 @@ namespace Zenith
             m_frame.submitMesh(m_pyramidMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{1.0f}});
             m_frame.submitMesh(m_cubeMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}), {.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
             m_frame.submitMesh(m_planeMesh, glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, -1.5f, 0.0f}), {.tint = glm::vec4{0.9f, 0.9f, 0.9f, 1.0f}});
+            m_frame.finalize();
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
         }

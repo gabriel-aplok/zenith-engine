@@ -48,6 +48,15 @@ namespace Zenith::Render
         uint32_t indexCount = 0;
     };
 
+    struct RenderBatch
+    {
+        MeshHandle mesh{};
+        glm::mat4 transform{1.0f};
+        MaterialState material{};
+        uint32_t firstIndex = 0;
+        uint32_t indexCount = 0;
+    };
+
     struct RenderViewState
     {
         glm::mat4 view{1.0f};

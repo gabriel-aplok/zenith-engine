@@ -20,6 +20,11 @@ namespace Zenith
             }
         }
 
+        void finalize()
+        {
+            commands.finalize();
+        }
+
         void setView(const Render::RenderViewState &viewState)
         {
             view = viewState;
