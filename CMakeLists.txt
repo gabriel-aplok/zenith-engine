@@ -37,6 +37,29 @@ set(ZENITH_INCLUDE_DIRS
 	"${ZENITH_SOURCE_DIR}"
 )
 
+set(ZENITH_SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders")
+set(ZENITH_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(ZENITH_GENERATED_SHADER_DIR "${ZENITH_GENERATED_DIR}/render/shaders")
+
+set(ZENITH_SHADER_OUTPUTS
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_vs.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_fs.bin.h"
+)
+
+add_custom_command(
+	OUTPUT ${ZENITH_SHADER_OUTPUTS}
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${ZENITH_GENERATED_SHADER_DIR}"
+	COMMAND powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${CMAKE_CURRENT_SOURCE_DIR}/tools/build_bgfx_shaders.ps1" -ShaderDir "${ZENITH_SHADER_SOURCE_DIR}" -OutputDir "${ZENITH_GENERATED_SHADER_DIR}"
+	DEPENDS
+		"${CMAKE_CURRENT_SOURCE_DIR}/tools/build_bgfx_shaders.ps1"
+		"${ZENITH_SHADER_SOURCE_DIR}/mesh_vs.sc"
+		"${ZENITH_SHADER_SOURCE_DIR}/mesh_fs.sc"
+		"${ZENITH_SHADER_SOURCE_DIR}/varying.def.sc"
+	VERBATIM
+)
+
+add_custom_target(bgfx-shaders DEPENDS ${ZENITH_SHADER_OUTPUTS})
+
 function(zenith_configure_app TARGET_NAME)
 	target_include_directories(${TARGET_NAME}
 		PRIVATE ${ZENITH_INCLUDE_DIRS}
@@ -63,12 +86,15 @@ add_library(zenith-lib
 	"src/render/bgfx_debug.cpp"
 	"src/render/bgfx_render_context.cpp"
 	"src/render/bgfx_renderer.cpp"
+	"src/render/render_commands.cpp"
+	"src/render/mesh_builder.cpp"
 	"src/log/log.cpp"
 	"src/engine/input.cpp"
 )
 
 target_include_directories(zenith-lib
 	PUBLIC ${ZENITH_INCLUDE_DIRS}
+	PRIVATE "${ZENITH_GENERATED_DIR}"
 )
 
 target_link_libraries(zenith-lib
@@ -80,6 +106,8 @@ target_link_libraries(zenith-lib
 		bgfx::bimg
 		bgfx::bimg_decode
 )
+
+add_dependencies(zenith-lib bgfx-shaders)
 
 set_target_properties(zenith-lib
 	PROPERTIES

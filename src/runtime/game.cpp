@@ -3,93 +3,99 @@
 #include "log/log.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
+#include "render/mesh_builder.hpp"
 #include "render/render_context.hpp"
+#include "render/render_submission.hpp"
 
-#include <memory>
-#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
-namespace Zenith
-{
-    class GameApplication final : public Application
-    {
-    public:
-        explicit GameApplication(const ApplicationConfig &config)
-            : Application(config)
-        {
+namespace Zenith {
+
+class GameApplication final : public Application {
+public:
+    explicit GameApplication(const ApplicationConfig &config)
+        : Application(config) {}
+
+protected:
+    void onInit() override {
+        m_renderContext = createRenderContext(getWindow(), getConfig().debug);
+        if (!m_renderContext) {
+            Log::Error("Failed to create render context");
+            requestQuit();
+            return;
         }
 
-    protected:
-        void onInit() override
-        {
-            const auto &debugConfig = getConfig().debug;
-
-            m_renderContext = createRenderContext(getWindow(), debugConfig);
-            m_renderer = createRenderer(m_renderContext->graphicsApi());
-            m_renderer->initialize(*m_renderContext);
-            resizeRenderer(m_renderContext->framebufferSize());
+        m_renderer = std::make_unique<Render::BgfxRenderer>();
+        if (!m_renderer->initialize(*m_renderContext)) {
+            Log::Error("Failed to initialize renderer");
+            requestQuit();
+            return;
         }
 
-        void onRender() override
-        {
-            if (!m_renderContext || !m_renderer)
-            {
-                return;
+        m_pyramidMesh = m_renderer->createMesh(MeshBuilder::makePyramid());
+        m_cubeMesh = m_renderer->createMesh(MeshBuilder::makeCube());
+        if (m_pyramidMesh.id == 0 || m_cubeMesh.id == 0) {
+            Log::Error("Failed to create demo meshes");
+            requestQuit();
+        }
+    }
+
+    void onRender() override {
+        if (!m_renderer || !m_renderContext) {
+            return;
+        }
+
+        m_renderContext->beginFrame();
+        m_frame.commands.clear();
+        m_frame.commands.setView(makeViewState());
+        m_frame.commands.drawIndexed(m_pyramidMesh, 0, 0, glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}));
+        m_frame.commands.drawIndexed(m_cubeMesh, 0, 0, glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}));
+        m_renderer->render(m_frame);
+        m_renderContext->endFrame();
+    }
+
+    void onShutdown() override {
+        if (m_renderer) {
+            if (m_pyramidMesh.id != 0) {
+                m_renderer->destroyMesh(m_pyramidMesh);
             }
-
-            m_renderContext->beginFrame();
-            m_renderer->render(m_frame);
-            m_renderContext->endFrame();
-        }
-
-        void onShutdown() override
-        {
-            if (m_renderer)
-            {
-                m_renderer->shutdown();
-                m_renderer.reset();
+            if (m_cubeMesh.id != 0) {
+                m_renderer->destroyMesh(m_cubeMesh);
             }
-            m_renderContext.reset();
+            m_renderer->shutdown();
         }
 
-        void onWindowEvent(const WindowEvent &event) override
-        {
-            if (event.type == WindowEventType::FramebufferResized)
-            {
-                resizeRenderer(event.size);
-            }
-        }
+        m_renderer.reset();
+        m_renderContext.reset();
+    }
 
-    private:
-        void resizeRenderer(const glm::ivec2 &framebufferSize)
-        {
-            if (!m_renderContext || !m_renderer || framebufferSize.x <= 0 || framebufferSize.y <= 0)
-            {
-                return;
-            }
+private:
+    Render::RenderViewState makeViewState() const {
+        const glm::vec3 eye{0.0f, 2.5f, 6.0f};
+        const glm::vec3 target{0.0f, 0.0f, 0.0f};
+        const glm::vec3 up{0.0f, 1.0f, 0.0f};
+        const glm::ivec2 size = m_renderContext ? m_renderContext->framebufferSize() : glm::ivec2{1, 1};
+        const float aspect = size.y > 0 ? static_cast<float>(size.x) / static_cast<float>(size.y) : 1.0f;
 
-            m_renderContext->resize(framebufferSize);
-            m_renderer->resize(framebufferSize);
-        }
+        Render::RenderViewState viewState{};
+        viewState.view = glm::lookAt(eye, target, up);
+        viewState.projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+        viewState.projection[1][1] *= -1.0f;
+        return viewState;
+    }
 
-        std::unique_ptr<RenderContext> m_renderContext;
-        std::unique_ptr<IRenderer> m_renderer;
-        RenderFrame m_frame;
-    };
+    std::unique_ptr<RenderContext> m_renderContext;
+    std::unique_ptr<IRenderer> m_renderer;
+    Render::MeshHandle m_pyramidMesh{};
+    Render::MeshHandle m_cubeMesh{};
+    RenderFrame m_frame{};
+};
 
 } // namespace Zenith
 
-int main(int argc, char **argv)
-{
-    try
-    {
-        Zenith::Log::Init();
-        Zenith::GameApplication app{Zenith::parseApplicationConfig(argc, argv)};
-        app.run();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Fatal Error: " << e.what() << std::endl;
-        return -1;
-    }
+int main(int argc, char **argv) {
+    Zenith::Log::Init();
+    Zenith::GameApplication app{Zenith::parseApplicationConfig(argc, argv)};
+    app.run();
     return 0;
 }
