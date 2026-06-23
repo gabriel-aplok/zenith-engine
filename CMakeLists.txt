@@ -99,6 +99,7 @@ add_library(zenith-lib
 	"src/render/mesh_builder.cpp"
 	"src/log/log.cpp"
 	"src/engine/input.cpp"
+	"src/resource/obj_mesh_loader.cpp"
 	"src/scene/component.cpp"
 	"src/scene/game_object.cpp"
 	"src/scene/transform.cpp"

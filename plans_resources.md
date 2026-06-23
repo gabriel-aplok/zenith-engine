@@ -63,3 +63,9 @@ Notes:
 
 - Source parsing and baking stay below GPU upload.
 - GPU upload remains renderer-specific.
+
+## Current Status
+
+- Phase 1 is implemented in a first pass.
+- Builtin and file-backed mesh loading now both work through `ResourceManager`.
+- The next resource step is texture/file-backed asset types, not more ECS work.

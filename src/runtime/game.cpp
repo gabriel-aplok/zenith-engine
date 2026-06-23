@@ -4,6 +4,7 @@
 #include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
 #include "log/log.hpp"
+#include "resource/obj_mesh_loader.hpp"
 #include "resource/resource_manager.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
@@ -13,6 +14,7 @@
 #include "render/render_submission.hpp"
 #include "scene/scene.hpp"
 
+#include <filesystem>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Zenith
@@ -45,7 +47,8 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_scene.setMeshMetadataProvider(&m_meshCache);
-            m_resources.registerLoader<Render::MeshData>([](const std::string &path) -> std::shared_ptr<Render::MeshData> {
+            m_resources.registerLoader<Render::MeshData>([](const std::string &path) -> std::shared_ptr<Render::MeshData>
+                                                         {
                 if (path == "builtin://cube")
                 {
                     return std::make_shared<Render::MeshData>(MeshBuilder::makeCube());
@@ -61,15 +64,28 @@ namespace Zenith
                     return std::make_shared<Render::MeshData>(MeshBuilder::makePlane());
                 }
 
-                return nullptr;
-            });
+                const std::filesystem::path filePath = path;
+                if (filePath.extension() == ".obj")
+                {
+                    if (auto loaded = loadObjMesh(filePath))
+                    {
+                        return std::make_shared<Render::MeshData>(std::move(*loaded));
+                    }
+                }
 
-            m_cubeMeshData = m_resources.load<Render::MeshData>("builtin://cube");
+                return nullptr; });
+
+            m_cubeMeshData = m_resources.load<Render::MeshData>("resources/models/obj/cube.obj");
             if (!m_cubeMeshData)
             {
-                Log::Error("Failed to load demo cube resource");
-                requestQuit();
-                return;
+                Log::Error("Failed to load file-backed cube resource; falling back to builtin");
+                m_cubeMeshData = m_resources.load<Render::MeshData>("builtin://cube");
+                if (!m_cubeMeshData)
+                {
+                    Log::Error("Failed to load demo cube resource");
+                    requestQuit();
+                    return;
+                }
             }
 
             m_cubeMesh = m_meshCache.acquireRef("demo/cube", *m_cubeMeshData);
