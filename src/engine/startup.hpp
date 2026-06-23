@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/application.hpp"
+#include "engine/window_backend.hpp"
 
 namespace Zenith
 {

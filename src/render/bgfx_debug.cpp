@@ -9,6 +9,37 @@ namespace Zenith
 {
     namespace
     {
+        const char *bgfxBackendName(BgfxRendererBackend backend)
+        {
+            switch (backend)
+            {
+            case BgfxRendererBackend::Auto:
+                return "auto";
+            case BgfxRendererBackend::Noop:
+                return "noop";
+            case BgfxRendererBackend::Agc:
+                return "agc";
+            case BgfxRendererBackend::Direct3D11:
+                return "d3d11";
+            case BgfxRendererBackend::Direct3D12:
+                return "d3d12";
+            case BgfxRendererBackend::Gnm:
+                return "gnm";
+            case BgfxRendererBackend::Metal:
+                return "metal";
+            case BgfxRendererBackend::Nvn:
+                return "nvn";
+            case BgfxRendererBackend::OpenGL:
+                return "opengl";
+            case BgfxRendererBackend::OpenGLES:
+                return "opengles";
+            case BgfxRendererBackend::Vulkan:
+                return "vulkan";
+            default:
+                return "unknown";
+            }
+        }
+
         const char *graphicsApiName(GraphicsApi api)
         {
             switch (api)
@@ -54,6 +85,7 @@ namespace Zenith
         Log::Info("Zenith startup diagnostics");
         Log::Info("Window backend: {}", window.getBackendName());
         Log::Info("Graphics API: {}", graphicsApiName(window.getGraphicsApi()));
+        Log::Info("Requested bgfx backend: {}", bgfxBackendName(window.getConfig().bgfxBackend));
         Log::Info("Window size: {}x{}", window.getSize().x, window.getSize().y);
         Log::Info("Framebuffer size: {}x{}", window.getFramebufferSize().x, window.getFramebufferSize().y);
         Log::Info("bgfx API version: {}", BGFX_API_VERSION);

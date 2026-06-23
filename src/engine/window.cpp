@@ -6,9 +6,10 @@
 namespace Zenith
 {
     Window::Window(const WindowConfig &config)
+        : m_config(config)
     {
         m_backend = createDefaultWindowBackend(
-            config,
+            m_config,
             m_input,
             [this](const WindowEvent &event)
             { dispatchEvent(event); });

@@ -42,9 +42,12 @@ namespace Zenith
 
         void setEventCallback(WindowEventCallback callback);
 
+        const WindowConfig &getConfig() const { return m_config; }
+
     private:
         void dispatchEvent(const WindowEvent &event) const;
 
+        WindowConfig m_config;
         InputState m_input;
         WindowEventCallback m_eventCallback;
         std::unique_ptr<WindowBackend> m_backend;

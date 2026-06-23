@@ -16,6 +16,21 @@ namespace Zenith
         Bgfx
     };
 
+    enum class BgfxRendererBackend
+    {
+        Auto = 0,
+        Noop,
+        Agc,
+        Direct3D11,
+        Direct3D12,
+        Gnm,
+        Metal,
+        Nvn,
+        OpenGL,
+        OpenGLES,
+        Vulkan,
+    };
+
     enum class CursorMode
     {
         Normal = 0,
@@ -32,6 +47,7 @@ namespace Zenith
         bool vsync = true;
         bool resizable = true;
         GraphicsApi graphicsApi = GraphicsApi::Bgfx;
+        BgfxRendererBackend bgfxBackend = BgfxRendererBackend::OpenGL;
     };
 
     enum class WindowEventType

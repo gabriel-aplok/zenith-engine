@@ -13,6 +13,38 @@
 
 namespace Zenith
 {
+    namespace
+    {
+        bgfx::RendererType::Enum toBgfxRendererType(BgfxRendererBackend backend)
+        {
+            switch (backend)
+            {
+            case BgfxRendererBackend::Noop:
+                return bgfx::RendererType::Noop;
+            case BgfxRendererBackend::Agc:
+                return bgfx::RendererType::Agc;
+            case BgfxRendererBackend::Direct3D11:
+                return bgfx::RendererType::Direct3D11;
+            case BgfxRendererBackend::Direct3D12:
+                return bgfx::RendererType::Direct3D12;
+            case BgfxRendererBackend::Gnm:
+                return bgfx::RendererType::Gnm;
+            case BgfxRendererBackend::Metal:
+                return bgfx::RendererType::Metal;
+            case BgfxRendererBackend::Nvn:
+                return bgfx::RendererType::Nvn;
+            case BgfxRendererBackend::OpenGL:
+                return bgfx::RendererType::OpenGL;
+            case BgfxRendererBackend::OpenGLES:
+                return bgfx::RendererType::OpenGLES;
+            case BgfxRendererBackend::Vulkan:
+                return bgfx::RendererType::Vulkan;
+            case BgfxRendererBackend::Auto:
+            default:
+                return bgfx::RendererType::Count;
+            }
+        }
+    } // namespace
 
     BgfxRenderContext::BgfxRenderContext(Window &window, const EngineDebugConfig &debugConfig)
         : m_framebufferSize(window.getFramebufferSize()), m_debugConfig(debugConfig)
@@ -23,7 +55,7 @@ namespace Zenith
         }
 
         bgfx::Init init;
-        init.type = bgfx::RendererType::Count;
+        init.type = toBgfxRendererType(window.getConfig().bgfxBackend);
         init.resolution.width = static_cast<uint32_t>(m_framebufferSize.x);
         init.resolution.height = static_cast<uint32_t>(m_framebufferSize.y);
         init.resolution.reset = BGFX_RESET_VSYNC;
