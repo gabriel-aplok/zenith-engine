@@ -4,6 +4,7 @@
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
 #include "render/mesh_builder.hpp"
+#include "render/mesh_cache.hpp"
 #include "render/render_context.hpp"
 #include "render/render_submission.hpp"
 
@@ -32,8 +33,9 @@ protected:
             return;
         }
 
-        m_pyramidMesh = m_renderer->createMesh(MeshBuilder::makePyramid());
-        m_cubeMesh = m_renderer->createMesh(MeshBuilder::makeCube());
+        m_meshCache.setUploader(m_renderer.get());
+        m_pyramidMesh = m_meshCache.acquire("demo/pyramid", MeshBuilder::makePyramid());
+        m_cubeMesh = m_meshCache.acquire("demo/cube", MeshBuilder::makeCube());
         if (m_pyramidMesh.id == 0 || m_cubeMesh.id == 0) {
             Log::Error("Failed to create demo meshes");
             requestQuit();
@@ -47,6 +49,7 @@ protected:
 
         m_renderContext->beginFrame();
         m_frame.commands.clear();
+        m_frame.commands.reserve(2);
         m_frame.commands.setView(makeViewState());
         m_frame.commands.drawIndexed(m_pyramidMesh, 0, 0, glm::translate(glm::mat4{1.0f}, glm::vec3{-1.5f, 0.0f, 0.0f}));
         m_frame.commands.drawIndexed(m_cubeMesh, 0, 0, glm::translate(glm::mat4{1.0f}, glm::vec3{1.5f, 0.0f, 0.0f}));
@@ -56,12 +59,7 @@ protected:
 
     void onShutdown() override {
         if (m_renderer) {
-            if (m_pyramidMesh.id != 0) {
-                m_renderer->destroyMesh(m_pyramidMesh);
-            }
-            if (m_cubeMesh.id != 0) {
-                m_renderer->destroyMesh(m_cubeMesh);
-            }
+            m_meshCache.clear();
             m_renderer->shutdown();
         }
 
@@ -86,6 +84,7 @@ private:
 
     std::unique_ptr<RenderContext> m_renderContext;
     std::unique_ptr<IRenderer> m_renderer;
+    Render::RenderMeshCache m_meshCache;
     Render::MeshHandle m_pyramidMesh{};
     Render::MeshHandle m_cubeMesh{};
     RenderFrame m_frame{};

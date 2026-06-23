@@ -225,11 +225,14 @@ Completed cleanup passes:
 3. The renderer was switched to bgfx.
 4. `Engine` was removed after becoming redundant with `Application` plus render abstractions.
 5. The old asset pipeline was removed from the codebase.
+6. Shader sources now live under `resources/shaders`, with generated headers emitted into the build tree.
+7. `RenderMeshCache` now sits between CPU mesh data and GPU upload so the renderer only exposes an uploader interface.
+8. `RenderCommandList` is the stable frame submission buffer and already supports multiple `DrawIndexed` entries.
 
 Recommended next cleanup passes:
 
-1. Add a real mesh upload/cache layer on top of bgfx once meshing returns.
-2. Grow `RenderSubmission` only if the renderer actually needs it.
+1. Keep CPU-side mesh generation and file loading separate from GPU upload.
+2. Add batching or instancing only if the renderer needs it.
 3. Move any remaining generic engine primitives into narrower modules if they stop being runtime-facing.
 4. Rewrite `README.md` whenever the architecture changes so it matches the code.
 

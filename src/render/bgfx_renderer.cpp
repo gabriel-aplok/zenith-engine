@@ -102,7 +102,7 @@ namespace Zenith::Render
         m_framebufferSize = framebufferSize;
     }
 
-    Render::MeshHandle BgfxRenderer::createMesh(const Render::MeshData &mesh)
+    Render::MeshHandle BgfxRenderer::uploadMesh(const Render::MeshData &mesh)
     {
         if (!m_initialized || mesh.vertices.empty() || mesh.indices.empty())
         {

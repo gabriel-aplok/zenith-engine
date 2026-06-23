@@ -6,6 +6,10 @@ void RenderCommandList::clear() {
     m_meshDraws.clear();
 }
 
+void RenderCommandList::reserve(std::size_t drawCount) {
+    m_meshDraws.reserve(drawCount);
+}
+
 void RenderCommandList::setView(const RenderViewState &view) {
     m_view = view;
 }

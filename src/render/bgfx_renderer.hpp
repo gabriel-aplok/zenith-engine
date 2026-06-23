@@ -17,7 +17,7 @@ public:
     void resize(const glm::ivec2 &framebufferSize) override;
     void render(const RenderFrame &frame) override;
 
-    Render::MeshHandle createMesh(const Render::MeshData &mesh) override;
+    Render::MeshHandle uploadMesh(const Render::MeshData &mesh) override;
     void destroyMesh(Render::MeshHandle mesh) override;
 
 private:
