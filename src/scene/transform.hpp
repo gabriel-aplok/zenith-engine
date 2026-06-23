@@ -4,6 +4,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace Zenith
 {
@@ -25,12 +26,25 @@ namespace Zenith
         Transform *parent() const { return m_parent; }
         const std::vector<Transform *> &children() const { return m_children; }
 
-        void setPosition(const glm::vec3 &position);
-        void setRotation(const glm::quat &rotation);
-        void setRotationEulerRadians(const glm::vec3 &eulerRadians);
-        void setRotationEulerDegrees(const glm::vec3 &eulerDegrees);
-        void setScale(const glm::vec3 &scale);
-        void setParent(Transform *parent);
+        void setLocalPosition(const glm::vec3 &position);
+        void setWorldPosition(const glm::vec3 &position);
+        void setLocalRotation(const glm::quat &rotation);
+        void setWorldRotation(const glm::quat &rotation);
+        void setLocalRotationEulerRadians(const glm::vec3 &eulerRadians);
+        void setWorldRotationEulerRadians(const glm::vec3 &eulerRadians);
+        void setLocalRotationEulerDegrees(const glm::vec3 &eulerDegrees);
+        void setWorldRotationEulerDegrees(const glm::vec3 &eulerDegrees);
+        void setLocalScale(const glm::vec3 &scale);
+        void setWorldScale(const glm::vec3 &scale);
+        void setLocalTransform(const glm::mat4 &localTransform);
+        void setWorldTransform(const glm::mat4 &worldTransform);
+        void setParent(Transform *parent, bool keepWorldPosition = true);
+
+        void setPosition(const glm::vec3 &position) { setLocalPosition(position); }
+        void setRotation(const glm::quat &rotation) { setLocalRotation(rotation); }
+        void setRotationEulerRadians(const glm::vec3 &eulerRadians) { setLocalRotationEulerRadians(eulerRadians); }
+        void setRotationEulerDegrees(const glm::vec3 &eulerDegrees) { setLocalRotationEulerDegrees(eulerDegrees); }
+        void setScale(const glm::vec3 &scale) { setLocalScale(scale); }
 
         void translate(const glm::vec3 &delta);
         void rotate(const glm::quat &deltaRotation);
@@ -48,6 +62,8 @@ namespace Zenith
         bool isDirty() const { return m_localDirty || m_worldDirty; }
 
     private:
+        void setFromLocalMatrix(const glm::mat4 &localTransform);
+        void setFromWorldMatrix(const glm::mat4 &worldTransform);
         void markLocalDirty();
         void markWorldDirty();
         void updateLocalMatrix() const;

@@ -1,46 +1,164 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "scene/transform.hpp"
 
 #include <algorithm>
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace Zenith
 {
+    namespace
+    {
+        void decomposeTransform(const glm::mat4 &matrix, glm::vec3 &translation, glm::quat &rotation, glm::vec3 &scale)
+        {
+            glm::vec3 skew{0.0f};
+            glm::vec4 perspective{0.0f};
+            glm::quat orientation{1.0f, 0.0f, 0.0f, 0.0f};
+            glm::vec3 tmpScale{1.0f};
+            glm::vec3 tmpTranslation{0.0f};
+
+            if (glm::decompose(matrix, tmpScale, orientation, tmpTranslation, skew, perspective))
+            {
+                translation = tmpTranslation;
+                rotation = glm::normalize(orientation);
+                scale = tmpScale;
+                return;
+            }
+
+            translation = glm::vec3(matrix[3]);
+            rotation = glm::quat_cast(matrix);
+            scale = glm::vec3{1.0f};
+        }
+
+        glm::mat4 inverseOrIdentity(const glm::mat4 &matrix)
+        {
+            const float determinant = glm::determinant(matrix);
+            if (glm::abs(determinant) <= 0.000001f)
+            {
+                return glm::mat4{1.0f};
+            }
+
+            return glm::inverse(matrix);
+        }
+    } // namespace
+
     Transform::Transform()
     {
         updateLocalMatrix();
         updateWorldMatrix();
     }
 
-    void Transform::setPosition(const glm::vec3 &position)
+    void Transform::setLocalPosition(const glm::vec3 &position)
     {
         m_position = position;
         markLocalDirty();
     }
 
-    void Transform::setRotation(const glm::quat &rotation)
+    void Transform::setWorldPosition(const glm::vec3 &position)
+    {
+        if (m_parent == nullptr)
+        {
+            setLocalPosition(position);
+            return;
+        }
+
+        const glm::mat4 parentWorldInverse = inverseOrIdentity(m_parent->worldMatrix());
+        const glm::vec4 localPosition = parentWorldInverse * glm::vec4(position, 1.0f);
+        setLocalPosition(glm::vec3(localPosition));
+    }
+
+    void Transform::setLocalRotation(const glm::quat &rotation)
     {
         m_rotation = glm::normalize(rotation);
         markLocalDirty();
     }
 
-    void Transform::setRotationEulerRadians(const glm::vec3 &eulerRadians)
+    void Transform::setWorldRotation(const glm::quat &rotation)
     {
-        setRotation(glm::quat(eulerRadians));
+        if (m_parent == nullptr)
+        {
+            setLocalRotation(rotation);
+            return;
+        }
+
+        glm::vec3 parentPosition{0.0f};
+        glm::quat parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec3 parentScale{1.0f};
+        decomposeTransform(m_parent->worldMatrix(), parentPosition, parentRotation, parentScale);
+        setLocalRotation(glm::normalize(glm::inverse(parentRotation) * rotation));
     }
 
-    void Transform::setRotationEulerDegrees(const glm::vec3 &eulerDegrees)
+    void Transform::setLocalRotationEulerRadians(const glm::vec3 &eulerRadians)
     {
-        setRotationEulerRadians(glm::radians(eulerDegrees));
+        setLocalRotation(glm::quat(eulerRadians));
     }
 
-    void Transform::setScale(const glm::vec3 &scale)
+    void Transform::setWorldRotationEulerRadians(const glm::vec3 &eulerRadians)
+    {
+        setWorldRotation(glm::quat(eulerRadians));
+    }
+
+    void Transform::setLocalRotationEulerDegrees(const glm::vec3 &eulerDegrees)
+    {
+        setLocalRotationEulerRadians(glm::radians(eulerDegrees));
+    }
+
+    void Transform::setWorldRotationEulerDegrees(const glm::vec3 &eulerDegrees)
+    {
+        setWorldRotationEulerRadians(glm::radians(eulerDegrees));
+    }
+
+    void Transform::setLocalScale(const glm::vec3 &scale)
     {
         m_scale = scale;
         markLocalDirty();
     }
 
-    void Transform::setParent(Transform *parent)
+    void Transform::setWorldScale(const glm::vec3 &scale)
+    {
+        if (m_parent == nullptr)
+        {
+            setLocalScale(scale);
+            return;
+        }
+
+        glm::vec3 parentPosition{0.0f};
+        glm::quat parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec3 parentScale{1.0f};
+        decomposeTransform(m_parent->worldMatrix(), parentPosition, parentRotation, parentScale);
+
+        glm::vec3 localScale = scale;
+        if (parentScale.x != 0.0f)
+        {
+            localScale.x /= parentScale.x;
+        }
+        if (parentScale.y != 0.0f)
+        {
+            localScale.y /= parentScale.y;
+        }
+        if (parentScale.z != 0.0f)
+        {
+            localScale.z /= parentScale.z;
+        }
+
+        setLocalScale(localScale);
+    }
+
+    void Transform::setLocalTransform(const glm::mat4 &localTransform)
+    {
+        setFromLocalMatrix(localTransform);
+        markLocalDirty();
+    }
+
+    void Transform::setWorldTransform(const glm::mat4 &worldTransform)
+    {
+        setFromWorldMatrix(worldTransform);
+        markLocalDirty();
+    }
+
+    void Transform::setParent(Transform *parent, bool keepWorldPosition)
     {
         if (m_parent == parent || parent == this)
         {
@@ -55,6 +173,8 @@ namespace Zenith
             }
         }
 
+        const glm::mat4 worldBeforeReparent = keepWorldPosition ? worldMatrix() : glm::mat4{1.0f};
+
         if (m_parent != nullptr)
         {
             auto &siblings = m_parent->m_children;
@@ -65,6 +185,13 @@ namespace Zenith
         if (m_parent != nullptr)
         {
             m_parent->m_children.push_back(this);
+        }
+
+        if (keepWorldPosition)
+        {
+            setFromWorldMatrix(worldBeforeReparent);
+            markLocalDirty();
+            return;
         }
 
         markWorldDirty();
@@ -135,6 +262,23 @@ namespace Zenith
     const glm::mat4 &Transform::worldMatrix() const
     {
         return localToWorld();
+    }
+
+    void Transform::setFromLocalMatrix(const glm::mat4 &localTransform)
+    {
+        decomposeTransform(localTransform, m_position, m_rotation, m_scale);
+    }
+
+    void Transform::setFromWorldMatrix(const glm::mat4 &worldTransform)
+    {
+        if (m_parent == nullptr)
+        {
+            setFromLocalMatrix(worldTransform);
+            return;
+        }
+
+        const glm::mat4 localTransform = inverseOrIdentity(m_parent->worldMatrix()) * worldTransform;
+        setFromLocalMatrix(localTransform);
     }
 
     void Transform::markLocalDirty()

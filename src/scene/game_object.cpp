@@ -11,7 +11,7 @@ namespace Zenith
 
     GameObject::~GameObject() = default;
 
-    bool GameObject::setParent(GameObject *parent)
+    bool GameObject::setParent(GameObject *parent, bool keepWorldPosition)
     {
         if (parent == this)
         {
@@ -40,13 +40,13 @@ namespace Zenith
             m_parent->m_children.push_back(this);
         }
 
-        m_transform.setParent(m_parent != nullptr ? &m_parent->transform() : nullptr);
+        m_transform.setParent(m_parent != nullptr ? &m_parent->transform() : nullptr, keepWorldPosition);
         return true;
     }
 
-    bool GameObject::addChild(GameObject &child)
+    bool GameObject::addChild(GameObject &child, bool keepWorldPosition)
     {
-        return child.setParent(this);
+        return child.setParent(this, keepWorldPosition);
     }
 
     bool GameObject::isDescendantOf(const GameObject &other) const

@@ -31,8 +31,8 @@ namespace Zenith
         GameObject *parent() const { return m_parent; }
         const std::vector<GameObject *> &children() const { return m_children; }
 
-        bool setParent(GameObject *parent);
-        bool addChild(GameObject &child);
+        bool setParent(GameObject *parent, bool keepWorldPosition = true);
+        bool addChild(GameObject &child, bool keepWorldPosition = true);
         bool isDescendantOf(const GameObject &other) const;
 
         template <typename T, typename... Args>
