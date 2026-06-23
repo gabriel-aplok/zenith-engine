@@ -57,8 +57,10 @@ endfunction()
 
 add_library(zenith-lib
 	"src/engine/window.cpp"
+	"src/engine/startup.cpp"
 	"src/platform/glfw_window_backend.cpp"
 	"src/engine/application.cpp"
+	"src/render/bgfx_debug.cpp"
 	"src/render/bgfx_render_context.cpp"
 	"src/render/bgfx_renderer.cpp"
 	"src/log/log.cpp"
