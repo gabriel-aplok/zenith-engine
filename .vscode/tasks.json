@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cmake-configure-debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--preset", "windows-debug"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake-build-debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "windows-debug"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "cmake-configure-debug",
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

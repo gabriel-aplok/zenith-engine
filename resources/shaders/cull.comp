@@ -1,0 +1,157 @@
+#version 460 core
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+struct DrawElementsIndirectCommand {
+    uint count;
+    uint instanceCount;
+    uint firstIndex;
+    uint baseVertex;
+    uint baseInstance;
+};
+
+struct MeshInfo {
+    uint indexCount;
+    uint firstIndex;
+    uint baseVertex;
+    float boundingRadius;
+    vec4 boundingCenter;
+};
+
+struct RenderableComponent {
+    uint mesh_uuid;
+    uint material_uuid;
+    uint shaderId;
+    uint objectId;
+    float alpha;
+};
+
+struct TransformComponent {
+    mat4 localMatrix;
+    mat4 worldMatrix;
+};
+
+layout (std140, binding = 0) uniform SceneData {
+    mat4 projection;
+    mat4 view;
+    vec3 lightPos;
+    vec3 viewPos;
+    vec3 lightColor;
+    vec4 frustumPlanes[6];
+} sceneData;
+
+layout(binding = 0, std430) buffer AtomicCounterBuffer {
+    uint visibleObjectCount;
+};
+
+layout(binding = 1, std430) buffer VisibleObjectBuffer {
+    uint visibleObjects[];
+};
+
+layout(binding = 2, std430) readonly buffer ObjectBuffer {
+    TransformComponent transforms[];
+};
+
+layout(binding = 3, std430) readonly buffer MeshInfoBuffer {
+    MeshInfo meshInfos[];
+};
+
+layout(binding = 4, std430) readonly buffer RenderableBuffer {
+    RenderableComponent renderables[];
+};
+
+uniform uint u_objectCount;
+uniform uint u_maxDraws;
+uniform float u_smallObjectThreshold;
+
+uniform sampler2D u_hizTexture;
+uniform vec2 u_hizTextureSize;
+uniform float u_hizMaxMipLevel;
+
+const float FRUSTUM_PADDING_FACTOR = 1.05f;
+
+bool isVisible(vec3 world_pos, float radius) {
+    for (int i = 0; i < 6; i++) {
+        if (dot(sceneData.frustumPlanes[i].xyz, world_pos) + sceneData.frustumPlanes[i].w < -radius) {
+            return false;
+        }
+    }
+    return true;
+}
+
+float getMinClipZ(vec3 worldPos, float worldRadius) {
+    vec4 clipCenter = sceneData.projection * sceneData.view * vec4(worldPos, 1.0);
+    if (clipCenter.w <= 0.0) return 1.0;
+
+    vec4 viewPos = sceneData.view * vec4(worldPos, 1.0);
+    float closestViewZ = viewPos.z + worldRadius;
+    vec4 clipClosestPoint = sceneData.projection * vec4(viewPos.xy, closestViewZ, 1.0);
+    return clipClosestPoint.z / clipClosestPoint.w;
+}
+
+float getMipLevel(vec3 worldPos, float worldRadius) {
+    vec4 clipCenter = sceneData.projection * sceneData.view * vec4(worldPos, 1.0);
+
+    if (clipCenter.w <= 0.0) return u_hizMaxMipLevel;
+    float projectedRadiusNDC = worldRadius * abs(sceneData.projection[1][1]) / abs(clipCenter.w);
+    float pixelDiameter = projectedRadiusNDC * u_hizTextureSize.y;
+    float mipLevel = u_hizMaxMipLevel - log2(pixelDiameter);
+    return clamp(mipLevel, 0.0, u_hizMaxMipLevel);
+}
+
+bool testHiZ(vec3 worldPos, float worldRadius, float minClipZ) {
+    vec4 clipCenter = sceneData.projection * sceneData.view * vec4(worldPos, 1.0);
+    if (clipCenter.w <= 0.0) return false;
+
+    float mipLevel = getMipLevel(worldPos, worldRadius);
+
+    vec2 ndcPos = clipCenter.xy / clipCenter.w;
+    float projectedRadiusNDC = worldRadius * abs(sceneData.projection[1][1]) / abs(clipCenter.w);
+
+    vec2 uv_center = ndcPos * 0.5 + 0.5;
+    vec2 uv_radius = vec2(projectedRadiusNDC * 0.5, projectedRadiusNDC * 0.5);
+
+    if (minClipZ <= textureLod(u_hizTexture, uv_center, mipLevel).r) return true;
+    if (minClipZ <= textureLod(u_hizTexture, uv_center + vec2(-uv_radius.x, -uv_radius.y), mipLevel).r) return true;
+    if (minClipZ <= textureLod(u_hizTexture, uv_center + vec2(uv_radius.x, -uv_radius.y), mipLevel).r) return true;
+    if (minClipZ <= textureLod(u_hizTexture, uv_center + vec2(-uv_radius.x, uv_radius.y), mipLevel).r) return true;
+    if (minClipZ <= textureLod(u_hizTexture, uv_center + vec2(uv_radius.x, uv_radius.y), mipLevel).r) return true;
+
+    return false;
+}
+
+void main() {
+    uint objectId = gl_GlobalInvocationID.x;
+    if (objectId >= u_objectCount) return;
+
+    RenderableComponent renderable = renderables[objectId];
+    mat4 modelMatrix = transforms[objectId].worldMatrix;
+    MeshInfo mesh = meshInfos[renderable.mesh_uuid];
+
+    vec4 world_pos_vec4 = modelMatrix * mesh.boundingCenter;
+    vec3 world_pos = world_pos_vec4.xyz;
+
+    float world_radius = mesh.boundingRadius * max(length(modelMatrix[0]), max(length(modelMatrix[1]), length(modelMatrix[2])));
+
+    if (!isVisible(world_pos, world_radius * FRUSTUM_PADDING_FACTOR)) {
+        return;
+    }
+
+    float dist = distance(world_pos, sceneData.viewPos);
+    if (dist > 0.0) {
+        float projectedSize = world_radius / dist;
+        if (projectedSize < u_smallObjectThreshold) {
+            return;
+        }
+    }
+
+    float minClipZ = getMinClipZ(world_pos, world_radius);
+    if (!testHiZ(world_pos, world_radius, minClipZ)) {
+        return;
+    }
+
+    uint index = atomicAdd(visibleObjectCount, 1);
+    if (index < u_maxDraws) {
+        visibleObjects[index] = objectId;
+    }
+}

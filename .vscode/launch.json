@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch zenith-game (Debug)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/out/build/windows-debug/Debug/zenith-game.exe",
+      "cwd": "${workspaceFolder}/out/build/windows-debug/Debug",
+      "args": [],
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "preLaunchTask": "cmake-build-debug"
+    }
+  ]
+}
