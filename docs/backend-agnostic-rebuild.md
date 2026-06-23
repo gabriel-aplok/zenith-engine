@@ -7,7 +7,6 @@ This repository is being reset toward a code-first engine core with explicit abs
 - input collection
 - graphics backend bootstrap
 - renderer implementation
-- asset and scene services
 
 The goal is to keep the engine core independent from GLFW, bgfx internals, or any single platform API.
 
@@ -42,10 +41,6 @@ src/
     render_context.hpp
     bgfx_renderer.*
     bgfx_render_context.*
-  asset/
-    baked_mesh_asset.hpp
-    asset_baker.*
-    asset_loader.*
   runtime/
     game.cpp
 ```
@@ -200,17 +195,7 @@ Introduce a neutral frame submission layer:
 
 Do not rebuild a large scene graph until the renderer actually needs one. Grow from flat submission data first.
 
-### Phase 5: Asset and Resource Boundaries
-
-Split:
-
-- asset loading
-- asset baking
-- GPU upload
-
-Asset manager should not directly define GPU resource lifetime policy.
-
-### Phase 6: Advanced Renderer Recovery
+### Phase 5: Advanced Renderer Recovery
 
 Only after the simple path is solid:
 
@@ -228,9 +213,8 @@ When resetting files, follow these rules:
 2. Keep interfaces small and explicit.
 3. Do not let `core` depend on `platform` implementation details.
 4. Do not let submission data models depend on backend internals.
-5. Do not let `asset` depend on native windowing.
-6. Prefer compile-safe stubs over large unfinished systems.
-7. Rebuild features incrementally behind interfaces.
+5. Prefer compile-safe stubs over large unfinished systems.
+6. Rebuild features incrementally behind interfaces.
 
 ## 6. Current Repository Guidance
 
@@ -240,7 +224,7 @@ Completed cleanup passes:
 2. `IRenderer` and `RenderContext` were introduced.
 3. The renderer was switched to bgfx.
 4. `Engine` was removed after becoming redundant with `Application` plus render abstractions.
-5. Asset baking and baked-asset loading were split into separate responsibilities.
+5. The old asset pipeline was removed from the codebase.
 
 Recommended next cleanup passes:
 

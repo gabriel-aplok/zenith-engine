@@ -7,7 +7,6 @@
       "features": ["tools"]
     },
     "glfw3",
-    "glm",
-    "tinyobjloader"
+    "glm"
   ]
 }

@@ -9,8 +9,6 @@ The current repository state is intentionally transitional:
 - bgfx now handles rendering through `RenderContext` and `IRenderer` implementations under `src/render`.
 - the runtime renderer is a minimal clear-screen path for now.
 - `Engine` was removed and render orchestration now lives directly in the runtime application layer.
-- `BakedMeshAsset` is the CPU-side mesh payload used across asset loading and future upload paths.
-- baking and baked-asset loading stay under `src/asset`.
 
 ## Current Goal
 
@@ -68,7 +66,6 @@ VS Code `F5` is configured to build and launch `zenith-game`.
 - `bgfx`
 - `glfw3`
 - `glm`
-- `tinyobjloader`
 
 ## Status
 
@@ -81,4 +78,3 @@ Recent completed reset steps:
 - `IRenderer` and `RenderContext` split under `src/render`
 - bgfx renderer swap from the old graphics backend path
 - `Engine` removal after it became redundant
-- separation of asset baking from baked-asset loading

@@ -29,7 +29,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(tinyobjloader CONFIG REQUIRED)
 
 set(ZENITH_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
@@ -63,8 +62,6 @@ add_library(zenith-lib
 	"src/render/bgfx_render_context.cpp"
 	"src/render/bgfx_renderer.cpp"
 	"src/log/log.cpp"
-	"src/asset/asset_baker.cpp"
-	"src/asset/asset_loader.cpp"
 	"src/engine/input.cpp"
 )
 
@@ -80,7 +77,6 @@ target_link_libraries(zenith-lib
 		bgfx::bgfx
 		bgfx::bimg
 		bgfx::bimg_decode
-		tinyobjloader::tinyobjloader
 )
 
 set_target_properties(zenith-lib
