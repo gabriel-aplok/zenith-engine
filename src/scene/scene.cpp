@@ -143,9 +143,8 @@ namespace Zenith
         return const_cast<Scene *>(this)->findCamera();
     }
 
-    void Scene::render(RenderFrame &frame, const glm::ivec2 &framebufferSize)
+    bool Scene::buildRenderFrame(RenderFrame &frame, const glm::ivec2 &framebufferSize)
     {
-        std::array<FrustumPlane, 6> frustum{};
         if (auto *camera = findCamera())
         {
             for (auto &object : m_gameObjects)
@@ -156,11 +155,17 @@ namespace Zenith
                     const glm::mat4 cameraWorld = object->transform().localToWorld();
                     camera->buildViewState(cameraWorld, framebufferSize, frame.view);
                     frame.commands.setView(frame.view);
-                    frustum = buildFrustumPlanes(frame.view.projection * frame.view.view);
-                    break;
+                    return true;
                 }
             }
         }
+
+        return false;
+    }
+
+    void Scene::render(RenderFrame &frame)
+    {
+        std::array<FrustumPlane, 6> frustum = buildFrustumPlanes(frame.view.projection * frame.view.view);
 
         for (auto &object : m_gameObjects)
         {
@@ -179,5 +184,15 @@ namespace Zenith
 
             object->render(frame);
         }
+    }
+
+    void Scene::render(RenderFrame &frame, const glm::ivec2 &framebufferSize)
+    {
+        if (!buildRenderFrame(frame, framebufferSize))
+        {
+            return;
+        }
+
+        render(frame);
     }
 } // namespace Zenith

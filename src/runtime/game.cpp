@@ -97,7 +97,14 @@ namespace Zenith
 
             m_renderContext->beginFrame();
             m_frame.begin();
-            m_scene.render(m_frame, m_renderContext->framebufferSize());
+            if (!m_scene.buildRenderFrame(m_frame, m_renderContext->framebufferSize()))
+            {
+                m_frame.finalize();
+                m_renderContext->endFrame();
+                return;
+            }
+
+            m_scene.render(m_frame);
             m_frame.finalize();
             m_renderer->render(m_frame);
             m_renderContext->endFrame();

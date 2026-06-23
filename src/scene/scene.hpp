@@ -22,6 +22,8 @@ namespace Zenith
         void clear();
 
         void update(float deltaTime);
+        bool buildRenderFrame(RenderFrame &frame, const glm::ivec2 &framebufferSize);
+        void render(RenderFrame &frame);
         void render(RenderFrame &frame, const glm::ivec2 &framebufferSize);
 
         std::size_t gameObjectCount() const { return m_gameObjects.size(); }
