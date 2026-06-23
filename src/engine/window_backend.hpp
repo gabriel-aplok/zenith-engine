@@ -47,7 +47,7 @@ namespace Zenith
         bool vsync = true;
         bool resizable = true;
         GraphicsApi graphicsApi = GraphicsApi::Bgfx;
-        BgfxRendererBackend bgfxBackend = BgfxRendererBackend::Direct3D12;
+        BgfxRendererBackend bgfxBackend = BgfxRendererBackend::Vulkan;
     };
 
     enum class WindowEventType

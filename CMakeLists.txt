@@ -42,8 +42,14 @@ set(ZENITH_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(ZENITH_GENERATED_SHADER_DIR "${ZENITH_GENERATED_DIR}/render/shaders")
 
 set(ZENITH_SHADER_OUTPUTS
-	"${ZENITH_GENERATED_SHADER_DIR}/mesh_vs.bin.h"
-	"${ZENITH_GENERATED_SHADER_DIR}/mesh_fs.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_vs_dx11.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_fs_dx11.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_vs_glsl430.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_fs_glsl430.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_vs_gles300.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_fs_gles300.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_vs_spirv.bin.h"
+	"${ZENITH_GENERATED_SHADER_DIR}/mesh_fs_spirv.bin.h"
 )
 
 add_custom_command(

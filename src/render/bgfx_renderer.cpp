@@ -8,8 +8,14 @@
 #include "engine/window_backend.hpp"
 #include "log/log.hpp"
 #include "render/render_context.hpp"
-#include "render/shaders/mesh_fs.bin.h"
-#include "render/shaders/mesh_vs.bin.h"
+#include "render/shaders/mesh_fs_dx11.bin.h"
+#include "render/shaders/mesh_fs_gles300.bin.h"
+#include "render/shaders/mesh_fs_glsl430.bin.h"
+#include "render/shaders/mesh_fs_spirv.bin.h"
+#include "render/shaders/mesh_vs_dx11.bin.h"
+#include "render/shaders/mesh_vs_gles300.bin.h"
+#include "render/shaders/mesh_vs_glsl430.bin.h"
+#include "render/shaders/mesh_vs_spirv.bin.h"
 
 namespace Zenith::Render
 {
@@ -36,6 +42,37 @@ namespace Zenith::Render
         {
             const bgfx::Memory *memory = bgfx::copy(bytes, static_cast<uint32_t>(size));
             return bgfx::createShader(memory);
+        }
+
+        struct ShaderVariant
+        {
+            const uint8_t *vertexBytes = nullptr;
+            size_t vertexSize = 0;
+            const uint8_t *fragmentBytes = nullptr;
+            size_t fragmentSize = 0;
+        };
+
+        ShaderVariant selectShaderVariant(bgfx::RendererType::Enum rendererType)
+        {
+            switch (rendererType)
+            {
+            case bgfx::RendererType::OpenGL:
+                return {mesh_vs_glsl430, sizeof(mesh_vs_glsl430), mesh_fs_glsl430, sizeof(mesh_fs_glsl430)};
+            case bgfx::RendererType::OpenGLES:
+                return {mesh_vs_gles300, sizeof(mesh_vs_gles300), mesh_fs_gles300, sizeof(mesh_fs_gles300)};
+            case bgfx::RendererType::Vulkan:
+                return {mesh_vs_spirv, sizeof(mesh_vs_spirv), mesh_fs_spirv, sizeof(mesh_fs_spirv)};
+            case bgfx::RendererType::Direct3D11:
+            case bgfx::RendererType::Direct3D12:
+            case bgfx::RendererType::Noop:
+            case bgfx::RendererType::Agc:
+            case bgfx::RendererType::Gnm:
+            case bgfx::RendererType::Metal:
+            case bgfx::RendererType::Nvn:
+            case bgfx::RendererType::Count:
+            default:
+                return {mesh_vs_dx11, sizeof(mesh_vs_dx11), mesh_fs_dx11, sizeof(mesh_fs_dx11)};
+            }
         }
 
     } // namespace
@@ -67,8 +104,9 @@ namespace Zenith::Render
             return false;
         }
 
-        const bgfx::ShaderHandle vertexShader = loadShader(mesh_vs_dx11, sizeof(mesh_vs_dx11));
-        const bgfx::ShaderHandle fragmentShader = loadShader(mesh_fs_dx11, sizeof(mesh_fs_dx11));
+        const ShaderVariant shaders = selectShaderVariant(bgfx::getRendererType());
+        const bgfx::ShaderHandle vertexShader = loadShader(shaders.vertexBytes, shaders.vertexSize);
+        const bgfx::ShaderHandle fragmentShader = loadShader(shaders.fragmentBytes, shaders.fragmentSize);
         m_program = bgfx::createProgram(vertexShader, fragmentShader, true);
         if (!bgfx::isValid(m_program))
         {
