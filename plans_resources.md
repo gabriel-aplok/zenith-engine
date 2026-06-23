@@ -58,6 +58,7 @@ Milestone:
 - mesh source loading
 - texture source loading
 - baked resource loading
+- binary/raw resource loading
 
 Notes:
 
@@ -68,7 +69,9 @@ Notes:
 
 - Phase 1 is implemented in a first pass.
 - Builtin and file-backed mesh loading now both work through `ResourceManager`.
+- Mesh parsing now lands in `MeshSource` first, with `Render::MeshData` treated as the renderer-facing conversion result.
 - Resource registration is now centralized in `registerStandardResourceLoaders`.
 - Text sources can now be loaded through the same typed cache path.
+- Binary sources now use the same path, which is the right base layer for image decoding and other opaque assets.
 - The old duplicate `TextAsset` stub was removed so the resource layer only keeps one text-loading concept.
 - The next resource step is image/texture-backed asset types, not more ECS work.
