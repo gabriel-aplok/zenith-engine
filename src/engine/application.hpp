@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 
+#include "engine/debug.hpp"
 #include "engine/window.hpp"
 
 namespace Zenith
@@ -10,6 +11,7 @@ namespace Zenith
     struct ApplicationConfig
     {
         WindowConfig window{};
+        EngineDebugConfig debug{};
     };
 
     class Application
@@ -24,6 +26,8 @@ namespace Zenith
         void run();
         void requestQuit();
 
+        const ApplicationConfig &getConfig() const { return m_config; }
+
     protected:
         virtual void onInit() {}
         virtual void onUpdate(float deltaTime) {}
@@ -37,6 +41,7 @@ namespace Zenith
         const InputState &getInput() const { return m_window->getInput(); }
 
     private:
+        ApplicationConfig m_config;
         std::unique_ptr<Window> m_window;
         bool m_running = true;
 

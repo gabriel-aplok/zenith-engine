@@ -4,6 +4,7 @@
 
 #include <glm/vec2.hpp>
 
+#include "engine/debug.hpp"
 #include "engine/window.hpp"
 
 namespace Zenith
@@ -21,6 +22,6 @@ namespace Zenith
         virtual void resize(const glm::ivec2 &framebufferSize) = 0;
     };
 
-    std::unique_ptr<RenderContext> createRenderContext(Window &window);
+    std::unique_ptr<RenderContext> createRenderContext(Window &window, const EngineDebugConfig &debugConfig);
 
 } // namespace Zenith

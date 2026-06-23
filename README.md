@@ -61,6 +61,13 @@ Run:
 
 VS Code `F5` is configured to build and launch `zenith-game`.
 
+Runtime flags:
+
+- `--no-debug` disables engine startup diagnostics and the bgfx debug overlay.
+- `--debug` re-enables engine debugging if you turned it off with a previous flag.
+- `--no-debug-text` disables the bgfx on-screen debug text.
+- `--no-debug-stats` disables the bgfx stats overlay.
+
 ## Current Dependencies
 
 - `bgfx`

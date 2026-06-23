@@ -3,8 +3,9 @@
 namespace Zenith
 {
     Application::Application(const ApplicationConfig &config)
+        : m_config(config)
     {
-        m_window = std::make_unique<Window>(config.window);
+        m_window = std::make_unique<Window>(m_config.window);
         m_window->setEventCallback([this](const WindowEvent &event)
                                    {
             if (event.type == WindowEventType::CloseRequested) {
