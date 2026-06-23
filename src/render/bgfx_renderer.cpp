@@ -246,7 +246,7 @@ namespace Zenith::Render
         const RenderStats &stats = frame.commands.stats();
         bgfx::dbgTextPrintf(0, 1, 0x0f, "frame: commands %u  batches %u  draws %u  indices %u", stats.commandCount, stats.batchCount, stats.drawCount, stats.indexCount);
 
-        const uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_CULL_CW;
+        const uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_CULL_CCW;
         for (const RenderBatch &batch : frame.commands.batches())
         {
             const auto meshIt = m_meshes.find(batch.mesh.id);
