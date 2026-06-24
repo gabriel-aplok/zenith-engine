@@ -29,6 +29,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(lodepng CONFIG REQUIRED)
 
 set(ZENITH_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
@@ -96,6 +97,7 @@ add_library(zenith-lib
 	"src/render/bgfx_renderer.cpp"
 	"src/render/render_commands.cpp"
 	"src/render/mesh_cache.cpp"
+	"src/render/texture_cache.cpp"
 	"src/render/mesh_builder.cpp"
 	"src/log/log.cpp"
 	"src/engine/input.cpp"
@@ -123,6 +125,7 @@ target_link_libraries(zenith-lib
 		bgfx::bgfx
 		bgfx::bimg
 		bgfx::bimg_decode
+		lodepng
 )
 
 add_dependencies(zenith-lib bgfx-shaders)

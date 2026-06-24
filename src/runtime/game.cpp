@@ -4,16 +4,20 @@
 #include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
 #include "log/log.hpp"
+#include "resource/image_source.hpp"
 #include "resource/resource_loaders.hpp"
 #include "resource/resource_manager.hpp"
 #include "resource/text_source.hpp"
+#include "resource/texture_asset.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
 #include "render/mesh_cache.hpp"
+#include "render/texture_cache.hpp"
 #include "render/render_context.hpp"
 #include "scene/scene.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
 
 namespace Zenith
 {
@@ -44,6 +48,7 @@ namespace Zenith
             }
 
             m_meshCache.setUploader(m_renderer.get());
+            m_textureCache.setUploader(m_renderer.get());
             m_scene.setMeshMetadataProvider(&m_meshCache);
             registerStandardResourceLoaders(m_resources);
 
@@ -74,6 +79,39 @@ namespace Zenith
                 return;
             }
 
+            m_cubeTextureAsset = m_resources.load<TextureAsset>("resources/textures/texel_checker.png");
+            if (m_cubeTextureAsset)
+            {
+                m_cubeTexture = m_textureCache.acquireRef("demo/cube_diffuse", m_cubeTextureAsset->source.data());
+            }
+
+            if (!m_cubeTexture)
+            {
+                ImageSourceData checker{};
+                checker.width = 2;
+                checker.height = 2;
+                checker.format = "rgba8";
+                checker.pixels = {
+                    255,
+                    255,
+                    255,
+                    255,
+                    32,
+                    32,
+                    32,
+                    255,
+                    32,
+                    32,
+                    32,
+                    255,
+                    255,
+                    255,
+                    255,
+                    255,
+                };
+                m_checkerTexture = m_textureCache.acquireRef("demo/checker", checker);
+            }
+
             GameObject &cameraObject = m_scene.createGameObject("Main Camera");
             cameraObject.transform().setPosition(glm::vec3{0.0f, 2.5f, 6.0f});
             cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
@@ -96,7 +134,17 @@ namespace Zenith
             filter.setMesh(m_cubeMesh.handle());
 
             auto &renderer = cube.add_component<Components::MeshRenderer>();
-            renderer.setMaterial({.tint = glm::vec4{0.9f, 1.0f, 1.0f, 1.0f}});
+            Render::MaterialState material{};
+            material.tint = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+            if (m_cubeTexture)
+            {
+                material.textureId = m_cubeTexture.handle().id;
+            }
+            else if (m_checkerTexture)
+            {
+                material.textureId = m_checkerTexture.handle().id;
+            }
+            renderer.setMaterial(material);
         }
 
         void onUpdate(float deltaTime) override
@@ -135,9 +183,12 @@ namespace Zenith
         {
             m_scene.clear();
             m_cubeMesh.reset();
+            m_cubeTexture.reset();
+            m_checkerTexture.reset();
             if (m_renderer)
             {
                 m_meshCache.clear();
+                m_textureCache.clear();
                 m_renderer->shutdown();
             }
 
@@ -150,9 +201,13 @@ namespace Zenith
         std::unique_ptr<IRenderer> m_renderer;
         ResourceManager m_resources;
         Render::RenderMeshCache m_meshCache;
+        Render::TextureCache m_textureCache;
         ResourceHandle<TextSource> m_vertexShaderSource{};
         ResourceHandle<Render::MeshData> m_cubeMeshData{};
+        ResourceHandle<TextureAsset> m_cubeTextureAsset{};
         Render::MeshRef m_cubeMesh{};
+        Render::TextureRef m_cubeTexture{};
+        Render::TextureRef m_checkerTexture{};
         Scene m_scene{};
         RenderFrame m_frame{};
         GameObject *m_pivotObject = nullptr;

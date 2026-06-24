@@ -11,6 +11,7 @@ namespace Zenith::Render
     struct MeshVertex
     {
         glm::vec3 position{0.0f};
+        glm::vec2 uv{0.0f};
         glm::vec4 color{1.0f};
     };
 
@@ -35,9 +36,15 @@ namespace Zenith::Render
     struct MaterialState
     {
         glm::vec4 tint{1.0f};
+        uint32_t textureId = 0;
     };
 
     struct MeshHandle
+    {
+        uint32_t id = 0;
+    };
+
+    struct TextureHandle
     {
         uint32_t id = 0;
     };
@@ -54,6 +61,7 @@ namespace Zenith::Render
     {
         RenderCommandType type = RenderCommandType::DrawIndexed;
         MeshHandle mesh{};
+        TextureHandle texture{};
         glm::mat4 transform{1.0f};
         MaterialState material{};
         uint32_t firstIndex = 0;
@@ -63,6 +71,7 @@ namespace Zenith::Render
     struct RenderBatch
     {
         MeshHandle mesh{};
+        TextureHandle texture{};
         glm::mat4 transform{1.0f};
         MaterialState material{};
         uint32_t firstIndex = 0;

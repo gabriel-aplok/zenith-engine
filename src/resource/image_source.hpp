@@ -10,7 +10,9 @@ namespace Zenith
 {
     struct ImageSourceData
     {
-        std::vector<std::uint8_t> bytes;
+        std::uint32_t width = 0;
+        std::uint32_t height = 0;
+        std::vector<std::uint8_t> pixels;
         std::string format;
     };
 

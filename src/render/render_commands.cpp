@@ -87,6 +87,7 @@ namespace Zenith::Render
             case RenderCommandType::DrawIndexed:
                 m_batches.push_back(RenderBatch{
                     .mesh = currentMesh,
+                    .texture = {currentMaterial.textureId},
                     .transform = currentTransform,
                     .material = currentMaterial,
                     .firstIndex = command.firstIndex,

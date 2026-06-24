@@ -5,6 +5,8 @@
 #include <iterator>
 #include <vector>
 
+#include <lodepng.h>
+
 #include "render/mesh_builder.hpp"
 #include "resource/baked_mesh_asset.hpp"
 #include "resource/binary_source.hpp"
@@ -49,7 +51,7 @@ namespace Zenith
             source->vertices.reserve(mesh->vertices.size());
             for (const auto &vertex : mesh->vertices)
             {
-                source->vertices.push_back({vertex.position, vertex.color});
+                source->vertices.push_back(MeshSourceVertex{vertex.position, vertex.uv, vertex.color});
             }
             source->indices = mesh->indices;
             source->bounds = {mesh->bounds.center, mesh->bounds.extents};
@@ -64,7 +66,7 @@ namespace Zenith
                 source->vertices.reserve(loaded->vertices.size());
                 for (const auto &vertex : loaded->vertices)
                 {
-                    source->vertices.push_back({vertex.position, vertex.color});
+                    source->vertices.push_back(MeshSourceVertex{vertex.position, vertex.uv, vertex.color});
                 }
                 source->indices = loaded->indices;
                 source->bounds = {loaded->bounds.center, loaded->bounds.extents};
@@ -96,7 +98,7 @@ namespace Zenith
             asset->mesh.vertices.reserve(source->vertices.size());
             for (const auto &vertex : source->vertices)
             {
-                asset->mesh.vertices.push_back({vertex.position, vertex.color});
+                asset->mesh.vertices.push_back(Render::MeshVertex{vertex.position, vertex.uv, vertex.color});
             }
             asset->mesh.indices = source->indices;
             asset->mesh.bounds = {source->bounds.center, source->bounds.extents};
@@ -129,15 +131,20 @@ namespace Zenith
 
         std::shared_ptr<ImageSource> loadImageSourceFile(const std::filesystem::path &path)
         {
-            std::ifstream file(path, std::ios::binary);
-            if (!file)
+            std::vector<unsigned char> encoded;
+            unsigned width = 0;
+            unsigned height = 0;
+
+            const unsigned decodeError = lodepng::decode(encoded, width, height, path.string());
+            if (decodeError != 0)
             {
                 return nullptr;
             }
 
-            std::vector<std::uint8_t> bytes{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
             ImageSourceData data;
-            data.bytes = std::move(bytes);
+            data.width = width;
+            data.height = height;
+            data.pixels.assign(encoded.begin(), encoded.end());
             data.format = path.extension().string();
             return std::make_shared<ImageSource>(std::move(data), path.string());
         }
@@ -181,7 +188,7 @@ namespace Zenith
                 mesh.vertices.reserve(builtin->vertices.size());
                 for (const auto &vertex : builtin->vertices)
                 {
-                    mesh.vertices.push_back({vertex.position, vertex.color});
+                    mesh.vertices.push_back(Render::MeshVertex{vertex.position, vertex.uv, vertex.color});
                 }
                 mesh.indices = builtin->indices;
                 mesh.bounds = {builtin->bounds.center, builtin->bounds.extents};
@@ -197,7 +204,7 @@ namespace Zenith
                     mesh.vertices.reserve(source->vertices.size());
                     for (const auto &vertex : source->vertices)
                     {
-                        mesh.vertices.push_back({vertex.position, vertex.color});
+                        mesh.vertices.push_back(Render::MeshVertex{vertex.position, vertex.uv, vertex.color});
                     }
                     mesh.indices = source->indices;
                     mesh.bounds = {source->bounds.center, source->bounds.extents};

@@ -15,6 +15,7 @@ namespace Zenith::Components
 
         void setMaterial(const Render::MaterialState &material) { m_material = material; }
         const Render::MaterialState &material() const { return m_material; }
+        void setTexture(Render::TextureHandle texture) { m_material.textureId = texture.id; }
 
     private:
         Render::MaterialState m_material{};

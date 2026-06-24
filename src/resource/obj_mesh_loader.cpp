@@ -99,7 +99,9 @@ namespace Zenith
                         continue;
                     }
 
-                    vertices.push_back(Render::MeshVertex{.position = positions[static_cast<std::size_t>(resolved)], .color = glm::vec4{1.0f}});
+                    const glm::vec3 position = positions[static_cast<std::size_t>(resolved)];
+                    const glm::vec2 uv{(position.x + 1.0f) * 0.5f, (position.z + 1.0f) * 0.5f};
+                    vertices.push_back(Render::MeshVertex{position, uv, glm::vec4{1.0f}});
                     faceIndices.push_back(static_cast<uint16_t>(vertices.size() - 1));
                 }
 

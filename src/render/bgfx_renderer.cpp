@@ -29,6 +29,7 @@ namespace Zenith::Render
         struct VertexGpu
         {
             float position[3];
+            float uv[2];
             uint32_t color;
         };
 
@@ -39,6 +40,11 @@ namespace Zenith::Render
             const uint32_t b = static_cast<uint32_t>(glm::clamp(color.b, 0.0f, 1.0f) * 255.0f + 0.5f);
             const uint32_t a = static_cast<uint32_t>(glm::clamp(color.a, 0.0f, 1.0f) * 255.0f + 0.5f);
             return (a << 24) | (b << 16) | (g << 8) | r;
+        }
+
+        VertexGpu toGpuVertex(const MeshVertex &vertex)
+        {
+            return {{vertex.position.x, vertex.position.y, vertex.position.z}, {vertex.uv.x, vertex.uv.y}, packColor(vertex.color)};
         }
 
         bgfx::ShaderHandle loadShader(const uint8_t *bytes, size_t size)
@@ -97,6 +103,7 @@ namespace Zenith::Render
 
         m_vertexLayout.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
 
@@ -104,6 +111,13 @@ namespace Zenith::Render
         if (!bgfx::isValid(m_tintUniform))
         {
             Log::Error("Failed to create bgfx tint uniform");
+            return false;
+        }
+
+        m_textureUniform = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+        if (!bgfx::isValid(m_textureUniform))
+        {
+            Log::Error("Failed to create bgfx texture uniform");
             return false;
         }
 
@@ -148,6 +162,21 @@ namespace Zenith::Render
             m_tintUniform = BGFX_INVALID_HANDLE;
         }
 
+        if (bgfx::isValid(m_textureUniform))
+        {
+            bgfx::destroy(m_textureUniform);
+            m_textureUniform = BGFX_INVALID_HANDLE;
+        }
+
+        for (auto &[_, texture] : m_textures)
+        {
+            if (bgfx::isValid(texture.texture))
+            {
+                bgfx::destroy(texture.texture);
+            }
+        }
+        m_textures.clear();
+
         m_initialized = false;
     }
 
@@ -167,10 +196,7 @@ namespace Zenith::Render
         vertices.reserve(mesh.vertices.size());
         for (const auto &vertex : mesh.vertices)
         {
-            vertices.push_back(VertexGpu{
-                .position = {vertex.position.x, vertex.position.y, vertex.position.z},
-                .color = packColor(vertex.color),
-            });
+            vertices.push_back(toGpuVertex(vertex));
         }
 
         const bgfx::Memory *vertexMemory = bgfx::copy(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexGpu)));
@@ -213,10 +239,7 @@ namespace Zenith::Render
         vertices.reserve(mesh.vertices.size());
         for (const auto &vertex : mesh.vertices)
         {
-            vertices.push_back(VertexGpu{
-                .position = {vertex.position.x, vertex.position.y, vertex.position.z},
-                .color = packColor(vertex.color),
-            });
+            vertices.push_back(toGpuVertex(vertex));
         }
 
         const bgfx::Memory *vertexMemory = bgfx::copy(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexGpu)));
@@ -313,9 +336,56 @@ namespace Zenith::Render
             bgfx::setVertexBuffer(0, mesh.vertexBuffer);
             bgfx::setIndexBuffer(mesh.indexBuffer, firstIndex, indexCount);
             bgfx::setUniform(m_tintUniform, tint);
+            if (batch.texture.id != 0)
+            {
+                const auto textureIt = m_textures.find(batch.texture.id);
+                if (textureIt != m_textures.end() && bgfx::isValid(textureIt->second.texture))
+                {
+                    bgfx::setTexture(0, m_textureUniform, textureIt->second.texture);
+                }
+            }
             bgfx::setState(state);
             bgfx::submit(0, m_program);
         }
+    }
+
+    Render::TextureHandle BgfxRenderer::uploadTexture(uint32_t width, uint32_t height, const uint8_t *rgbaPixels)
+    {
+        if (rgbaPixels == nullptr || width == 0 || height == 0)
+        {
+            return {};
+        }
+
+            const bgfx::Memory *memory = bgfx::copy(rgbaPixels, static_cast<uint32_t>(width * height * 4));
+        const bgfx::TextureHandle texture = bgfx::createTexture2D(static_cast<uint16_t>(width), static_cast<uint16_t>(height), false, 1, bgfx::TextureFormat::RGBA8, 0, memory);
+        if (!bgfx::isValid(texture))
+        {
+            return {};
+        }
+
+        const uint32_t id = texture.idx + 1;
+        m_textures.emplace(id, TextureResource{texture});
+        return Render::TextureHandle{id};
+    }
+
+    void BgfxRenderer::destroyTexture(Render::TextureHandle texture)
+    {
+        if (texture.id == 0)
+        {
+            return;
+        }
+
+        const auto it = m_textures.find(texture.id);
+        if (it == m_textures.end())
+        {
+            return;
+        }
+
+        if (bgfx::isValid(it->second.texture))
+        {
+            bgfx::destroy(it->second.texture);
+        }
+        m_textures.erase(it);
     }
 
 } // namespace Zenith::Render
