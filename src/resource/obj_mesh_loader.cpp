@@ -65,7 +65,7 @@ namespace Zenith
         }
 
         std::vector<Vector3> positions;
-        std::vector<glm::vec2> texCoords;
+        std::vector<Vector2> texCoords;
         std::vector<Render::MeshVertex> vertices;
         std::vector<uint16_t> indices;
 
@@ -123,7 +123,7 @@ namespace Zenith
                     }
 
                     const Vector3 position = positions[static_cast<std::size_t>(resolved)];
-                    glm::vec2 uv{(position.x + 1.0f) * 0.5f, (position.z + 1.0f) * 0.5f};
+                    Vector2 uv{(position.x + 1.0f) * 0.5f, (position.z + 1.0f) * 0.5f};
                     if (texCoordIndex > 0)
                     {
                         const int resolvedUv = resolveObjIndex(texCoordIndex, texCoords.size());
@@ -132,7 +132,7 @@ namespace Zenith
                             uv = texCoords[static_cast<std::size_t>(resolvedUv)];
                         }
                     }
-                    vertices.push_back(Render::MeshVertex{position, uv, glm::vec4{1.0f}});
+                    vertices.push_back(Render::MeshVertex{position, uv, Vector4{1.0f}});
                     faceIndices.push_back(static_cast<uint16_t>(vertices.size() - 1));
                 }
 

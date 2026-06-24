@@ -21,7 +21,7 @@ namespace Zenith
 
         virtual bool initialize(RenderContext &context) = 0;
         virtual void shutdown() = 0;
-        virtual void resize(const glm::ivec2 &framebufferSize) = 0;
+        virtual void resize(const IVector2 &framebufferSize) = 0;
         virtual void render(const RenderFrame &frame) = 0;
 
         virtual Render::TextureHandle uploadTexture(std::uint32_t width, std::uint32_t height, const std::uint8_t *rgbaPixels) = 0;

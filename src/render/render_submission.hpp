@@ -31,12 +31,12 @@ namespace Zenith
             commands.setView(viewState);
         }
 
-        void submitMesh(Render::MeshHandle mesh, const glm::mat4 &transform = glm::mat4{1.0f}, const Render::MaterialState &material = Render::MaterialState{})
+        void submitMesh(Render::MeshHandle mesh, const Matrix4 &transform = Matrix4{1.0f}, const Render::MaterialState &material = Render::MaterialState{})
         {
             commands.drawIndexed(mesh, 0, 0, transform, material);
         }
 
-        void submitIndexed(Render::MeshHandle mesh, uint32_t firstIndex, uint32_t indexCount, const glm::mat4 &transform = glm::mat4{1.0f}, const Render::MaterialState &material = Render::MaterialState{})
+        void submitIndexed(Render::MeshHandle mesh, uint32_t firstIndex, uint32_t indexCount, const Matrix4 &transform = Matrix4{1.0f}, const Render::MaterialState &material = Render::MaterialState{})
         {
             commands.drawIndexed(mesh, firstIndex, indexCount, transform, material);
         }

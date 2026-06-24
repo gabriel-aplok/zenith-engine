@@ -50,7 +50,7 @@ namespace Zenith
         onUnload();
     }
 
-    void Scene::setFramebufferSize(const glm::ivec2 &framebufferSize)
+    void Scene::setFramebufferSize(const IVector2 &framebufferSize)
     {
         m_framebufferSize = framebufferSize;
     }

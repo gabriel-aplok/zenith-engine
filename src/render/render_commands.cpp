@@ -26,7 +26,7 @@ namespace Zenith::Render
         m_view = view;
     }
 
-    void RenderCommandList::setTransform(const glm::mat4 &transform)
+    void RenderCommandList::setTransform(const Matrix4 &transform)
     {
         m_commands.push_back(RenderCommand{.type = RenderCommandType::SetTransform, .transform = transform});
         markDirty();
@@ -50,7 +50,7 @@ namespace Zenith::Render
         markDirty();
     }
 
-    void RenderCommandList::drawIndexed(MeshHandle mesh, uint32_t firstIndex, uint32_t indexCount, const glm::mat4 &transform, const MaterialState &material)
+    void RenderCommandList::drawIndexed(MeshHandle mesh, uint32_t firstIndex, uint32_t indexCount, const Matrix4 &transform, const MaterialState &material)
     {
         bindMesh(mesh);
         setTransform(transform);
@@ -68,7 +68,7 @@ namespace Zenith::Render
         m_batches.clear();
         m_stats = {};
         MeshHandle currentMesh{};
-        glm::mat4 currentTransform{1.0f};
+        Matrix4 currentTransform{1.0f};
         MaterialState currentMaterial{};
 
         for (const RenderCommand &command : m_commands)

@@ -21,8 +21,8 @@ namespace Zenith
         void setShouldClose(bool close) override;
         void setTitle(const std::string &title) override;
         void setVSync(bool enabled) override;
-        glm::ivec2 getSize() const override;
-        glm::ivec2 getFramebufferSize() const override;
+        IVector2 getSize() const override;
+        IVector2 getFramebufferSize() const override;
         float getAspectRatio() const override;
         void *getNativeHandle() const override;
         void setCursorMode(CursorMode mode) override;
@@ -40,8 +40,8 @@ namespace Zenith
         InputState &m_input;
         WindowEventCallback m_eventCallback;
         CursorMode m_cursorMode = CursorMode::Normal;
-        glm::ivec2 m_size{0, 0};
-        glm::ivec2 m_framebufferSize{0, 0};
+        IVector2 m_size{0, 0};
+        IVector2 m_framebufferSize{0, 0};
     };
 
 } // namespace Zenith

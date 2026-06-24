@@ -11,11 +11,11 @@ namespace Zenith
 {
     namespace
     {
-        void decomposeTransform(const glm::mat4 &matrix, Vector3 &translation, glm::quat &rotation, Vector3 &scale)
+        void decomposeTransform(const Matrix4 &matrix, Vector3 &translation, Quaternion &rotation, Vector3 &scale)
         {
             Vector3 skew{0.0f};
-            glm::vec4 perspective{0.0f};
-            glm::quat orientation{1.0f, 0.0f, 0.0f, 0.0f};
+            Vector4 perspective{0.0f};
+            Quaternion orientation{1.0f, 0.0f, 0.0f, 0.0f};
             Vector3 tmpScale{1.0f};
             Vector3 tmpTranslation{0.0f};
 
@@ -32,12 +32,12 @@ namespace Zenith
             scale = Vector3{1.0f};
         }
 
-        glm::mat4 inverseOrIdentity(const glm::mat4 &matrix)
+        Matrix4 inverseOrIdentity(const Matrix4 &matrix)
         {
             const float determinant = glm::determinant(matrix);
             if (glm::abs(determinant) <= 0.000001f)
             {
-                return glm::mat4{1.0f};
+                return Matrix4{1.0f};
             }
 
             return glm::inverse(matrix);
@@ -64,18 +64,18 @@ namespace Zenith
             return;
         }
 
-        const glm::mat4 parentWorldInverse = inverseOrIdentity(m_parent->worldMatrix());
-        const glm::vec4 localPosition = parentWorldInverse * glm::vec4(position, 1.0f);
+        const Matrix4 parentWorldInverse = inverseOrIdentity(m_parent->worldMatrix());
+        const Vector4 localPosition = parentWorldInverse * Vector4(position, 1.0f);
         setLocalPosition(Vector3(localPosition));
     }
 
-    void Transform::setLocalRotation(const glm::quat &rotation)
+    void Transform::setLocalRotation(const Quaternion &rotation)
     {
         m_rotation = glm::normalize(rotation);
         markLocalDirty();
     }
 
-    void Transform::setWorldRotation(const glm::quat &rotation)
+    void Transform::setWorldRotation(const Quaternion &rotation)
     {
         if (m_parent == nullptr)
         {
@@ -84,7 +84,7 @@ namespace Zenith
         }
 
         Vector3 parentPosition{0.0f};
-        glm::quat parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
+        Quaternion parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
         Vector3 parentScale{1.0f};
         decomposeTransform(m_parent->worldMatrix(), parentPosition, parentRotation, parentScale);
         setLocalRotation(glm::normalize(glm::inverse(parentRotation) * rotation));
@@ -92,12 +92,12 @@ namespace Zenith
 
     void Transform::setLocalRotationEulerRadians(const Vector3 &eulerRadians)
     {
-        setLocalRotation(glm::quat(eulerRadians));
+        setLocalRotation(Quaternion(eulerRadians));
     }
 
     void Transform::setWorldRotationEulerRadians(const Vector3 &eulerRadians)
     {
-        setWorldRotation(glm::quat(eulerRadians));
+        setWorldRotation(Quaternion(eulerRadians));
     }
 
     void Transform::setLocalRotationEulerDegrees(const Vector3 &eulerDegrees)
@@ -125,7 +125,7 @@ namespace Zenith
         }
 
         Vector3 parentPosition{0.0f};
-        glm::quat parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
+        Quaternion parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
         Vector3 parentScale{1.0f};
         decomposeTransform(m_parent->worldMatrix(), parentPosition, parentRotation, parentScale);
 
@@ -146,13 +146,13 @@ namespace Zenith
         setLocalScale(localScale);
     }
 
-    void Transform::setLocalTransform(const glm::mat4 &localTransform)
+    void Transform::setLocalTransform(const Matrix4 &localTransform)
     {
         setFromLocalMatrix(localTransform);
         markLocalDirty();
     }
 
-    void Transform::setWorldTransform(const glm::mat4 &worldTransform)
+    void Transform::setWorldTransform(const Matrix4 &worldTransform)
     {
         setFromWorldMatrix(worldTransform);
         markLocalDirty();
@@ -169,7 +169,7 @@ namespace Zenith
                 return;
         }
 
-        const glm::mat4 worldBeforeReparent = keepWorldPosition ? worldMatrix() : glm::mat4{1.0f};
+        const Matrix4 worldBeforeReparent = keepWorldPosition ? worldMatrix() : Matrix4{1.0f};
 
         if (m_parent != nullptr)
         {
@@ -197,7 +197,7 @@ namespace Zenith
         markLocalDirty();
     }
 
-    void Transform::rotate(const glm::quat &deltaRotation)
+    void Transform::rotate(const Quaternion &deltaRotation)
     {
         m_rotation = glm::normalize(deltaRotation * m_rotation);
         markLocalDirty();
@@ -205,7 +205,7 @@ namespace Zenith
 
     void Transform::rotateEulerRadians(const Vector3 &eulerRadians)
     {
-        rotate(glm::quat(eulerRadians));
+        rotate(Quaternion(eulerRadians));
     }
 
     void Transform::rotateEulerDegrees(const Vector3 &eulerDegrees)
@@ -221,7 +221,7 @@ namespace Zenith
 
     void Transform::lookAt(const Vector3 &target, const Vector3 &worldUp)
     {
-        const glm::mat4 view = glm::lookAt(m_position, target, worldUp);
+        const Matrix4 view = glm::lookAt(m_position, target, worldUp);
         m_rotation = glm::normalize(glm::quat_cast(glm::inverse(view)));
         markLocalDirty();
     }
@@ -241,29 +241,29 @@ namespace Zenith
         return glm::normalize(Vector3{worldMatrix()[2]});
     }
 
-    const glm::mat4 &Transform::localMatrix() const
+    const Matrix4 &Transform::localMatrix() const
     {
         updateLocalMatrix();
         return m_localMatrix;
     }
 
-    const glm::mat4 &Transform::localToWorld() const
+    const Matrix4 &Transform::localToWorld() const
     {
         updateWorldMatrix();
         return m_localToWorld;
     }
 
-    const glm::mat4 &Transform::worldMatrix() const
+    const Matrix4 &Transform::worldMatrix() const
     {
         return localToWorld();
     }
 
-    void Transform::setFromLocalMatrix(const glm::mat4 &localTransform)
+    void Transform::setFromLocalMatrix(const Matrix4 &localTransform)
     {
         decomposeTransform(localTransform, m_position, m_rotation, m_scale);
     }
 
-    void Transform::setFromWorldMatrix(const glm::mat4 &worldTransform)
+    void Transform::setFromWorldMatrix(const Matrix4 &worldTransform)
     {
         if (m_parent == nullptr)
         {
@@ -271,7 +271,7 @@ namespace Zenith
             return;
         }
 
-        const glm::mat4 localTransform = inverseOrIdentity(m_parent->worldMatrix()) * worldTransform;
+        const Matrix4 localTransform = inverseOrIdentity(m_parent->worldMatrix()) * worldTransform;
         setFromLocalMatrix(localTransform);
     }
 
@@ -292,9 +292,9 @@ namespace Zenith
 
     void Transform::updateLocalMatrix() const
     {
-        const glm::mat4 translation = glm::translate(glm::mat4{1.0f}, m_position);
-        const glm::mat4 rotation = glm::mat4_cast(m_rotation);
-        const glm::mat4 scaling = glm::scale(glm::mat4{1.0f}, m_scale);
+        const Matrix4 translation = glm::translate(Matrix4{1.0f}, m_position);
+        const Matrix4 rotation = glm::mat4_cast(m_rotation);
+        const Matrix4 scaling = glm::scale(Matrix4{1.0f}, m_scale);
         m_localMatrix = translation * rotation * scaling;
         m_localDirty = false;
     }

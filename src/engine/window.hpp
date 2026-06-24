@@ -29,8 +29,8 @@ namespace Zenith
         void setCursorMode(CursorMode mode);
         CursorMode getCursorMode() const;
 
-        glm::ivec2 getSize() const;
-        glm::ivec2 getFramebufferSize() const;
+        IVector2 getSize() const;
+        IVector2 getFramebufferSize() const;
         float getAspectRatio() const;
 
         void *getNativeHandle() const;

@@ -10,8 +10,8 @@ namespace Zenith
     struct MeshSourceVertex
     {
         Vector3 position{0.0f};
-        glm::vec2 uv{0.0f};
-        glm::vec4 color{1.0f};
+        Vector2 uv{0.0f};
+        Vector4 color{1.0f};
     };
 
     struct MeshSourceBounds

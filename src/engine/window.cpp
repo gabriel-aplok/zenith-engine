@@ -60,12 +60,12 @@ namespace Zenith
         return m_backend->getCursorMode();
     }
 
-    glm::ivec2 Window::getSize() const
+    IVector2 Window::getSize() const
     {
         return m_backend->getSize();
     }
 
-    glm::ivec2 Window::getFramebufferSize() const
+    IVector2 Window::getFramebufferSize() const
     {
         return m_backend->getFramebufferSize();
     }

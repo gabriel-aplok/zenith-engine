@@ -45,7 +45,7 @@ namespace Zenith
             if (objectCamera == camera)
             {
                 frame.clear = buildClearState(*camera);
-                const glm::mat4 cameraWorld = object->transform().localToWorld();
+                const Matrix4 cameraWorld = object->transform().localToWorld();
                 camera->buildViewState(cameraWorld, scene.framebufferSize(), frame.view);
                 frame.commands.setView(frame.view);
                 return;

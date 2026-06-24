@@ -286,12 +286,12 @@ namespace Zenith
         (void)enabled;
     }
 
-    glm::ivec2 RgfwWindowBackend::getSize() const
+    IVector2 RgfwWindowBackend::getSize() const
     {
         return m_size;
     }
 
-    glm::ivec2 RgfwWindowBackend::getFramebufferSize() const
+    IVector2 RgfwWindowBackend::getFramebufferSize() const
     {
         return m_framebufferSize;
     }

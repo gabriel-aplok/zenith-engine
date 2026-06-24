@@ -92,7 +92,7 @@ namespace Zenith
         return GraphicsApi::Bgfx;
     }
 
-    glm::ivec2 BgfxRenderContext::framebufferSize() const
+    IVector2 BgfxRenderContext::framebufferSize() const
     {
         return m_framebufferSize;
     }
@@ -112,7 +112,7 @@ namespace Zenith
         bgfx::frame();
     }
 
-    void BgfxRenderContext::resize(const glm::ivec2 &framebufferSize)
+    void BgfxRenderContext::resize(const IVector2 &framebufferSize)
     {
         m_framebufferSize = framebufferSize;
         if (m_framebufferSize.x <= 0 || m_framebufferSize.y <= 0)

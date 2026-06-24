@@ -20,16 +20,16 @@ namespace Zenith
     {
         advanceButtonStates(m_keyStates);
         advanceButtonStates(m_mouseButtonStates);
-        m_mouseDelta = glm::dvec2(0.0, 0.0);
-        m_scrollDelta = glm::dvec2(0.0, 0.0);
+        m_mouseDelta = DVector2(0.0, 0.0);
+        m_scrollDelta = DVector2(0.0, 0.0);
     }
 
     void InputState::clear()
     {
         m_keyStates.fill(ButtonState::Up);
         m_mouseButtonStates.fill(ButtonState::Up);
-        m_mouseDelta = glm::dvec2(0.0, 0.0);
-        m_scrollDelta = glm::dvec2(0.0, 0.0);
+        m_mouseDelta = DVector2(0.0, 0.0);
+        m_scrollDelta = DVector2(0.0, 0.0);
     }
 
     void InputState::onKeyEvent(KeyCode key, bool pressed)
@@ -55,7 +55,7 @@ namespace Zenith
 
     void InputState::onMouseMove(double x, double y)
     {
-        const glm::dvec2 newPosition{x, y};
+        const DVector2 newPosition{x, y};
         if (m_hasMousePosition)
             m_mouseDelta += newPosition - m_mousePosition;
 
@@ -65,7 +65,7 @@ namespace Zenith
 
     void InputState::onMouseScroll(double xOffset, double yOffset)
     {
-        m_scrollDelta += glm::dvec2(xOffset, yOffset);
+        m_scrollDelta += DVector2(xOffset, yOffset);
     }
 
     void InputState::setFocused(bool focused)
@@ -115,17 +115,17 @@ namespace Zenith
         return isDown(m_mouseButtonStates, toIndex(button));
     }
 
-    glm::dvec2 InputState::getMousePosition() const
+    DVector2 InputState::getMousePosition() const
     {
         return m_mousePosition;
     }
 
-    glm::dvec2 InputState::getMouseDelta() const
+    DVector2 InputState::getMouseDelta() const
     {
         return m_mouseDelta;
     }
 
-    glm::dvec2 InputState::getScrollDelta() const
+    DVector2 InputState::getScrollDelta() const
     {
         return m_scrollDelta;
     }
