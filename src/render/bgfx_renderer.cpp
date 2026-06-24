@@ -9,6 +9,7 @@
 #include "engine/window_backend.hpp"
 #include "log/log.hpp"
 #include "render/render_context.hpp"
+#include "render/mesh_builder.hpp"
 #include "render/shaders/mesh_fs_dx11.bin.h"
 #include "render/shaders/mesh_fs_gles300.bin.h"
 #include "render/shaders/mesh_fs_glsl430.bin.h"
@@ -132,6 +133,8 @@ namespace Zenith::Render
             return false;
         }
 
+        m_fullscreenQuad = uploadMesh(MeshBuilder::makeFullscreenQuad());
+
         m_initialized = true;
         return true;
     }
@@ -139,6 +142,11 @@ namespace Zenith::Render
     void BgfxRenderer::shutdown()
     {
         m_targetPool.clear();
+        if (m_fullscreenQuad.id != 0)
+        {
+            destroyMesh(m_fullscreenQuad);
+            m_fullscreenQuad = {};
+        }
         for (auto& [_, mesh] : m_meshes)
         {
             if (bgfx::isValid(mesh.vertexBuffer))
@@ -324,6 +332,9 @@ namespace Zenith::Render
         case Render::RenderPassKind::Transparent:
             renderSceneLightingPass(pass);
             break;
+        case Render::RenderPassKind::Present:
+            renderPresentPass(pass);
+            break;
         case Render::RenderPassKind::PostProcess:
             renderSceneLightingPass(pass);
             break;
@@ -362,7 +373,11 @@ namespace Zenith::Render
 
     void BgfxRenderer::renderOpaquePass(const Render::RenderPass& pass)
     {
-        if (pass.desc.colorTarget.width > 0 && pass.desc.colorTarget.height > 0)
+        if (pass.desc.useBackbuffer)
+        {
+            bgfx::setViewFrameBuffer(static_cast<uint16_t>(pass.desc.viewId), BGFX_INVALID_HANDLE);
+        }
+        else if (pass.desc.colorTarget.width > 0 && pass.desc.colorTarget.height > 0)
         {
             auto handle = m_targetPool.acquire(pass.desc.colorTarget);
             const auto fb = m_targetPool.framebuffer(handle);
@@ -416,6 +431,44 @@ namespace Zenith::Render
             bgfx::setState(state);
             bgfx::submit(static_cast<uint16_t>(pass.desc.viewId), m_program);
         }
+    }
+
+    void BgfxRenderer::renderPresentPass(const Render::RenderPass& pass)
+    {
+        if (pass.desc.useBackbuffer)
+        {
+            return;
+        }
+
+        const float identity[16] =
+        {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f,
+        };
+        bgfx::setViewTransform(static_cast<uint16_t>(pass.desc.viewId), identity, identity);
+        bgfx::setViewRect(static_cast<uint16_t>(pass.desc.viewId), 0, 0, static_cast<uint16_t>(m_framebufferSize.x), static_cast<uint16_t>(m_framebufferSize.y));
+
+        auto sourceHandle = m_targetPool.acquire(pass.desc.sourceTarget);
+        const auto sourceTexture = m_targetPool.texture(sourceHandle);
+        if (bgfx::isValid(sourceTexture) && m_fullscreenQuad.id != 0)
+        {
+            const auto meshIt = m_meshes.find(m_fullscreenQuad.id);
+            if (meshIt != m_meshes.end())
+            {
+                const float tint[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                bgfx::setTexture(0, m_textureUniform, sourceTexture);
+                bgfx::setUniform(m_tintUniform, tint);
+                const uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_CULL_CW;
+                bgfx::setState(state);
+                bgfx::setTransform(identity);
+                bgfx::setVertexBuffer(0, meshIt->second.vertexBuffer);
+                bgfx::setIndexBuffer(meshIt->second.indexBuffer);
+                bgfx::submit(static_cast<uint16_t>(pass.desc.viewId), m_program);
+            }
+        }
+        m_targetPool.release(sourceHandle);
     }
 
     void BgfxRenderer::render(const RenderFrame& frame)

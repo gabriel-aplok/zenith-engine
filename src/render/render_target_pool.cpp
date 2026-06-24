@@ -17,8 +17,13 @@ namespace Zenith::Render
             case RenderTargetFormat::ColorRGBA8:
             case RenderTargetFormat::Unknown:
             default:
-                return bgfx::TextureFormat::RGBA8;
+                return bgfx::TextureFormat::BGRA8;
             }
+        }
+
+        bool isDepthFormat(RenderTargetFormat format)
+        {
+            return format == RenderTargetFormat::Depth24 || format == RenderTargetFormat::Depth32F;
         }
     }
 
@@ -40,16 +45,23 @@ namespace Zenith::Render
 
         const uint32_t id = m_nextId++;
         bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
+        bgfx::FrameBufferHandle framebuffer = BGFX_INVALID_HANDLE;
         if (desc.width > 0 && desc.height > 0)
         {
-            texture = bgfx::createTexture2D(desc.width, desc.height, false, desc.mipLevels, toBgfxFormat(desc.format), desc.allowRendering ? BGFX_TEXTURE_RT : 0);
-        }
+            const uint64_t flags = desc.allowRendering ? BGFX_TEXTURE_RT : 0;
+            if (isDepthFormat(desc.format))
+            {
+                framebuffer = bgfx::createFrameBuffer(desc.width, desc.height, toBgfxFormat(desc.format), flags);
+            }
+            else
+            {
+                framebuffer = bgfx::createFrameBuffer(desc.width, desc.height, toBgfxFormat(desc.format), flags);
+            }
 
-        bgfx::FrameBufferHandle framebuffer = BGFX_INVALID_HANDLE;
-        if (bgfx::isValid(texture))
-        {
-            const bgfx::TextureHandle attachments[] = { texture };
-            framebuffer = bgfx::createFrameBuffer(1, attachments, false);
+            if (bgfx::isValid(framebuffer))
+            {
+                texture = bgfx::getTexture(framebuffer);
+            }
         }
 
         m_entries.emplace(id, Entry{ .desc = desc, .texture = texture, .framebuffer = framebuffer, .refCount = 1 });
@@ -77,10 +89,6 @@ namespace Zenith::Render
             if (bgfx::isValid(entry.framebuffer))
             {
                 bgfx::destroy(entry.framebuffer);
-            }
-            if (bgfx::isValid(entry.texture))
-            {
-                bgfx::destroy(entry.texture);
             }
         }
         m_entries.clear();

@@ -334,8 +334,12 @@ namespace Zenith
                 }
 
                 auto& opaquePass = m_frame.addPass(Render::RenderPassDesc{ .kind = Render::RenderPassKind::Opaque, .viewId = 0 });
+                opaquePass.desc.useBackbuffer = true;
                 opaquePass.desc.clusteredLighting = buildClusteredLighting(*scene);
                 opaquePass.commands = m_frame.commands;
+
+                auto& presentPass = m_frame.addPass(Render::RenderPassDesc{ .kind = Render::RenderPassKind::Present, .viewId = 2 });
+                presentPass.desc.useBackbuffer = true;
             }
             m_renderer->render(m_frame);
             m_renderContext->endFrame();

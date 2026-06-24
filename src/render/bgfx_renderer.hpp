@@ -34,6 +34,7 @@ namespace Zenith::Render
         void renderShadowPass(const Render::RenderPass& pass);
         void renderSceneLightingPass(const Render::RenderPass& pass);
         void renderOpaquePass(const Render::RenderPass& pass);
+        void renderPresentPass(const Render::RenderPass& pass);
         void prepareClusteredLighting(const Render::ClusteredLightingFrame& lighting);
 
         struct MeshResource
@@ -57,6 +58,7 @@ namespace Zenith::Render
         bgfx::ProgramHandle m_program{ BGFX_INVALID_HANDLE };
         bgfx::UniformHandle m_tintUniform{ BGFX_INVALID_HANDLE };
         bgfx::UniformHandle m_textureUniform{ BGFX_INVALID_HANDLE };
+        Render::MeshHandle m_fullscreenQuad{};
         Render::RenderTargetPool m_targetPool;
     };
 

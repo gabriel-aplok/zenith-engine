@@ -14,6 +14,7 @@ namespace Zenith::Render
         Shadow,
         Opaque,
         Transparent,
+        Present,
         PostProcess,
         Debug,
         Compute,
@@ -51,7 +52,9 @@ namespace Zenith::Render
         uint32_t viewId = 0;
         RenderTargetDesc colorTarget{};
         RenderTargetDesc depthTarget{};
+        RenderTargetDesc sourceTarget{};
         ClusteredLightingFrame clusteredLighting{};
+        bool useBackbuffer = true;
     };
 
     struct RenderPass

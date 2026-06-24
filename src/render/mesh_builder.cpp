@@ -4,16 +4,16 @@
 
 namespace Zenith::MeshBuilder
 {
-    Render::Bounds computeBounds(const std::vector<Render::MeshVertex> &vertices)
+    Render::Bounds computeBounds(const std::vector<Render::MeshVertex>& vertices)
     {
         if (vertices.empty())
         {
             return {};
         }
 
-        Vector3 minPoint{std::numeric_limits<float>::max()};
-        Vector3 maxPoint{std::numeric_limits<float>::lowest()};
-        for (const auto &vertex : vertices)
+        Vector3 minPoint{ std::numeric_limits<float>::max() };
+        Vector3 maxPoint{ std::numeric_limits<float>::lowest() };
+        for (const auto& vertex : vertices)
         {
             minPoint = glm::min(minPoint, vertex.position);
             maxPoint = glm::max(maxPoint, vertex.position);
@@ -42,7 +42,7 @@ namespace Zenith::MeshBuilder
                             {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f}, {0.2f, 0.2f, 1.0f, 1.0f}},
                             {{1.0f, -1.0f, -1.0f}, {1.0f, 1.0f}, {1.0f, 1.0f, 0.2f, 1.0f}},
                             {{-1.0f, -1.0f, -1.0f}, {0.0f, 1.0f}, {1.0f, 0.2f, 1.0f, 1.0f}},
-                        },
+            },
                         {
                             0,
                             2,
@@ -76,7 +76,7 @@ namespace Zenith::MeshBuilder
                             {{1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}, {0.2f, 1.0f, 1.0f, 1.0f}},
                             {{1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}, {0.9f, 0.9f, 0.9f, 1.0f}},
                             {{-1.0f, 1.0f, -1.0f}, {1.0f, 1.0f}, {0.4f, 0.4f, 0.4f, 1.0f}},
-                        },
+            },
                         {
                             0,
                             1,
@@ -124,7 +124,7 @@ namespace Zenith::MeshBuilder
                             {{1.0f, 0.0f, -1.0f}, {1.0f, 0.0f}, {0.7f, 0.8f, 1.0f, 1.0f}},
                             {{1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.7f, 1.0f, 0.8f, 1.0f}},
                             {{-1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.8f, 0.7f, 1.0f}},
-                        },
+            },
                         {
                             0,
                             1,
@@ -132,6 +132,20 @@ namespace Zenith::MeshBuilder
                             0,
                             2,
                             3,
+                        });
+    }
+
+    Render::MeshData makeFullscreenQuad()
+    {
+        return makeMesh({
+                            {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+                            {{1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+                            {{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+                            {{-1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+            },
+                        {
+                            0, 1, 2,
+                            0, 2, 3,
                         });
     }
 
