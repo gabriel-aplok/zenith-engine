@@ -25,6 +25,7 @@
 #include "systems/script_system.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <functional>
 #include <vector>
 
 namespace Zenith
@@ -38,6 +39,44 @@ namespace Zenith
         }
     };
 
+    class SceneSwitchBehaviour final : public ScriptBehaviour
+    {
+    public:
+        using Callback = std::function<void()>;
+
+        SceneSwitchBehaviour() = default;
+        SceneSwitchBehaviour(Callback onSpacePressed, Callback onSceneEntered)
+            : m_onSpacePressed(std::move(onSpacePressed)), m_onSceneEntered(std::move(onSceneEntered)) {}
+
+        void onStart(GameObject &owner) override
+        {
+            if (m_onSceneEntered)
+            {
+                m_onSceneEntered();
+            }
+            (void)owner;
+        }
+
+        void onUpdate(GameObject &owner, float deltaTime) override
+        {
+            (void)deltaTime;
+            auto *scene = owner.scene();
+            if (!scene || !scene->input())
+            {
+                return;
+            }
+
+            if (scene->input()->isKeyPressed(KeyCode::Space) && m_onSpacePressed)
+            {
+                m_onSpacePressed();
+            }
+        }
+
+    private:
+        Callback m_onSpacePressed;
+        Callback m_onSceneEntered;
+    };
+
     class GameApplication final : public Application
     {
     public:
@@ -48,6 +87,20 @@ namespace Zenith
         std::unique_ptr<Scene> buildMainScene()
         {
             auto scene = std::make_unique<Scene>();
+
+            GameObject &controller = scene->createGameObject("Scene Controller");
+            auto &controllerScript = controller.add_component<Components::ScriptComponent>();
+            controllerScript.setBehaviour<SceneSwitchBehaviour>(
+                [this]()
+                {
+                    if (!m_cubeSceneLoadJob && !m_sceneManager.hasPendingScene())
+                    {
+                        m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>(
+                            m_sceneManager.prepareSceneAsync([this]()
+                                                             { return buildCubeScene(); }));
+                    }
+                },
+                []() {});
 
             GameObject &cameraObject = scene->createGameObject("Main Camera");
             cameraObject.transform().setPosition(glm::vec3{-10.0f, 0.0f, 6.0f});
@@ -90,6 +143,19 @@ namespace Zenith
         std::unique_ptr<Scene> buildCubeScene()
         {
             auto scene = std::make_unique<Scene>();
+
+            GameObject &controller = scene->createGameObject("Scene Controller");
+            auto &controllerScript = controller.add_component<Components::ScriptComponent>();
+            controllerScript.setBehaviour<SceneSwitchBehaviour>(
+                [this]()
+                {
+                    if (!m_sceneManager.hasPendingScene())
+                    {
+                        m_sceneManager.popScene();
+                        m_scene = m_sceneManager.currentScene();
+                    }
+                },
+                []() {});
 
             GameObject &cameraObject = scene->createGameObject("Cube Camera");
             cameraObject.transform().setPosition(glm::vec3{-16.0f, 10.0f, 16.0f});
@@ -230,7 +296,6 @@ namespace Zenith
                 return;
             }
             m_scene = m_sceneManager.currentScene();
-            m_isMainScene = true;
             if (!m_scene)
             {
                 Log::Error("Failed to create initial scene");
@@ -241,20 +306,9 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            if (getInput().isKeyPressed(KeyCode::Space) && !m_sceneManager.hasPendingScene() && !m_cubeSceneLoadJob)
+            if (m_scene)
             {
-                if (m_isMainScene)
-                {
-                    m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>(
-                        m_sceneManager.prepareSceneAsync([this]()
-                                                         { return buildCubeScene(); }));
-                }
-                else if (m_sceneManager.hasSceneStack())
-                {
-                    m_sceneManager.popScene();
-                    m_scene = m_sceneManager.currentScene();
-                    m_isMainScene = true;
-                }
+                m_scene->setInputState(&getInput());
             }
 
             if (m_cubeSceneLoadJob && m_cubeSceneLoadJob->ready())
@@ -262,7 +316,6 @@ namespace Zenith
                 m_sceneManager.pushPreparedScene(*m_cubeSceneLoadJob);
                 m_sceneManager.commitScene();
                 m_scene = m_sceneManager.currentScene();
-                m_isMainScene = false;
                 m_cubeSceneLoadJob.reset();
             }
 
@@ -284,6 +337,7 @@ namespace Zenith
             if (m_scene)
             {
                 m_scene->setFramebufferSize(m_renderContext->framebufferSize());
+                m_scene->setInputState(&getInput());
                 m_sceneManager.render(m_frame);
             }
             m_frame.finalize();
@@ -329,7 +383,6 @@ namespace Zenith
         std::unique_ptr<SceneManager::SceneLoadJob> m_cubeSceneLoadJob{};
         Scene *m_scene = nullptr;
         RenderFrame m_frame{};
-        bool m_isMainScene = true;
     };
 
 } // namespace Zenith

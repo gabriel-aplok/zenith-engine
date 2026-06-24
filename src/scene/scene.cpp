@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "engine/input.hpp"
 #include "components/script_component.hpp"
 
 namespace Zenith
@@ -87,6 +88,11 @@ namespace Zenith
     void Scene::setFramebufferSize(const glm::ivec2 &framebufferSize)
     {
         m_framebufferSize = framebufferSize;
+    }
+
+    void Scene::setInputState(const InputState *inputState)
+    {
+        m_inputState = inputState;
     }
 
     Components::Camera *Scene::findCamera()

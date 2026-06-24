@@ -6,8 +6,9 @@
       "name": "bgfx",
       "features": ["tools"]
     },
-    "rgfw",
     "glm",
-    "stb"
+    "rgfw",
+    "stb",
+    "sol2"
   ]
 }

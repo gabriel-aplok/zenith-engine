@@ -29,6 +29,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Stb REQUIRED)
+find_package(sol2 CONFIG REQUIRED)
 find_path(RGFW_INCLUDE_DIRS "RGFW.h")
 
 set(ZENITH_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -142,6 +143,7 @@ target_link_libraries(zenith-lib
 		bgfx::bgfx
 		bgfx::bimg
 		bgfx::bimg_decode
+		sol2::sol2
 )
 
 add_dependencies(zenith-lib bgfx-shaders)
