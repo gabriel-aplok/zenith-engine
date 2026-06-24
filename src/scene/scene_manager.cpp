@@ -20,12 +20,9 @@ namespace Zenith
 
     void SceneManager::SceneLoadToken::setScene(std::unique_ptr<Scene> scene)
     {
-        {
-            std::scoped_lock lock(m_mutex);
-            m_scene = std::move(scene);
-            m_ready = true;
-        }
-        m_readyCondition.notify_all();
+        std::scoped_lock lock(m_mutex);
+        m_scene = std::move(scene);
+        m_ready = true;
     }
 
     SceneManager::SceneLoadJob::SceneLoadJob(std::function<std::unique_ptr<Scene>()> factory)
@@ -54,6 +51,17 @@ namespace Zenith
         return *this;
     }
 
+    std::unique_ptr<Scene> SceneManager::SceneLoadJob::takeScene()
+    {
+        if (!m_token)
+        {
+            return nullptr;
+        }
+
+        wait();
+        return m_token->takeScene();
+    }
+
     void SceneManager::SceneLoadJob::wait()
     {
         if (m_worker.joinable())
@@ -66,17 +74,12 @@ namespace Zenith
     {
         m_token = std::make_unique<SceneLoadToken>();
         m_worker = std::thread([token = m_token.get(), factory = std::move(factory)]() mutable
-                               {
-                                   auto scene = factory ? factory() : nullptr;
-                                   token->setScene(std::move(scene)); });
+                               { token->setScene(factory ? factory() : nullptr); });
     }
 
     void SceneManager::SceneLoadJob::stop()
     {
-        if (m_worker.joinable())
-        {
-            m_worker.join();
-        }
+        wait();
     }
 
     SceneManager::SceneManager()
@@ -98,27 +101,30 @@ namespace Zenith
 
     void SceneManager::setScene(std::unique_ptr<Scene> scene)
     {
-        m_pendingFactory = {};
-        m_pendingLoadJob.reset();
-        m_pendingScene = std::move(scene);
-        m_transitionState = TransitionState::Loading;
-        commitScene();
-    }
+        if (!scene)
+        {
+            return;
+        }
 
-    void SceneManager::prepareScene(std::unique_ptr<Scene> scene)
-    {
-        m_pendingFactory = {};
-        m_pendingLoadJob.reset();
-        m_pendingScene = std::move(scene);
-        m_transitionState = TransitionState::PendingCommit;
-    }
+        if (m_activeScene)
+        {
+            m_systems->bindScene(nullptr);
+            m_activeScene->onExit();
+            m_activeScene->onUnload();
+            m_activeScene.reset();
+        }
 
-    void SceneManager::prepareSceneFactory(std::function<std::unique_ptr<Scene>()> factory)
-    {
-        m_pendingScene.reset();
-        m_pendingLoadJob.reset();
-        m_pendingFactory = std::move(factory);
-        m_transitionState = TransitionState::Loading;
+        while (!m_sceneStack.empty())
+        {
+            m_sceneStack.back()->onExit();
+            m_sceneStack.back()->onUnload();
+            m_sceneStack.pop_back();
+        }
+
+        scene->onLoad();
+        m_activeScene = std::move(scene);
+        m_activeScene->onEnter();
+        m_systems->bindScene(m_activeScene.get());
     }
 
     SceneManager::SceneLoadJob SceneManager::prepareSceneAsync(std::function<std::unique_ptr<Scene>()> factory)
@@ -126,32 +132,9 @@ namespace Zenith
         return SceneLoadJob(std::move(factory));
     }
 
-    void SceneManager::acceptPreparedScene(SceneLoadJob &job)
+    void SceneManager::addSystem(std::unique_ptr<System> system)
     {
-        if (!job.valid())
-        {
-            return;
-        }
-
-        job.wait();
-        m_pendingScene = job.token()->takeScene();
-        m_pendingFactory = {};
-        m_pendingLoadJob.reset();
-        m_transitionState = TransitionState::PendingCommit;
-    }
-
-    void SceneManager::pushPreparedScene(SceneLoadJob &job)
-    {
-        if (!job.valid())
-        {
-            return;
-        }
-
-        job.wait();
-        m_pendingScene = job.token()->takeScene();
-        m_pendingFactory = {};
-        m_pendingLoadJob.reset();
-        m_transitionState = TransitionState::PendingCommit;
+        m_systems->addSystem(std::move(system));
     }
 
     void SceneManager::pushScene(std::unique_ptr<Scene> scene)
@@ -161,32 +144,17 @@ namespace Zenith
             return;
         }
 
-        m_pendingFactory = {};
-        m_pendingLoadJob.reset();
-        m_pendingScene = std::move(scene);
-
         if (m_activeScene)
         {
-            m_transitionState = TransitionState::Exiting;
             m_systems->bindScene(nullptr);
             m_activeScene->onExit();
             m_sceneStack.push_back(std::move(m_activeScene));
         }
 
-        m_pendingScene->onLoad();
-        m_transitionState = TransitionState::Entering;
-        m_activeScene = std::move(m_pendingScene);
+        scene->onLoad();
+        m_activeScene = std::move(scene);
         m_activeScene->onEnter();
         m_systems->bindScene(m_activeScene.get());
-        m_transitionState = TransitionState::Idle;
-    }
-
-    void SceneManager::pushSceneFactory(std::function<std::unique_ptr<Scene>()> factory)
-    {
-        m_pendingScene.reset();
-        m_pendingLoadJob.reset();
-        m_pendingFactory = std::move(factory);
-        m_transitionState = TransitionState::Loading;
     }
 
     bool SceneManager::popScene()
@@ -198,7 +166,6 @@ namespace Zenith
 
         if (m_activeScene)
         {
-            m_transitionState = TransitionState::Exiting;
             m_systems->bindScene(nullptr);
             m_activeScene->onExit();
             m_activeScene->onUnload();
@@ -209,104 +176,50 @@ namespace Zenith
         m_sceneStack.pop_back();
         m_activeScene->onEnter();
         m_systems->bindScene(m_activeScene.get());
-        m_transitionState = TransitionState::Idle;
-        return true;
-    }
-
-    void SceneManager::addSystem(std::unique_ptr<System> system)
-    {
-        m_systems->addSystem(std::move(system));
-    }
-
-    bool SceneManager::commitScene()
-    {
-        if (m_pendingFactory)
-        {
-            m_transitionState = TransitionState::Loading;
-            m_pendingScene = m_pendingFactory();
-            m_pendingFactory = {};
-        }
-
-        if (m_pendingLoadJob && m_pendingLoadJob->ready())
-        {
-            m_pendingScene = m_pendingLoadJob->token()->takeScene();
-            m_pendingLoadJob.reset();
-        }
-
-        if (!m_pendingScene)
-        {
-            return false;
-        }
-
-        m_pendingScene->onLoad();
-
-        if (m_activeScene)
-        {
-            m_transitionState = TransitionState::Exiting;
-            m_systems->bindScene(nullptr);
-            m_activeScene->onExit();
-            m_activeScene->onUnload();
-            m_sceneStack.clear();
-            m_activeScene.reset();
-        }
-
-        m_transitionState = TransitionState::Entering;
-        m_activeScene = std::move(m_pendingScene);
-        m_activeScene->onEnter();
-        m_systems->bindScene(m_activeScene.get());
-        m_sceneStack.clear();
-        m_transitionState = TransitionState::Idle;
         return true;
     }
 
     void SceneManager::update(float deltaTime)
     {
-        if (m_transitionState == TransitionState::PendingCommit && m_pendingScene)
+        if (!m_activeScene)
         {
-            commitScene();
+            return;
         }
-        if (m_activeScene)
-        {
-            m_activeScene->flushCommands();
-            m_systems->update(*m_activeScene, deltaTime);
-            m_activeScene->flushCommands();
-        }
+
+        m_activeScene->flushCommands();
+        m_systems->update(*m_activeScene, deltaTime);
+        m_activeScene->flushCommands();
     }
 
     void SceneManager::render(RenderFrame &frame)
     {
-        if (m_activeScene)
+        if (!m_activeScene)
         {
-            m_activeScene->flushCommands();
-            m_systems->render(*m_activeScene, frame);
-            m_activeScene->flushCommands();
+            return;
         }
+
+        m_activeScene->flushCommands();
+        m_systems->render(*m_activeScene, frame);
+        m_activeScene->flushCommands();
     }
 
     void SceneManager::clear()
     {
-        m_pendingFactory = {};
-        m_pendingLoadJob.reset();
-        m_pendingScene.reset();
         if (m_activeScene)
         {
-            m_transitionState = TransitionState::Exiting;
             m_systems->bindScene(nullptr);
             m_activeScene->onExit();
             m_activeScene->onUnload();
             m_activeScene.reset();
         }
+
         while (!m_sceneStack.empty())
         {
             m_sceneStack.back()->onExit();
             m_sceneStack.back()->onUnload();
             m_sceneStack.pop_back();
         }
-        m_sceneStack.clear();
-        if (m_systems)
-        {
-            m_systems->clear();
-        }
-        m_transitionState = TransitionState::Idle;
+
+        m_systems->clear();
     }
 } // namespace Zenith

@@ -93,11 +93,10 @@ namespace Zenith
             controllerScript.setBehaviour<SceneSwitchBehaviour>(
                 [this]()
                 {
-                    if (!m_cubeSceneLoadJob && !m_sceneManager.hasPendingScene())
+                    if (!m_cubeSceneLoadJob)
                     {
-                        m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>(
-                            m_sceneManager.prepareSceneAsync([this]()
-                                                             { return buildCubeScene(); }));
+                        m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>([this]()
+                                                                                          { return buildCubeScene(); });
                     }
                 },
                 []() {});
@@ -149,11 +148,7 @@ namespace Zenith
             controllerScript.setBehaviour<SceneSwitchBehaviour>(
                 [this]()
                 {
-                    if (!m_sceneManager.hasPendingScene())
-                    {
-                        m_sceneManager.popScene();
-                        m_scene = m_sceneManager.currentScene();
-                    }
+                    m_sceneManager.popScene();
                 },
                 []() {});
 
@@ -288,13 +283,7 @@ namespace Zenith
             m_sceneManager.addSystem(std::make_unique<ScriptSystem>());
             m_sceneManager.addSystem(std::make_unique<CameraSystem>());
             m_sceneManager.addSystem(std::make_unique<RenderSystem>());
-            m_sceneManager.prepareScene(buildMainScene());
-            if (!m_sceneManager.commitScene())
-            {
-                Log::Error("Failed to create initial scene");
-                requestQuit();
-                return;
-            }
+            m_sceneManager.setScene(buildMainScene());
             m_scene = m_sceneManager.currentScene();
             if (!m_scene)
             {
@@ -306,21 +295,16 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            if (m_scene)
-            {
-                m_scene->setInputState(&getInput());
-            }
-
             if (m_cubeSceneLoadJob && m_cubeSceneLoadJob->ready())
             {
-                m_sceneManager.pushPreparedScene(*m_cubeSceneLoadJob);
-                m_sceneManager.commitScene();
+                m_sceneManager.pushScene(m_cubeSceneLoadJob->takeScene());
                 m_scene = m_sceneManager.currentScene();
                 m_cubeSceneLoadJob.reset();
             }
 
             if (m_scene)
             {
+                m_scene->setInputState(&getInput());
                 m_sceneManager.update(deltaTime);
             }
         }

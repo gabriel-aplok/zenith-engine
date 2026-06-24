@@ -1,6 +1,5 @@
 #pragma once
 
-#include <condition_variable>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -31,7 +30,6 @@ namespace Zenith
             void setScene(std::unique_ptr<Scene> scene);
 
             mutable std::mutex m_mutex;
-            mutable std::condition_variable m_readyCondition;
             std::unique_ptr<Scene> m_scene;
             bool m_ready = false;
         };
@@ -51,7 +49,7 @@ namespace Zenith
 
             bool valid() const { return static_cast<bool>(m_token); }
             bool ready() const { return m_token && m_token->ready(); }
-            SceneLoadToken *token() const { return m_token.get(); }
+            std::unique_ptr<Scene> takeScene();
             void wait();
 
         private:
@@ -62,15 +60,6 @@ namespace Zenith
             std::thread m_worker;
         };
 
-        enum class TransitionState
-        {
-            Idle,
-            Loading,
-            PendingCommit,
-            Exiting,
-            Entering,
-        };
-
         SceneManager();
         ~SceneManager();
 
@@ -79,32 +68,20 @@ namespace Zenith
 
         bool hasScene() const { return static_cast<bool>(m_activeScene); }
         bool hasSceneStack() const { return !m_sceneStack.empty(); }
-        TransitionState transitionState() const { return m_transitionState; }
-        bool hasPendingScene() const { return static_cast<bool>(m_pendingScene) || static_cast<bool>(m_pendingFactory) || static_cast<bool>(m_pendingLoadJob); }
         Scene *currentScene();
         const Scene *currentScene() const;
 
         void setScene(std::unique_ptr<Scene> scene);
-        void prepareScene(std::unique_ptr<Scene> scene);
-        void prepareSceneFactory(std::function<std::unique_ptr<Scene>()> factory);
         SceneLoadJob prepareSceneAsync(std::function<std::unique_ptr<Scene>()> factory);
-        void acceptPreparedScene(SceneLoadJob &job);
-        void pushPreparedScene(SceneLoadJob &job);
         void addSystem(std::unique_ptr<System> system);
         void pushScene(std::unique_ptr<Scene> scene);
-        void pushSceneFactory(std::function<std::unique_ptr<Scene>()> factory);
         bool popScene();
-        bool commitScene();
         void update(float deltaTime);
         void render(RenderFrame &frame);
         void clear();
 
     private:
-        TransitionState m_transitionState = TransitionState::Idle;
         std::unique_ptr<Scene> m_activeScene;
-        std::unique_ptr<Scene> m_pendingScene;
-        std::function<std::unique_ptr<Scene>()> m_pendingFactory;
-        std::unique_ptr<SceneLoadJob> m_pendingLoadJob;
         std::unique_ptr<SystemRegistry> m_systems;
         std::vector<std::unique_ptr<Scene>> m_sceneStack;
     };
