@@ -14,10 +14,6 @@ namespace Zenith
 {
     class GameObject;
     class Scene;
-    void queueComponentAddition(Scene &scene, GameObject &object, std::type_index type, std::unique_ptr<Component> component);
-    void queueComponentRemoval(Scene &scene, GameObject &object, std::type_index type);
-    Component *sceneGetComponent(Scene &scene, GameObject &object, std::type_index type);
-    const Component *sceneGetComponent(const Scene &scene, const GameObject &object, std::type_index type);
 
     class GameObject
     {
@@ -48,57 +44,36 @@ namespace Zenith
         T &add_component(Args &&...args)
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-            auto component = std::make_unique<T>(std::forward<Args>(args)...);
-            T &componentRef = *component;
-            componentRef.setOwner(this);
-            if (m_scene)
-            {
-                queueComponentAddition(*m_scene, *this, std::type_index(typeid(T)), std::move(component));
-            }
-            return componentRef;
+            return *static_cast<T *>(addComponentImpl(std::type_index(typeid(T)), std::make_unique<T>(std::forward<Args>(args)...)));
         }
 
         template <typename T>
         T *get_component()
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-            if (m_scene)
-            {
-                if (auto *component = sceneGetComponent(*m_scene, *this, std::type_index(typeid(T))))
-                {
-                    return dynamic_cast<T *>(component);
-                }
-            }
-            return nullptr;
+            return dynamic_cast<T *>(getComponentImpl(std::type_index(typeid(T))));
         }
 
         template <typename T>
         const T *get_component() const
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-            if (m_scene)
-            {
-                if (auto *component = sceneGetComponent(*m_scene, *this, std::type_index(typeid(T))))
-                {
-                    return dynamic_cast<const T *>(component);
-                }
-            }
-            return nullptr;
+            return dynamic_cast<const T *>(getComponentImpl(std::type_index(typeid(T))));
         }
 
         template <typename T>
         bool remove_component()
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-            if (m_scene)
-            {
-                queueComponentRemoval(*m_scene, *this, std::type_index(typeid(T)));
-                return true;
-            }
-            return false;
+            return removeComponentImpl(std::type_index(typeid(T)));
         }
 
     private:
+        Component *addComponentImpl(std::type_index type, std::unique_ptr<Component> component);
+        Component *getComponentImpl(std::type_index type);
+        const Component *getComponentImpl(std::type_index type) const;
+        bool removeComponentImpl(std::type_index type);
+
         std::string m_name;
         Transform m_transform;
         Scene *m_scene = nullptr;

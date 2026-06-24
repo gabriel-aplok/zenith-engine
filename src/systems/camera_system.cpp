@@ -41,7 +41,7 @@ namespace Zenith
 
         for (auto &object : scene.gameObjects())
         {
-            auto *objectCamera = object->scene() ? object->scene()->tryGetComponent<Components::Camera>(*object) : object->get_component<Components::Camera>();
+            auto *objectCamera = object->get_component<Components::Camera>();
             if (objectCamera == camera)
             {
                 frame.clear = buildClearState(*camera);

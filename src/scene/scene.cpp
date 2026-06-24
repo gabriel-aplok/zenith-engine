@@ -7,26 +7,6 @@
 
 namespace Zenith
 {
-    void queueComponentAddition(Scene &scene, GameObject &object, std::type_index type, std::unique_ptr<Component> component)
-    {
-        scene.queueComponentAddition(object, type, std::move(component));
-    }
-
-    void queueComponentRemoval(Scene &scene, GameObject &object, std::type_index type)
-    {
-        scene.queueComponentRemoval(object, type);
-    }
-
-    Component *sceneGetComponent(Scene &scene, GameObject &object, std::type_index type)
-    {
-        return scene.getComponent(object, type);
-    }
-
-    const Component *sceneGetComponent(const Scene &scene, const GameObject &object, std::type_index type)
-    {
-        return scene.getComponent(object, type);
-    }
-
     GameObject &Scene::createGameObject(std::string name)
     {
         auto object = std::make_unique<GameObject>(std::move(name));

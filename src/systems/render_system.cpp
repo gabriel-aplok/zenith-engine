@@ -67,8 +67,8 @@ namespace Zenith
         for (auto &objectPtr : scene.gameObjects())
         {
             auto &object = *objectPtr;
-            auto *filter = object.scene() ? object.scene()->tryGetComponent<Components::MeshFilter>(object) : object.get_component<Components::MeshFilter>();
-            auto *renderer = object.scene() ? object.scene()->tryGetComponent<Components::MeshRenderer>(object) : object.get_component<Components::MeshRenderer>();
+            auto *filter = object.get_component<Components::MeshFilter>();
+            auto *renderer = object.get_component<Components::MeshRenderer>();
             if (filter == nullptr || renderer == nullptr)
             {
                 continue;
