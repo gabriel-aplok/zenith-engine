@@ -28,24 +28,12 @@ namespace Zenith
 
     void Scene::onEnter()
     {
-        if (m_isEntered)
-        {
-            return;
-        }
-
-        m_isEntered = true;
         flushCommands();
     }
 
     void Scene::onExit()
     {
-        if (!m_isEntered)
-        {
-            return;
-        }
-
         flushCommands();
-        m_isEntered = false;
     }
 
     void Scene::onUnload()
@@ -54,7 +42,6 @@ namespace Zenith
         m_gameObjects.clear();
         m_componentRegistry.clear();
         m_pendingCommands.clear();
-        m_isEntered = false;
     }
 
     void Scene::clear()

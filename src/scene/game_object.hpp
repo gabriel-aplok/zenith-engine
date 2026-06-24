@@ -44,7 +44,10 @@ namespace Zenith
         T &add_component(Args &&...args)
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-            return *static_cast<T *>(addComponentImpl(std::type_index(typeid(T)), std::make_unique<T>(std::forward<Args>(args)...)));
+            auto component = std::make_unique<T>(std::forward<Args>(args)...);
+            T &componentRef = *component;
+            addComponentImpl(std::type_index(typeid(T)), std::move(component));
+            return componentRef;
         }
 
         template <typename T>

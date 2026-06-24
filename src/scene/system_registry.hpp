@@ -19,11 +19,7 @@ namespace Zenith
         void clear();
 
     private:
-        void stopActiveScene();
-        void startActiveScene();
-
         std::vector<std::unique_ptr<System>> m_systems;
-        Scene *m_boundScene = nullptr;
         Scene *m_activeScene = nullptr;
     };
 } // namespace Zenith

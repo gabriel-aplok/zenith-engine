@@ -11,10 +11,10 @@ namespace Zenith
             return;
         }
 
-        if (m_boundScene)
+        if (m_activeScene)
         {
-            system->onAdd(*m_boundScene);
-            system->onStart(*m_boundScene);
+            system->onAdd(*m_activeScene);
+            system->onStart(*m_activeScene);
         }
 
         m_systems.emplace_back(std::move(system));
@@ -27,9 +27,24 @@ namespace Zenith
             return;
         }
 
-        stopActiveScene();
-        m_boundScene = scene;
-        startActiveScene();
+        if (m_activeScene)
+        {
+            for (auto &system : m_systems)
+            {
+                system->onStop(*m_activeScene);
+                system->onRemove(*m_activeScene);
+            }
+        }
+
+        m_activeScene = scene;
+        if (m_activeScene)
+        {
+            for (auto &system : m_systems)
+            {
+                system->onAdd(*m_activeScene);
+                system->onStart(*m_activeScene);
+            }
+        }
     }
 
     void SystemRegistry::update(Scene &scene, float deltaTime)
@@ -56,45 +71,15 @@ namespace Zenith
 
     void SystemRegistry::clear()
     {
-        Scene *scene = m_boundScene;
-        stopActiveScene();
-        for (auto &system : m_systems)
+        if (m_activeScene)
         {
-            if (scene)
+            for (auto &system : m_systems)
             {
-                system->onRemove(*scene);
+                system->onStop(*m_activeScene);
+                system->onRemove(*m_activeScene);
             }
         }
         m_systems.clear();
-        m_boundScene = nullptr;
-    }
-
-    void SystemRegistry::stopActiveScene()
-    {
-        if (!m_activeScene)
-        {
-            return;
-        }
-
-        for (auto &system : m_systems)
-        {
-            system->onStop(*m_activeScene);
-        }
         m_activeScene = nullptr;
-    }
-
-    void SystemRegistry::startActiveScene()
-    {
-        if (!m_boundScene)
-        {
-            return;
-        }
-
-        for (auto &system : m_systems)
-        {
-            system->onAdd(*m_boundScene);
-            system->onStart(*m_boundScene);
-        }
-        m_activeScene = m_boundScene;
     }
 } // namespace Zenith

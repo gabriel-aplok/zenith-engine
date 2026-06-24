@@ -88,7 +88,6 @@ namespace Zenith
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
         std::unordered_map<GameObject *, std::unordered_map<std::type_index, std::unique_ptr<Component>>> m_componentRegistry;
         std::vector<PendingCommand> m_pendingCommands;
-        bool m_isEntered = false;
         friend class RenderSystem;
         friend class CameraSystem;
     };
