@@ -67,10 +67,18 @@ namespace Zenith
         std::size_t gameObjectCount() const { return m_gameObjects.size(); }
 
     private:
-        struct PendingComponentAddition
+        enum class PendingCommandType
         {
-            GameObject *object;
-            std::type_index type;
+            AddComponent,
+            RemoveComponent,
+            DestroyGameObject,
+        };
+
+        struct PendingCommand
+        {
+            PendingCommandType type;
+            GameObject *object = nullptr;
+            std::type_index componentType{typeid(void)};
             std::unique_ptr<Component> component;
         };
         Components::Camera *findCamera();
@@ -78,15 +86,8 @@ namespace Zenith
         glm::ivec2 m_framebufferSize{0, 0};
         const InputState *m_inputState = nullptr;
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
-        std::vector<PendingComponentAddition> m_pendingComponentAdditions;
         std::unordered_map<GameObject *, std::unordered_map<std::type_index, std::unique_ptr<Component>>> m_componentRegistry;
-        struct PendingComponentRemoval
-        {
-            GameObject *object;
-            std::type_index type;
-        };
-        std::vector<GameObject *> m_pendingGameObjectDestruction;
-        std::vector<PendingComponentRemoval> m_pendingComponentRemovals;
+        std::vector<PendingCommand> m_pendingCommands;
         bool m_isEntered = false;
         friend class RenderSystem;
         friend class CameraSystem;
