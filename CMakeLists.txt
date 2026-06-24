@@ -12,7 +12,7 @@ project(zenith-engine
 # Global project settings
 # ============================================================
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
@@ -114,6 +114,7 @@ add_library(zenith-lib
 	"src/log/log.cpp"
 	"src/engine/input.cpp"
 	"src/resource/resource_loaders.cpp"
+	"src/resource/model_loader.cpp"
 	"src/resource/obj_mesh_loader.cpp"
 	"src/scene/component.cpp"
 	"src/scene/game_object.cpp"

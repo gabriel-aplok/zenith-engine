@@ -167,7 +167,7 @@ namespace Zenith
         }
     }
 
-    RgfwWindowBackend::RgfwWindowBackend(const WindowConfig &config, InputState &input, WindowEventCallback eventCallback)
+    RgfwWindowBackend::RgfwWindowBackend(const WindowConfig& config, InputState& input, WindowEventCallback eventCallback)
         : m_input(input), m_eventCallback(std::move(eventCallback))
     {
         const auto flags = static_cast<RGFW_windowFlags>(config.resizable ? RGFW_windowCenter : (RGFW_windowCenter | RGFW_windowNoResize));
@@ -183,7 +183,7 @@ namespace Zenith
         int width = config.width;
         int height = config.height;
         RGFW_window_getSize(m_handle, &width, &height);
-        m_size = {width, height};
+        m_size = { width, height };
         m_framebufferSize = m_size;
     }
 
@@ -225,25 +225,25 @@ namespace Zenith
                 break;
             case 13:
                 m_input.setFocused(true);
-                dispatchEvent(WindowEvent{.type = WindowEventType::FocusChanged, .focused = true});
+                dispatchEvent(WindowEvent{ .type = WindowEventType::FocusChanged, .focused = true });
                 break;
             case 14:
                 m_input.setFocused(false);
-                dispatchEvent(WindowEvent{.type = WindowEventType::FocusChanged, .focused = false});
+                dispatchEvent(WindowEvent{ .type = WindowEventType::FocusChanged, .focused = false });
                 break;
             case 12:
             {
                 int width = 0;
                 int height = 0;
                 RGFW_window_getSize(m_handle, &width, &height);
-                m_size = {width, height};
+                m_size = { width, height };
                 m_framebufferSize = m_size;
-                dispatchEvent(WindowEvent{.type = WindowEventType::Resized, .size = m_size});
-                dispatchEvent(WindowEvent{.type = WindowEventType::FramebufferResized, .size = m_framebufferSize});
+                dispatchEvent(WindowEvent{ .type = WindowEventType::Resized, .size = m_size });
+                dispatchEvent(WindowEvent{ .type = WindowEventType::FramebufferResized, .size = m_framebufferSize });
                 break;
             }
             case 16:
-                dispatchEvent(WindowEvent{.type = WindowEventType::CloseRequested});
+                dispatchEvent(WindowEvent{ .type = WindowEventType::CloseRequested });
                 break;
             default:
                 break;
@@ -254,7 +254,7 @@ namespace Zenith
         int height = 0;
         if (RGFW_window_getSize(m_handle, &width, &height) == RGFW_TRUE)
         {
-            m_size = {width, height};
+            m_size = { width, height };
             m_framebufferSize = m_size;
         }
     }
@@ -276,7 +276,7 @@ namespace Zenith
         }
     }
 
-    void RgfwWindowBackend::setTitle(const std::string &title)
+    void RgfwWindowBackend::setTitle(const std::string& title)
     {
         RGFW_window_setName(m_handle, title.c_str());
     }
@@ -301,7 +301,7 @@ namespace Zenith
         return m_framebufferSize.y == 0 ? 0.0f : static_cast<float>(m_framebufferSize.x) / static_cast<float>(m_framebufferSize.y);
     }
 
-    void *RgfwWindowBackend::getNativeHandle() const
+    void* RgfwWindowBackend::getNativeHandle() const
     {
 #if defined(_WIN32)
         return RGFW_window_getHWND(m_handle);
@@ -320,7 +320,7 @@ namespace Zenith
         return m_cursorMode;
     }
 
-    const char *RgfwWindowBackend::getBackendName() const
+    const char* RgfwWindowBackend::getBackendName() const
     {
         return "RGFW";
     }
@@ -330,7 +330,7 @@ namespace Zenith
         return GraphicsApi::Bgfx;
     }
 
-    void RgfwWindowBackend::dispatchEvent(const WindowEvent &event) const
+    void RgfwWindowBackend::dispatchEvent(const WindowEvent& event) const
     {
         if (m_eventCallback)
         {
@@ -339,8 +339,8 @@ namespace Zenith
     }
 
     std::unique_ptr<WindowBackend> createDefaultWindowBackend(
-        const WindowConfig &config,
-        InputState &input,
+        const WindowConfig& config,
+        InputState& input,
         WindowEventCallback eventCallback)
     {
         return std::make_unique<RgfwWindowBackend>(config, input, std::move(eventCallback));
