@@ -14,6 +14,7 @@ namespace Zenith
             if (script && script->behaviour() && !script->started)
             {
                 script->started = true;
+                script->behaviour()->onAdd(*object);
                 script->behaviour()->onStart(*object);
             }
         }
@@ -27,6 +28,8 @@ namespace Zenith
             if (script && script->behaviour())
             {
                 script->behaviour()->onStop(*object);
+                script->behaviour()->onRemove(*object);
+                script->started = false;
             }
         }
     }

@@ -124,6 +124,25 @@ namespace Zenith
         m_pendingComponentAdditions.push_back(PendingComponentAddition{&object, type, std::move(component)});
     }
 
+    namespace
+    {
+        void notifyScriptRemoval(Component *component, GameObject &object)
+        {
+            auto *script = dynamic_cast<Components::ScriptComponent *>(component);
+            if (!script || !script->behaviour())
+            {
+                return;
+            }
+
+            if (script->started)
+            {
+                script->behaviour()->onStop(object);
+            }
+            script->behaviour()->onRemove(object);
+            script->started = false;
+        }
+    } // namespace
+
     Component *Scene::getComponent(GameObject &object, std::type_index type)
     {
         auto storageIt = m_componentRegistry.find(&object);
@@ -174,11 +193,6 @@ namespace Zenith
             }
 
             addition.component->setOwner(addition.object);
-            if (auto *script = dynamic_cast<Components::ScriptComponent *>(addition.component.get()))
-            {
-                script->markAttached();
-            }
-
             storage.emplace(addition.type, std::move(addition.component));
         }
         m_pendingComponentAdditions.clear();
@@ -200,10 +214,7 @@ namespace Zenith
             auto componentIt = storage.find(removal.type);
             if (componentIt != storage.end())
             {
-                if (auto *script = dynamic_cast<Components::ScriptComponent *>(componentIt->second.get()))
-                {
-                    script->markDetached();
-                }
+                notifyScriptRemoval(componentIt->second.get(), *removal.object);
                 storage.erase(componentIt);
             }
         }

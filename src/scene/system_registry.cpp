@@ -56,12 +56,13 @@ namespace Zenith
 
     void SystemRegistry::clear()
     {
+        Scene *scene = m_boundScene;
         stopActiveScene();
         for (auto &system : m_systems)
         {
-            if (m_boundScene)
+            if (scene)
             {
-                system->onRemove(*m_boundScene);
+                system->onRemove(*scene);
             }
         }
         m_systems.clear();

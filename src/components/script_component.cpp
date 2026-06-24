@@ -26,27 +26,4 @@ namespace Zenith::Components
         m_behaviour.reset();
         started = false;
     }
-
-    void ScriptComponent::markAttached()
-    {
-        m_attached = true;
-        if (m_behaviour && owner())
-        {
-            m_behaviour->onAdd(*owner());
-        }
-    }
-
-    void ScriptComponent::markDetached()
-    {
-        if (m_behaviour && owner())
-        {
-            if (started)
-            {
-                m_behaviour->onStop(*owner());
-            }
-            m_behaviour->onRemove(*owner());
-        }
-        m_attached = false;
-        started = false;
-    }
 } // namespace Zenith::Components

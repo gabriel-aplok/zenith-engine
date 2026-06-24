@@ -28,10 +28,6 @@ namespace Zenith
                 auto behaviour = std::make_unique<T>(std::forward<Args>(args)...);
                 T &behaviourRef = *behaviour;
                 m_behaviour = std::move(behaviour);
-                if (m_attached && owner())
-                {
-                    m_behaviour->onAdd(*owner());
-                }
                 return behaviourRef;
             }
 
@@ -50,15 +46,11 @@ namespace Zenith
             }
 
             void clearBehaviour();
-            void markAttached();
-            void markDetached();
 
             bool started = false;
-            bool attached() const { return m_attached; }
 
         private:
             std::unique_ptr<ScriptBehaviour> m_behaviour;
-            bool m_attached = false;
         };
     } // namespace Components
 } // namespace Zenith
