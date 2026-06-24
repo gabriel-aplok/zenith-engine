@@ -66,3 +66,4 @@ Desktop.ini
 # stuff I don't want to commit
 files/sage
 files/examples
+files/cluster
