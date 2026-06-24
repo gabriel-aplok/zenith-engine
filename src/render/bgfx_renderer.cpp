@@ -138,6 +138,7 @@ namespace Zenith::Render
 
     void BgfxRenderer::shutdown()
     {
+        m_targetPool.clear();
         for (auto& [_, mesh] : m_meshes)
         {
             if (bgfx::isValid(mesh.vertexBuffer))
@@ -184,6 +185,15 @@ namespace Zenith::Render
     void BgfxRenderer::resize(const IVector2& framebufferSize)
     {
         m_framebufferSize = framebufferSize;
+    }
+
+    void BgfxRenderer::prepareClusteredLighting(const Render::ClusteredLightingFrame& lighting)
+    {
+        bgfx::dbgTextPrintf(0, 2, 0x0f, "cluster grid %ux%ux%u lights %u",
+            lighting.grid.config.clusterX,
+            lighting.grid.config.clusterY,
+            lighting.grid.config.clusterZ,
+            static_cast<uint32_t>(lighting.lights.size()));
     }
 
     Render::MeshHandle BgfxRenderer::uploadMesh(const Render::MeshData& mesh)
@@ -307,22 +317,65 @@ namespace Zenith::Render
     {
         switch (pass.desc.kind)
         {
+        case Render::RenderPassKind::Shadow:
+            renderShadowPass(pass);
+            break;
         case Render::RenderPassKind::Opaque:
         case Render::RenderPassKind::Transparent:
-            renderOpaquePass(pass);
+            renderSceneLightingPass(pass);
             break;
-        case Render::RenderPassKind::Shadow:
         case Render::RenderPassKind::PostProcess:
+            renderSceneLightingPass(pass);
+            break;
         case Render::RenderPassKind::Debug:
         case Render::RenderPassKind::Compute:
         default:
+            renderOpaquePass(pass);
             break;
         }
     }
 
+    void BgfxRenderer::renderShadowPass(const Render::RenderPass& pass)
+    {
+        if (pass.desc.depthTarget.width == 0 || pass.desc.depthTarget.height == 0)
+        {
+            return;
+        }
+
+        auto handle = m_targetPool.acquire(pass.desc.depthTarget);
+        const auto fb = m_targetPool.framebuffer(handle);
+        if (bgfx::isValid(fb))
+        {
+            bgfx::setViewFrameBuffer(static_cast<uint16_t>(pass.desc.viewId), fb);
+        }
+        bgfx::setViewRect(static_cast<uint16_t>(pass.desc.viewId), 0, 0, pass.desc.depthTarget.width, pass.desc.depthTarget.height);
+        bgfx::setViewClear(static_cast<uint16_t>(pass.desc.viewId), BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
+        bgfx::touch(static_cast<uint16_t>(pass.desc.viewId));
+        m_targetPool.release(handle);
+    }
+
+    void BgfxRenderer::renderSceneLightingPass(const Render::RenderPass& pass)
+    {
+        prepareClusteredLighting(pass.desc.clusteredLighting);
+        renderOpaquePass(pass);
+    }
+
     void BgfxRenderer::renderOpaquePass(const Render::RenderPass& pass)
     {
-        bgfx::setViewRect(static_cast<uint16_t>(pass.desc.viewId), 0, 0, static_cast<uint16_t>(m_framebufferSize.x), static_cast<uint16_t>(m_framebufferSize.y));
+        if (pass.desc.colorTarget.width > 0 && pass.desc.colorTarget.height > 0)
+        {
+            auto handle = m_targetPool.acquire(pass.desc.colorTarget);
+            const auto fb = m_targetPool.framebuffer(handle);
+            if (bgfx::isValid(fb))
+            {
+                bgfx::setViewFrameBuffer(static_cast<uint16_t>(pass.desc.viewId), fb);
+            }
+            m_targetPool.release(handle);
+        }
+
+        const uint16_t width = pass.desc.colorTarget.width > 0 ? pass.desc.colorTarget.width : static_cast<uint16_t>(m_framebufferSize.x);
+        const uint16_t height = pass.desc.colorTarget.height > 0 ? pass.desc.colorTarget.height : static_cast<uint16_t>(m_framebufferSize.y);
+        bgfx::setViewRect(static_cast<uint16_t>(pass.desc.viewId), 0, 0, width, height);
         bgfx::setViewClear(static_cast<uint16_t>(pass.desc.viewId), BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, packColor(Vector4{ 0.08f, 0.09f, 0.11f, 1.0f }), 1.0f, 0);
         bgfx::setViewTransform(static_cast<uint16_t>(pass.desc.viewId), glm::value_ptr(pass.commands.view().view), glm::value_ptr(pass.commands.view().projection));
         bgfx::touch(static_cast<uint16_t>(pass.desc.viewId));

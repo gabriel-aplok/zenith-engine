@@ -7,7 +7,9 @@
 #include "math/math.hpp"
 
 #include "render/irenderer.hpp"
+#include "render/lighting.hpp"
 #include "render/render_graph.hpp"
+#include "render/render_target_pool.hpp"
 
 namespace Zenith::Render
 {
@@ -29,7 +31,10 @@ namespace Zenith::Render
     private:
         void renderGraph(const Render::RenderGraph& graph);
         void renderPass(const Render::RenderPass& pass);
+        void renderShadowPass(const Render::RenderPass& pass);
+        void renderSceneLightingPass(const Render::RenderPass& pass);
         void renderOpaquePass(const Render::RenderPass& pass);
+        void prepareClusteredLighting(const Render::ClusteredLightingFrame& lighting);
 
         struct MeshResource
         {
@@ -52,6 +57,7 @@ namespace Zenith::Render
         bgfx::ProgramHandle m_program{ BGFX_INVALID_HANDLE };
         bgfx::UniformHandle m_tintUniform{ BGFX_INVALID_HANDLE };
         bgfx::UniformHandle m_textureUniform{ BGFX_INVALID_HANDLE };
+        Render::RenderTargetPool m_targetPool;
     };
 
 } // namespace Zenith::Render

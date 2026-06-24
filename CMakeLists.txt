@@ -112,6 +112,7 @@ add_library(zenith-lib
 	"src/render/bgfx_render_context.cpp"
 	"src/render/bgfx_renderer.cpp"
 	"src/render/render_graph.cpp"
+	"src/render/render_target_pool.cpp"
 	"src/render/render_commands.cpp"
 	"src/render/mesh_builder.cpp"
 	"src/log/log.cpp"

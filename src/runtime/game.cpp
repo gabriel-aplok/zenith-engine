@@ -2,6 +2,7 @@
 #include "engine/startup.hpp"
 #include "components/mesh_filter.hpp"
 #include "components/camera.hpp"
+#include "components/light.hpp"
 #include "components/mesh_renderer.hpp"
 #include "components/script_component.hpp"
 #include "components/script_behaviour.hpp"
@@ -68,6 +69,48 @@ namespace Zenith
 
     namespace
     {
+        Render::ClusteredLightingFrame buildClusteredLighting(const Scene& scene)
+        {
+            Render::ClusteredLightingFrame lighting{};
+            lighting.grid.screenSize = Vector2{ static_cast<float>(scene.framebufferSize().x), static_cast<float>(scene.framebufferSize().y) };
+            lighting.grid.clusterSize = Vector2{
+                lighting.grid.config.clusterX > 0 ? lighting.grid.screenSize.x / static_cast<float>(lighting.grid.config.clusterX) : 0.0f,
+                lighting.grid.config.clusterY > 0 ? lighting.grid.screenSize.y / static_cast<float>(lighting.grid.config.clusterY) : 0.0f
+            };
+
+            for (const auto& objectPtr : scene.gameObjects())
+            {
+                const auto& object = *objectPtr;
+                auto* light = object.get_component<Components::Light>();
+                if (light == nullptr || !light->enabled())
+                {
+                    continue;
+                }
+
+                Render::LightData data = light->data();
+                const Matrix4 world = object.transform().localToWorld();
+                data.position = Vector3{ world[3].x, world[3].y, world[3].z };
+                data.direction = object.transform().forward();
+                lighting.lights.push_back(data);
+            }
+
+            return lighting;
+        }
+
+        bool hasShadowCaster(const Scene& scene)
+        {
+            for (const auto& objectPtr : scene.gameObjects())
+            {
+                const auto& object = *objectPtr;
+                auto* light = object.get_component<Components::Light>();
+                if (light != nullptr && light->enabled() && light->data().castsShadow)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         void applyCubeMaterial(Components::MeshRenderer& renderer, Render::TextureHandle primaryTexture, Render::TextureHandle fallbackTexture, const Vector4& tint)
         {
             Render::MaterialState material{};
@@ -275,8 +318,25 @@ namespace Zenith
             }
             m_sceneManager.render(m_frame);
             m_frame.finalize();
-            auto& opaquePass = m_frame.addPass(Render::RenderPassDesc{ .kind = Render::RenderPassKind::Opaque, .viewId = 0 });
-            opaquePass.commands = m_frame.commands;
+            if (auto* scene = m_sceneManager.currentScene())
+            {
+                if (hasShadowCaster(*scene))
+                {
+                    auto& shadowPass = m_frame.addPass(Render::RenderPassDesc{ .kind = Render::RenderPassKind::Shadow, .viewId = 1 });
+                    shadowPass.desc.depthTarget = Render::RenderTargetDesc{
+                        .width = 2048,
+                        .height = 2048,
+                        .format = Render::RenderTargetFormat::Depth24,
+                        .mipLevels = 1,
+                        .allowSampling = true,
+                        .allowRendering = true
+                    };
+                }
+
+                auto& opaquePass = m_frame.addPass(Render::RenderPassDesc{ .kind = Render::RenderPassKind::Opaque, .viewId = 0 });
+                opaquePass.desc.clusteredLighting = buildClusteredLighting(*scene);
+                opaquePass.commands = m_frame.commands;
+            }
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
         }

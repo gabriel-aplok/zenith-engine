@@ -49,8 +49,8 @@ namespace Zenith::Render
     {
         RenderPassKind kind = RenderPassKind::Opaque;
         uint32_t viewId = 0;
-        RenderAttachment color{};
-        RenderAttachment depth{};
+        RenderTargetDesc colorTarget{};
+        RenderTargetDesc depthTarget{};
         ClusteredLightingFrame clusteredLighting{};
     };
 
