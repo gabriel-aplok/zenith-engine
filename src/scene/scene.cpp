@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-#include "components/mesh_filter.hpp"
 #include "components/script_component.hpp"
 
 namespace Zenith
@@ -43,11 +42,6 @@ namespace Zenith
         m_pendingComponentAdditions.clear();
         m_pendingGameObjectDestruction.clear();
         m_pendingComponentRemovals.clear();
-    }
-
-    void Scene::setMeshMetadataProvider(const Render::IMeshMetadataProvider *provider)
-    {
-        m_meshMetadataProvider = provider;
     }
 
     void Scene::addSystem(std::unique_ptr<System> system)
@@ -101,15 +95,6 @@ namespace Zenith
     const Components::Camera *Scene::findCamera() const
     {
         return const_cast<Scene *>(this)->findCamera();
-    }
-
-    std::optional<Render::Bounds> Scene::meshBoundsFor(const Components::MeshFilter &filter) const
-    {
-        if (!m_meshMetadataProvider)
-        {
-            return std::nullopt;
-        }
-        return m_meshMetadataProvider->meshBounds(filter.mesh());
     }
 
     void Scene::render(RenderFrame &frame)

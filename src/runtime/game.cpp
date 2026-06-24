@@ -64,7 +64,6 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_textureCache.setUploader(m_renderer.get());
-            m_scene.setMeshMetadataProvider(&m_meshCache);
             m_scene.addSystem(std::make_unique<TransformSystem>());
             m_scene.addSystem(std::make_unique<ScriptSystem>());
             m_scene.addSystem(std::make_unique<CameraSystem>());
@@ -152,7 +151,7 @@ namespace Zenith
             cube.transform().setPosition(glm::vec3{1.75f, 0.0f, 0.0f});
 
             auto &filter = cube.add_component<Components::MeshFilter>();
-            filter.setMesh(m_cubeMesh.handle());
+            filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
 
             auto &renderer = cube.add_component<Components::MeshRenderer>();
             Render::MaterialState material{};

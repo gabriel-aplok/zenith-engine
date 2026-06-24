@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <string>
-#include <optional>
 #include <typeindex>
 #include <vector>
 
@@ -30,7 +29,6 @@ namespace Zenith
         GameObject &createGameObject(std::string name = {});
         void destroyGameObject(GameObject &object);
         void clear();
-        void setMeshMetadataProvider(const Render::IMeshMetadataProvider *provider);
         void addSystem(std::unique_ptr<System> system);
         const std::vector<std::unique_ptr<GameObject>> &gameObjects() const { return m_gameObjects; }
         std::vector<std::unique_ptr<GameObject>> &gameObjects() { return m_gameObjects; }
@@ -55,9 +53,6 @@ namespace Zenith
         };
         Components::Camera *findCamera();
         const Components::Camera *findCamera() const;
-        std::optional<Render::Bounds> meshBoundsFor(const Components::MeshFilter &filter) const;
-
-        const Render::IMeshMetadataProvider *m_meshMetadataProvider = nullptr;
         glm::ivec2 m_framebufferSize{0, 0};
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
         std::vector<std::unique_ptr<System>> m_systems;

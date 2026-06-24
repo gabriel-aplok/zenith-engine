@@ -74,12 +74,13 @@ namespace Zenith
                 continue;
             }
 
-            const auto bounds = scene.meshBoundsFor(*filter);
+            const auto bounds = filter->bounds();
             if (bounds.has_value())
             {
                 const glm::mat4 &world = object.transform().localToWorld();
-                const glm::vec3 center = glm::vec3(world * glm::vec4(bounds->center, 1.0f));
-                const float radius = bounds->radius() * maxWorldScale(world);
+                const Render::Bounds &meshBounds = *bounds;
+                const glm::vec3 center = glm::vec3(world * glm::vec4(meshBounds.center, 1.0f));
+                const float radius = meshBounds.radius() * maxWorldScale(world);
                 if (!sphereInFrustum(frustum, center, radius))
                 {
                     continue;
