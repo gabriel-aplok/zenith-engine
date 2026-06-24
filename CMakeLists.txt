@@ -28,7 +28,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(lodepng CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_path(RGFW_INCLUDE_DIRS "RGFW.h")
 
@@ -127,7 +126,6 @@ target_link_libraries(zenith-lib
 		bgfx::bgfx
 		bgfx::bimg
 		bgfx::bimg_decode
-		lodepng
 )
 
 add_dependencies(zenith-lib bgfx-shaders)

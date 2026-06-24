@@ -5,7 +5,8 @@
 #include <iterator>
 #include <vector>
 
-#include <lodepng.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #include "render/mesh_builder.hpp"
 #include "resource/baked_mesh_asset.hpp"
@@ -131,21 +132,22 @@ namespace Zenith
 
         std::shared_ptr<ImageSource> loadImageSourceFile(const std::filesystem::path &path)
         {
-            std::vector<unsigned char> encoded;
-            unsigned width = 0;
-            unsigned height = 0;
+            int width = 0;
+            int height = 0;
+            int channels = 0;
 
-            const unsigned decodeError = lodepng::decode(encoded, width, height, path.string());
-            if (decodeError != 0)
+            stbi_uc *pixels = stbi_load(path.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
+            if (!pixels)
             {
                 return nullptr;
             }
 
             ImageSourceData data;
-            data.width = width;
-            data.height = height;
-            data.pixels.assign(encoded.begin(), encoded.end());
-            data.format = path.extension().string();
+            data.width = static_cast<std::uint32_t>(width);
+            data.height = static_cast<std::uint32_t>(height);
+            data.pixels.assign(pixels, pixels + (static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4));
+            data.format = "rgba8";
+            stbi_image_free(pixels);
             return std::make_shared<ImageSource>(std::move(data), path.string());
         }
 
@@ -181,7 +183,7 @@ namespace Zenith
             return nullptr; });
 
         resources.registerLoader<Render::MeshData>([](const std::string &path) -> std::shared_ptr<Render::MeshData>
-                                                    {
+                                                   {
             if (auto builtin = loadBuiltinMeshSource(path))
             {
                 Render::MeshData mesh;
@@ -218,17 +220,17 @@ namespace Zenith
                                                  { return loadBakedMeshAssetFromSource(path); });
 
         resources.registerLoader<TextSource>([](const std::string &path) -> std::shared_ptr<TextSource>
-                                            {
+                                             {
             const std::filesystem::path filePath = path;
             return loadTextAssetFile(filePath); });
 
         resources.registerLoader<BinarySource>([](const std::string &path) -> std::shared_ptr<BinarySource>
-                                                {
+                                               {
             const std::filesystem::path filePath = path;
             return loadBinaryAssetFile(filePath); });
 
         resources.registerLoader<ImageSource>([](const std::string &path) -> std::shared_ptr<ImageSource>
-                                               {
+                                              {
             const std::filesystem::path filePath = path;
             if (!filePath.has_extension())
             {
@@ -244,7 +246,7 @@ namespace Zenith
             return loadImageSourceFile(filePath); });
 
         resources.registerLoader<TextureAsset>([](const std::string &path) -> std::shared_ptr<TextureAsset>
-                                                {
+                                               {
             const std::filesystem::path filePath = path;
             if (!filePath.has_extension())
             {
