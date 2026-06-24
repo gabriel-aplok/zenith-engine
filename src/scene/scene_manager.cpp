@@ -106,6 +106,8 @@ namespace Zenith
             return;
         }
 
+        flushPendingTransitions();
+
         if (m_activeScene)
         {
             m_systems->bindScene(nullptr);
@@ -139,48 +141,72 @@ namespace Zenith
 
     void SceneManager::pushScene(std::unique_ptr<Scene> scene)
     {
-        if (!scene)
-        {
-            return;
-        }
-
-        if (m_activeScene)
-        {
-            m_systems->bindScene(nullptr);
-            m_activeScene->onExit();
-            m_sceneStack.push_back(std::move(m_activeScene));
-        }
-
-        scene->onLoad();
-        m_activeScene = std::move(scene);
-        m_activeScene->onEnter();
-        m_systems->bindScene(m_activeScene.get());
+        m_pendingScene = std::move(scene);
+        m_pendingTransition = PendingTransition::Push;
     }
 
     bool SceneManager::popScene()
     {
-        if (m_sceneStack.empty())
+        if (!m_activeScene || m_sceneStack.empty())
         {
             return false;
         }
 
-        if (m_activeScene)
+        m_pendingTransition = PendingTransition::Pop;
+        return true;
+    }
+
+    void SceneManager::flushPendingTransitions()
+    {
+        if (m_pendingTransition == PendingTransition::None)
         {
-            m_systems->bindScene(nullptr);
-            m_activeScene->onExit();
-            m_activeScene->onUnload();
-            m_activeScene.reset();
+            return;
         }
 
-        m_activeScene = std::move(m_sceneStack.back());
-        m_sceneStack.pop_back();
-        m_activeScene->onEnter();
-        m_systems->bindScene(m_activeScene.get());
-        return true;
+        if (m_pendingTransition == PendingTransition::Push)
+        {
+            if (m_pendingScene)
+            {
+                if (m_activeScene)
+                {
+                    m_systems->bindScene(nullptr);
+                    m_activeScene->onExit();
+                    m_sceneStack.push_back(std::move(m_activeScene));
+                }
+
+                m_pendingScene->onLoad();
+                m_activeScene = std::move(m_pendingScene);
+                m_activeScene->onEnter();
+                m_systems->bindScene(m_activeScene.get());
+            }
+        }
+        else if (m_pendingTransition == PendingTransition::Pop)
+        {
+            if (m_activeScene)
+            {
+                m_systems->bindScene(nullptr);
+                m_activeScene->onExit();
+                m_activeScene->onUnload();
+                m_activeScene.reset();
+            }
+
+            if (!m_sceneStack.empty())
+            {
+                m_activeScene = std::move(m_sceneStack.back());
+                m_sceneStack.pop_back();
+                m_activeScene->onEnter();
+                m_systems->bindScene(m_activeScene.get());
+            }
+        }
+
+        m_pendingScene.reset();
+        m_pendingTransition = PendingTransition::None;
     }
 
     void SceneManager::update(float deltaTime)
     {
+        flushPendingTransitions();
+
         if (!m_activeScene)
         {
             return;
@@ -189,10 +215,13 @@ namespace Zenith
         m_activeScene->flushCommands();
         m_systems->update(*m_activeScene, deltaTime);
         m_activeScene->flushCommands();
+        flushPendingTransitions();
     }
 
     void SceneManager::render(RenderFrame &frame)
     {
+        flushPendingTransitions();
+
         if (!m_activeScene)
         {
             return;
@@ -201,10 +230,14 @@ namespace Zenith
         m_activeScene->flushCommands();
         m_systems->render(*m_activeScene, frame);
         m_activeScene->flushCommands();
+        flushPendingTransitions();
     }
 
     void SceneManager::clear()
     {
+        m_pendingScene.reset();
+        m_pendingTransition = PendingTransition::None;
+
         if (m_activeScene)
         {
             m_systems->bindScene(nullptr);

@@ -76,13 +76,23 @@ namespace Zenith
         void addSystem(std::unique_ptr<System> system);
         void pushScene(std::unique_ptr<Scene> scene);
         bool popScene();
+        void flushPendingTransitions();
         void update(float deltaTime);
         void render(RenderFrame &frame);
         void clear();
 
     private:
+        enum class PendingTransition
+        {
+            None,
+            Push,
+            Pop,
+        };
+
         std::unique_ptr<Scene> m_activeScene;
         std::unique_ptr<SystemRegistry> m_systems;
         std::vector<std::unique_ptr<Scene>> m_sceneStack;
+        std::unique_ptr<Scene> m_pendingScene;
+        PendingTransition m_pendingTransition = PendingTransition::None;
     };
 } // namespace Zenith

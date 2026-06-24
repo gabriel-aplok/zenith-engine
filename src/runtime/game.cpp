@@ -26,7 +26,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <functional>
-#include <vector>
 
 namespace Zenith
 {
@@ -77,6 +76,24 @@ namespace Zenith
         Callback m_onSceneEntered;
     };
 
+    namespace
+    {
+        void applyCubeMaterial(Components::MeshRenderer &renderer, const Render::TextureRef &primaryTexture, const Render::TextureRef &fallbackTexture, const glm::vec4 &tint)
+        {
+            Render::MaterialState material{};
+            material.tint = tint;
+            if (primaryTexture)
+            {
+                material.textureId = primaryTexture.handle().id;
+            }
+            else if (fallbackTexture)
+            {
+                material.textureId = fallbackTexture.handle().id;
+            }
+            renderer.setMaterial(material);
+        }
+    } // namespace
+
     class GameApplication final : public Application
     {
     public:
@@ -124,17 +141,7 @@ namespace Zenith
             filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
 
             auto &renderer = cube.add_component<Components::MeshRenderer>();
-            Render::MaterialState material{};
-            material.tint = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
-            if (m_cubeTexture)
-            {
-                material.textureId = m_cubeTexture.handle().id;
-            }
-            else if (m_checkerTexture)
-            {
-                material.textureId = m_checkerTexture.handle().id;
-            }
-            renderer.setMaterial(material);
+            applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
 
             return scene;
         }
@@ -175,21 +182,7 @@ namespace Zenith
                         filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
 
                         auto &renderer = cube.add_component<Components::MeshRenderer>();
-                        Render::MaterialState material{};
-                        material.tint = glm::vec4{
-                            0.35f + 0.1f * static_cast<float>((x + 3) % 4),
-                            0.45f + 0.1f * static_cast<float>((y + 2) % 3),
-                            0.65f + 0.05f * static_cast<float>((z + 3) % 4),
-                            1.0f};
-                        if (m_cubeTexture)
-                        {
-                            material.textureId = m_cubeTexture.handle().id;
-                        }
-                        else if (m_checkerTexture)
-                        {
-                            material.textureId = m_checkerTexture.handle().id;
-                        }
-                        renderer.setMaterial(material);
+                        applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, glm::vec4{0.35f + 0.1f * static_cast<float>((x + 3) % 4), 0.45f + 0.1f * static_cast<float>((y + 2) % 3), 0.65f + 0.05f * static_cast<float>((z + 3) % 4), 1.0f});
                     }
                 }
             }
@@ -284,8 +277,7 @@ namespace Zenith
             m_sceneManager.addSystem(std::make_unique<CameraSystem>());
             m_sceneManager.addSystem(std::make_unique<RenderSystem>());
             m_sceneManager.setScene(buildMainScene());
-            m_scene = m_sceneManager.currentScene();
-            if (!m_scene)
+            if (!m_sceneManager.currentScene())
             {
                 Log::Error("Failed to create initial scene");
                 requestQuit();
@@ -298,15 +290,15 @@ namespace Zenith
             if (m_cubeSceneLoadJob && m_cubeSceneLoadJob->ready())
             {
                 m_sceneManager.pushScene(m_cubeSceneLoadJob->takeScene());
-                m_scene = m_sceneManager.currentScene();
                 m_cubeSceneLoadJob.reset();
             }
 
-            if (m_scene)
+            if (auto *scene = m_sceneManager.currentScene())
             {
-                m_scene->setInputState(&getInput());
-                m_sceneManager.update(deltaTime);
+                scene->setInputState(&getInput());
             }
+
+            m_sceneManager.update(deltaTime);
         }
 
         void onRender() override
@@ -318,12 +310,12 @@ namespace Zenith
 
             m_renderContext->beginFrame();
             m_frame.begin();
-            if (m_scene)
+            if (auto *scene = m_sceneManager.currentScene())
             {
-                m_scene->setFramebufferSize(m_renderContext->framebufferSize());
-                m_scene->setInputState(&getInput());
-                m_sceneManager.render(m_frame);
+                scene->setFramebufferSize(m_renderContext->framebufferSize());
+                scene->setInputState(&getInput());
             }
+            m_sceneManager.render(m_frame);
             m_frame.finalize();
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
@@ -365,7 +357,6 @@ namespace Zenith
         Render::TextureRef m_checkerTexture{};
         SceneManager m_sceneManager{};
         std::unique_ptr<SceneManager::SceneLoadJob> m_cubeSceneLoadJob{};
-        Scene *m_scene = nullptr;
         RenderFrame m_frame{};
     };
 
