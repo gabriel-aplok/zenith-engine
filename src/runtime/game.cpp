@@ -45,6 +45,97 @@ namespace Zenith
             : Application(config) {}
 
     protected:
+        std::unique_ptr<Scene> buildMainScene()
+        {
+            auto scene = std::make_unique<Scene>();
+
+            GameObject &cameraObject = scene->createGameObject("Main Camera");
+            cameraObject.transform().setPosition(glm::vec3{-10.0f, 0.0f, 6.0f});
+            cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+
+            auto &camera = cameraObject.add_component<Components::Camera>();
+            camera.setFieldOfView(45.0f);
+            camera.setNearClipPlane(0.1f);
+            camera.setFarClipPlane(100.0f);
+            camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
+            camera.setBackgroundColor(glm::vec4{0.08f, 0.09f, 0.11f, 1.0f});
+
+            GameObject &marker = scene->createGameObject("Pivot");
+            marker.transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
+            auto &script = marker.add_component<Components::ScriptComponent>();
+            script.setBehaviour<DemoRotateBehaviour>();
+
+            GameObject &cube = scene->createGameObject("Cube");
+            cube.setParent(&marker);
+            cube.transform().setPosition(glm::vec3{1.75f, 0.0f, 0.0f});
+            auto &filter = cube.add_component<Components::MeshFilter>();
+            filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
+
+            auto &renderer = cube.add_component<Components::MeshRenderer>();
+            Render::MaterialState material{};
+            material.tint = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+            if (m_cubeTexture)
+            {
+                material.textureId = m_cubeTexture.handle().id;
+            }
+            else if (m_checkerTexture)
+            {
+                material.textureId = m_checkerTexture.handle().id;
+            }
+            renderer.setMaterial(material);
+
+            return scene;
+        }
+
+        std::unique_ptr<Scene> buildCubeScene()
+        {
+            auto scene = std::make_unique<Scene>();
+
+            GameObject &cameraObject = scene->createGameObject("Cube Camera");
+            cameraObject.transform().setPosition(glm::vec3{-16.0f, 10.0f, 16.0f});
+            cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+
+            auto &camera = cameraObject.add_component<Components::Camera>();
+            camera.setFieldOfView(50.0f);
+            camera.setNearClipPlane(0.1f);
+            camera.setFarClipPlane(200.0f);
+            camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
+            camera.setBackgroundColor(glm::vec4{0.05f, 0.05f, 0.08f, 1.0f});
+
+            for (int x = -3; x <= 3; ++x)
+            {
+                for (int y = -2; y <= 2; ++y)
+                {
+                    for (int z = -3; z <= 3; ++z)
+                    {
+                        GameObject &cube = scene->createGameObject("Cube");
+                        cube.transform().setPosition(glm::vec3{static_cast<float>(x) * 2.5f, static_cast<float>(y) * 2.0f, static_cast<float>(z) * 2.5f});
+                        auto &filter = cube.add_component<Components::MeshFilter>();
+                        filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
+
+                        auto &renderer = cube.add_component<Components::MeshRenderer>();
+                        Render::MaterialState material{};
+                        material.tint = glm::vec4{
+                            0.35f + 0.1f * static_cast<float>((x + 3) % 4),
+                            0.45f + 0.1f * static_cast<float>((y + 2) % 3),
+                            0.65f + 0.05f * static_cast<float>((z + 3) % 4),
+                            1.0f};
+                        if (m_cubeTexture)
+                        {
+                            material.textureId = m_cubeTexture.handle().id;
+                        }
+                        else if (m_checkerTexture)
+                        {
+                            material.textureId = m_checkerTexture.handle().id;
+                        }
+                        renderer.setMaterial(material);
+                    }
+                }
+            }
+
+            return scene;
+        }
+
         void onInit() override
         {
             m_renderContext = createRenderContext(getWindow(), getConfig().debug);
@@ -65,24 +156,6 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_textureCache.setUploader(m_renderer.get());
-            m_sceneManager.addSystem(std::make_unique<TransformSystem>());
-            m_sceneManager.addSystem(std::make_unique<ScriptSystem>());
-            m_sceneManager.addSystem(std::make_unique<CameraSystem>());
-            m_sceneManager.addSystem(std::make_unique<RenderSystem>());
-            m_sceneManager.prepareScene(std::make_unique<Scene>());
-            if (!m_sceneManager.commitScene())
-            {
-                Log::Error("Failed to create initial scene");
-                requestQuit();
-                return;
-            }
-            m_scene = m_sceneManager.currentScene();
-            if (!m_scene)
-            {
-                Log::Error("Failed to create initial scene");
-                requestQuit();
-                return;
-            }
             registerStandardResourceLoaders(m_resources);
 
             m_vertexShaderSource = m_resources.load<TextSource>("resources/shaders/mesh_vs.sc");
@@ -145,50 +218,45 @@ namespace Zenith
                 m_checkerTexture = m_textureCache.acquireRef("demo/checker", checker);
             }
 
-            GameObject &cameraObject = m_scene->createGameObject("Main Camera");
-            cameraObject.transform().setPosition(glm::vec3{-10.0f, 0.0f, 6.0f});
-            cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
-
-            auto &camera = cameraObject.add_component<Components::Camera>();
-            camera.setFieldOfView(45.0f);
-            camera.setNearClipPlane(0.1f);
-            camera.setFarClipPlane(100.0f);
-            camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
-            camera.setBackgroundColor(glm::vec4{0.08f, 0.09f, 0.11f, 1.0f});
-
-            m_pivotObject = &m_scene->createGameObject("Pivot");
-            m_pivotObject->transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
-            auto &script = m_pivotObject->add_component<Components::ScriptComponent>();
-            script.setBehaviour<DemoRotateBehaviour>();
-
-            GameObject &cube = m_scene->createGameObject("Cube");
-            cube.setParent(m_pivotObject);
-            cube.transform().setPosition(glm::vec3{1.75f, 0.0f, 0.0f});
-
-            auto &filter = cube.add_component<Components::MeshFilter>();
-            filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
-
-            auto &renderer = cube.add_component<Components::MeshRenderer>();
-            Render::MaterialState material{};
-            material.tint = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
-            if (m_cubeTexture)
+            m_sceneManager.addSystem(std::make_unique<TransformSystem>());
+            m_sceneManager.addSystem(std::make_unique<ScriptSystem>());
+            m_sceneManager.addSystem(std::make_unique<CameraSystem>());
+            m_sceneManager.addSystem(std::make_unique<RenderSystem>());
+            m_sceneManager.prepareScene(buildMainScene());
+            if (!m_sceneManager.commitScene())
             {
-                material.textureId = m_cubeTexture.handle().id;
+                Log::Error("Failed to create initial scene");
+                requestQuit();
+                return;
             }
-            else if (m_checkerTexture)
+            m_scene = m_sceneManager.currentScene();
+            m_isMainScene = true;
+            if (!m_scene)
             {
-                material.textureId = m_checkerTexture.handle().id;
+                Log::Error("Failed to create initial scene");
+                requestQuit();
+                return;
             }
-            renderer.setMaterial(material);
         }
 
         void onUpdate(float deltaTime) override
         {
-            if (m_sceneManager.hasPendingScene())
+            if (m_isMainScene && getInput().isKeyPressed(KeyCode::Space) && !m_sceneManager.hasPendingScene() && !m_cubeSceneLoadJob)
             {
+                m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>(
+                    m_sceneManager.prepareSceneAsync([this]()
+                                                     { return buildCubeScene(); }));
+            }
+
+            if (m_cubeSceneLoadJob && m_cubeSceneLoadJob->ready())
+            {
+                m_sceneManager.acceptPreparedScene(*m_cubeSceneLoadJob);
                 m_sceneManager.commitScene();
                 m_scene = m_sceneManager.currentScene();
+                m_isMainScene = false;
+                m_cubeSceneLoadJob.reset();
             }
+
             if (m_scene)
             {
                 m_sceneManager.update(deltaTime);
@@ -216,6 +284,11 @@ namespace Zenith
 
         void onShutdown() override
         {
+            if (m_cubeSceneLoadJob)
+            {
+                m_cubeSceneLoadJob->wait();
+                m_cubeSceneLoadJob.reset();
+            }
             m_sceneManager.clear();
             m_cubeMesh.reset();
             m_cubeTexture.reset();
@@ -244,9 +317,10 @@ namespace Zenith
         Render::TextureRef m_cubeTexture{};
         Render::TextureRef m_checkerTexture{};
         SceneManager m_sceneManager{};
+        std::unique_ptr<SceneManager::SceneLoadJob> m_cubeSceneLoadJob{};
         Scene *m_scene = nullptr;
         RenderFrame m_frame{};
-        GameObject *m_pivotObject = nullptr;
+        bool m_isMainScene = true;
     };
 
 } // namespace Zenith
