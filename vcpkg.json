@@ -4,10 +4,9 @@
   "dependencies": [
     {
       "name": "bgfx",
-      "features": [
-        "tools"
-      ]
+      "features": ["tools"]
     },
+    "sdl2",
     "glfw3",
     "glm",
     "lodepng"

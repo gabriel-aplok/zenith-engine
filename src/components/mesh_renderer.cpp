@@ -9,15 +9,11 @@ namespace Zenith::Components
     {
         auto *filter = gameObject().get_component<MeshFilter>();
         if (!filter)
-        {
             return;
-        }
 
         const Render::MeshHandle mesh = filter->mesh();
         if (mesh.id == 0)
-        {
             return;
-        }
 
         frame.submitMesh(mesh, gameObject().transform().worldMatrix(), m_material);
     }
