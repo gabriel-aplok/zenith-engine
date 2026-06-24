@@ -1,138 +1,94 @@
 #pragma once
 
-#include <functional>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <typeindex>
+#include <type_traits>
 #include <unordered_map>
 
-#include "resource/resource_handle.hpp"
-#include "resource/resource_id.hpp"
+#include "resource/import_metadata.hpp"
+#include "resource/model_loader.hpp"
+#include "resource/resource.hpp"
+#include "resource/resource_path.hpp"
+#include "resource/virtual_file_system.hpp"
 
 namespace Zenith
 {
     class ResourceManager
     {
     public:
-        template <typename T>
-        using Loader = std::function<std::shared_ptr<T>(const std::string &path)>;
+        ResourceManager();
+
+        VirtualFileSystem& vfs() { return m_vfs; }
+        const VirtualFileSystem& vfs() const { return m_vfs; }
+
+        ModelLoaderRegistry& modelLoaders() { return m_modelLoaders; }
+        const ModelLoaderRegistry& modelLoaders() const { return m_modelLoaders; }
+
+        void setProjectRoot(std::filesystem::path root);
+        void setUserRoot(std::filesystem::path root);
+        void setEditorRoot(std::filesystem::path root);
 
         template <typename T>
-        void registerLoader(Loader<T> loader)
+        std::shared_ptr<T> load(const std::string& path)
         {
-            m_loaders[typeid(T)] = [loader = std::move(loader)](const std::string &path) -> std::shared_ptr<void>
-            {
-                return loader ? loader(path) : nullptr;
-            };
+            return load<T>(ResourcePath::parse(path));
         }
 
         template <typename T>
-        ResourceHandle<T> load(const std::string &path)
+        std::shared_ptr<T> load(const ResourcePath& path)
         {
-            return load<T>(ResourceId{path});
+            static_assert(std::is_base_of_v<Resource, T>, "T must derive from Resource");
+            const auto resource = loadTyped(std::type_index(typeid(T)), ResourceTraits<T>::kind, path);
+            return std::dynamic_pointer_cast<T>(resource);
         }
 
         template <typename T>
-        ResourceHandle<T> load(const ResourceId &id)
+        bool unload(const std::string& path)
         {
-            const std::string &path = id.path();
-            auto &cache = m_entries[typeid(T)];
-            const auto it = cache.resources.find(path);
-            if (it != cache.resources.end())
-            {
-                if (auto existing = it->second.lock())
-                {
-                    return ResourceHandle<T>{std::static_pointer_cast<T>(existing), path};
-                }
-            }
-
-            const auto loaderIt = m_loaders.find(typeid(T));
-            if (loaderIt == m_loaders.end())
-            {
-                return {};
-            }
-
-            std::shared_ptr<void> resource = loaderIt->second(path);
-            if (!resource)
-            {
-                return {};
-            }
-
-            cache.resources[path] = resource;
-            return ResourceHandle<T>{std::static_pointer_cast<T>(resource), path};
+            return unload<T>(ResourcePath::parse(path));
         }
 
         template <typename T>
-        ResourceHandle<T> store(const std::string &path, std::shared_ptr<T> resource)
+        bool unload(const ResourcePath& path)
         {
-            return store<T>(ResourceId{path}, std::move(resource));
+            static_assert(std::is_base_of_v<Resource, T>, "T must derive from Resource");
+            return unloadTyped(std::type_index(typeid(T)), path);
         }
 
         template <typename T>
-        ResourceHandle<T> store(const ResourceId &id, std::shared_ptr<T> resource)
+        bool has(const std::string& path) const
         {
-            if (!resource)
-            {
-                return {};
-            }
-
-            const std::string &path = id.path();
-            auto &cache = m_entries[typeid(T)];
-            cache.resources[path] = resource;
-            return ResourceHandle<T>{std::move(resource), path};
+            return has<T>(ResourcePath::parse(path));
         }
 
         template <typename T>
-        bool unload(const std::string &path)
+        bool has(const ResourcePath& path) const
         {
-            return unload<T>(ResourceId{path});
+            static_assert(std::is_base_of_v<Resource, T>, "T must derive from Resource");
+            return hasTyped(std::type_index(typeid(T)), path);
         }
 
-        template <typename T>
-        bool unload(const ResourceId &id)
-        {
-            const std::string &path = id.path();
-            const auto it = m_entries.find(typeid(T));
-            if (it == m_entries.end())
-            {
-                return false;
-            }
-
-            return it->second.resources.erase(path) > 0;
-        }
-
-        void clear()
-        {
-            m_entries.clear();
-        }
-
-        template <typename T>
-        bool has(const std::string &path) const
-        {
-            return has<T>(ResourceId{path});
-        }
-
-        template <typename T>
-        bool has(const ResourceId &id) const
-        {
-            const std::string &path = id.path();
-            const auto it = m_entries.find(typeid(T));
-            if (it == m_entries.end())
-            {
-                return false;
-            }
-
-            const auto resourceIt = it->second.resources.find(path);
-            return resourceIt != it->second.resources.end() && !resourceIt->second.expired();
-        }
+        void clear();
+        void importAllStaleAssets();
 
     private:
-        struct TypeEntry
-        {
-            std::unordered_map<std::string, std::weak_ptr<void>> resources;
-        };
+        using CacheBucket = std::unordered_map<std::string, std::weak_ptr<Resource>>;
 
-        std::unordered_map<std::type_index, TypeEntry> m_entries;
-        std::unordered_map<std::type_index, std::function<std::shared_ptr<void>(const std::string &path)>> m_loaders;
+        std::shared_ptr<Resource> loadTyped(std::type_index typeIndex, ResourceKind kind, const ResourcePath& path);
+        bool unloadTyped(std::type_index typeIndex, const ResourcePath& path);
+        bool hasTyped(std::type_index typeIndex, const ResourcePath& path) const;
+        std::shared_ptr<Resource> loadBuiltin(ResourceKind kind, const ResourcePath& path);
+        std::shared_ptr<Resource> loadFromSource(ResourceKind kind, const ResourcePath& path, const std::filesystem::path& sourcePath);
+        std::shared_ptr<Resource> loadFromBaked(ResourceKind kind, const ResourcePath& path, const std::filesystem::path& sourcePath, const std::filesystem::path& bakedPath, const ImportMetadata& metadata);
+        std::shared_ptr<Resource> reimport(ResourceKind kind, const ResourcePath& path, const std::filesystem::path& sourcePath, const std::filesystem::path& bakedPath, const std::filesystem::path& metadataPath);
+        std::string cacheKey(ResourceKind kind, const ResourcePath& path) const;
+        CacheBucket& cacheBucket(std::type_index typeIndex);
+        const CacheBucket& cacheBucket(std::type_index typeIndex) const;
+
+        VirtualFileSystem m_vfs;
+        ModelLoaderRegistry m_modelLoaders;
+        std::unordered_map<std::type_index, CacheBucket> m_cache;
     };
 } // namespace Zenith

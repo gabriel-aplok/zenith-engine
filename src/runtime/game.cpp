@@ -6,12 +6,8 @@
 #include "components/script_component.hpp"
 #include "components/script_behaviour.hpp"
 #include "log/log.hpp"
-#include "resource/baked_mesh_asset.hpp"
-#include "resource/image_source.hpp"
-#include "resource/resource_loaders.hpp"
+#include "resource/resource.hpp"
 #include "resource/resource_manager.hpp"
-#include "resource/text_source.hpp"
-#include "resource/texture_asset.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
 #include "render/mesh_cache.hpp"
@@ -31,9 +27,9 @@ namespace Zenith
     class DemoRotateBehaviour final : public ScriptBehaviour
     {
     public:
-        void onUpdate(GameObject &owner, float deltaTime) override
+        void onUpdate(GameObject& owner, float deltaTime) override
         {
-            owner.transform().rotateEulerDegrees(Vector3{0.0f, 45.0f * deltaTime, 0.0f});
+            owner.transform().rotateEulerDegrees(Vector3{ 0.0f, 45.0f * deltaTime, 0.0f });
         }
     };
 
@@ -44,30 +40,27 @@ namespace Zenith
 
         SceneSwitchBehaviour() = default;
         SceneSwitchBehaviour(Callback onSpacePressed, Callback onSceneEntered)
-            : m_onSpacePressed(std::move(onSpacePressed)), m_onSceneEntered(std::move(onSceneEntered)) {}
+            : m_onSpacePressed(std::move(onSpacePressed)), m_onSceneEntered(std::move(onSceneEntered)) {
+        }
 
-        void onStart(GameObject &owner) override
+        void onStart(GameObject& owner) override
         {
             if (m_onSceneEntered)
-            {
                 m_onSceneEntered();
-            }
+
             (void)owner;
         }
 
-        void onUpdate(GameObject &owner, float deltaTime) override
+        void onUpdate(GameObject& owner, float deltaTime) override
         {
             (void)deltaTime;
-            auto *scene = owner.scene();
+            auto* scene = owner.scene();
             if (!scene || !scene->input())
-            {
                 return;
-            }
 
             if (scene->input()->isKeyPressed(KeyCode::Space) && m_onSpacePressed)
-            {
                 m_onSpacePressed();
-            }
+
         }
 
     private:
@@ -77,18 +70,16 @@ namespace Zenith
 
     namespace
     {
-        void applyCubeMaterial(Components::MeshRenderer &renderer, const Render::TextureRef &primaryTexture, const Render::TextureRef &fallbackTexture, const Vector4 &tint)
+        void applyCubeMaterial(Components::MeshRenderer& renderer, const Render::TextureRef& primaryTexture, const Render::TextureRef& fallbackTexture, const Vector4& tint)
         {
             Render::MaterialState material{};
             material.tint = tint;
+
             if (primaryTexture)
-            {
                 material.textureId = primaryTexture.handle().id;
-            }
             else if (fallbackTexture)
-            {
                 material.textureId = fallbackTexture.handle().id;
-            }
+
             renderer.setMaterial(material);
         }
     } // namespace
@@ -96,16 +87,17 @@ namespace Zenith
     class GameApplication final : public Application
     {
     public:
-        explicit GameApplication(const ApplicationConfig &config)
-            : Application(config) {}
+        explicit GameApplication(const ApplicationConfig& config)
+            : Application(config) {
+        }
 
     protected:
         std::unique_ptr<Scene> buildMainScene()
         {
             auto scene = std::make_unique<Scene>();
 
-            GameObject &controller = scene->createGameObject("Scene Controller");
-            auto &controllerScript = controller.add_component<Components::ScriptComponent>();
+            GameObject& controller = scene->createGameObject("Scene Controller");
+            auto& controllerScript = controller.add_component<Components::ScriptComponent>();
             controllerScript.setBehaviour<SceneSwitchBehaviour>(
                 [this]()
                 {
@@ -113,30 +105,39 @@ namespace Zenith
                 },
                 []() {});
 
-            GameObject &cameraObject = scene->createGameObject("Main Camera");
-            cameraObject.transform().setPosition(Vector3{-10.0f, 0.0f, 6.0f});
-            cameraObject.transform().lookAt(Vector3{0.0f, 0.0f, 0.0f});
+            GameObject& cameraObject = scene->createGameObject("Main Camera");
+            cameraObject.transform().setPosition(Vector3{ -10.0f, 0.0f, 6.0f });
+            cameraObject.transform().lookAt(Vector3{ 0.0f, 0.0f, 0.0f });
 
-            auto &camera = cameraObject.add_component<Components::Camera>();
+            auto& camera = cameraObject.add_component<Components::Camera>();
             camera.setFieldOfView(45.0f);
             camera.setNearClipPlane(0.1f);
             camera.setFarClipPlane(100.0f);
             camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
-            camera.setBackgroundColor(Vector4{0.08f, 0.09f, 0.11f, 1.0f});
+            camera.setBackgroundColor(Vector4{ 0.08f, 0.09f, 0.11f, 1.0f });
 
-            GameObject &marker = scene->createGameObject("Pivot");
-            marker.transform().setPosition(Vector3{0.0f, 0.0f, 0.0f});
-            auto &script = marker.add_component<Components::ScriptComponent>();
+            GameObject& marker = scene->createGameObject("Pivot");
+            marker.transform().setPosition(Vector3{ 0.0f, 0.0f, 0.0f });
+            auto& script = marker.add_component<Components::ScriptComponent>();
             script.setBehaviour<DemoRotateBehaviour>();
 
-            GameObject &cube = scene->createGameObject("Cube");
+            GameObject& cube = scene->createGameObject("Cube");
             cube.setParent(&marker);
-            cube.transform().setPosition(Vector3{1.75f, 0.0f, 0.0f});
-            auto &filter = cube.add_component<Components::MeshFilter>();
-            filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
+            cube.transform().setPosition(Vector3{ 1.75f, 0.0f, 0.0f });
+            auto& filter = cube.add_component<Components::MeshFilter>();
+            filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->meshes.front().mesh.bounds);
 
-            auto &renderer = cube.add_component<Components::MeshRenderer>();
-            applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+            auto& renderer = cube.add_component<Components::MeshRenderer>();
+            applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+
+            GameObject& car = scene->createGameObject("car");
+            car.setParent(&marker);
+            car.transform().setPosition(Vector3{ 1.75f, 0.0f, 3.0f });
+            auto& filter2 = car.add_component<Components::MeshFilter>();
+            filter2.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->meshes.front().mesh.bounds);
+
+            auto& renderer2 = car.add_component<Components::MeshRenderer>();
+            applyCubeMaterial(renderer2, m_cubeTexture, m_checkerTexture, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
 
             return scene;
         }
@@ -145,8 +146,8 @@ namespace Zenith
         {
             auto scene = std::make_unique<Scene>();
 
-            GameObject &controller = scene->createGameObject("Scene Controller");
-            auto &controllerScript = controller.add_component<Components::ScriptComponent>();
+            GameObject& controller = scene->createGameObject("Scene Controller");
+            auto& controllerScript = controller.add_component<Components::ScriptComponent>();
             controllerScript.setBehaviour<SceneSwitchBehaviour>(
                 [this]()
                 {
@@ -154,16 +155,16 @@ namespace Zenith
                 },
                 []() {});
 
-            GameObject &cameraObject = scene->createGameObject("Cube Camera");
-            cameraObject.transform().setPosition(Vector3{-15.0f, 10.0f, 16.0f});
-            cameraObject.transform().lookAt(Vector3{0.0f, 0.0f, 0.0f});
+            GameObject& cameraObject = scene->createGameObject("Cube Camera");
+            cameraObject.transform().setPosition(Vector3{ -15.0f, 10.0f, 16.0f });
+            cameraObject.transform().lookAt(Vector3{ 0.0f, 0.0f, 0.0f });
 
-            auto &camera = cameraObject.add_component<Components::Camera>();
+            auto& camera = cameraObject.add_component<Components::Camera>();
             camera.setFieldOfView(50.0f);
             camera.setNearClipPlane(0.1f);
             camera.setFarClipPlane(200.0f);
             camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
-            camera.setBackgroundColor(Vector4{0.05f, 0.05f, 0.08f, 1.0f});
+            camera.setBackgroundColor(Vector4{ 0.05f, 0.05f, 0.08f, 1.0f });
 
             for (int x = -3; x <= 3; ++x)
             {
@@ -171,13 +172,13 @@ namespace Zenith
                 {
                     for (int z = -3; z <= 3; ++z)
                     {
-                        GameObject &cube = scene->createGameObject("Cube");
-                        cube.transform().setPosition(Vector3{static_cast<float>(x) * 2.5f, static_cast<float>(y) * 2.0f, static_cast<float>(z) * 2.5f});
-                        auto &filter = cube.add_component<Components::MeshFilter>();
-                        filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
+                        GameObject& cube = scene->createGameObject("Cube");
+                        cube.transform().setPosition(Vector3{ static_cast<float>(x) * 2.5f, static_cast<float>(y) * 2.0f, static_cast<float>(z) * 2.5f });
+                        auto& filter = cube.add_component<Components::MeshFilter>();
+                        filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->meshes.front().mesh.bounds);
 
-                        auto &renderer = cube.add_component<Components::MeshRenderer>();
-                        applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{0.35f + 0.1f * static_cast<float>((x + 3) % 4), 0.45f + 0.1f * static_cast<float>((y + 2) % 3), 0.65f + 0.05f * static_cast<float>((z + 3) % 4), 1.0f});
+                        auto& renderer = cube.add_component<Components::MeshRenderer>();
+                        applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{ 0.35f + 0.1f * static_cast<float>((x + 3) % 4), 0.45f + 0.1f * static_cast<float>((y + 2) % 3), 0.65f + 0.05f * static_cast<float>((z + 3) % 4), 1.0f });
                     }
                 }
             }
@@ -205,28 +206,21 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_textureCache.setUploader(m_renderer.get());
-            registerStandardResourceLoaders(m_resources);
+            m_resources.importAllStaleAssets();
 
-            m_vertexShaderSource = m_resources.load<TextSource>("resources/shaders/mesh_vs.sc");
+            m_vertexShaderSource = m_resources.load<ShaderResource>("res://shaders/mesh_vs.sc");
             if (m_vertexShaderSource)
-            {
-                Log::Info("Loaded vertex shader source: {} bytes", m_vertexShaderSource->data().size());
-            }
+                Log::Info("Loaded vertex shader source: {} bytes", m_vertexShaderSource->source.size());
 
-            m_cubeMeshAsset = m_resources.load<BakedMeshAsset>("resources/models/m1014.obj");
+            m_cubeMeshAsset = m_resources.load<ModelResource>("builtin://cube");
             if (!m_cubeMeshAsset)
             {
-                Log::Error("Failed to load file-backed cube resource; falling back to builtin");
-                m_cubeMeshAsset = m_resources.load<BakedMeshAsset>("builtin://cube");
-                if (!m_cubeMeshAsset)
-                {
-                    Log::Error("Failed to load demo cube resource");
-                    requestQuit();
-                    return;
-                }
+                Log::Error("Failed to load demo cube resource");
+                requestQuit();
+                return;
             }
 
-            m_cubeMesh = m_meshCache.acquireRef("demo/cube", m_cubeMeshAsset->mesh);
+            m_cubeMesh = m_meshCache.acquireRef("demo/cube", m_cubeMeshAsset->meshes.front().mesh);
             if (!m_cubeMesh)
             {
                 Log::Error("Failed to create demo meshes");
@@ -234,37 +228,15 @@ namespace Zenith
                 return;
             }
 
-            m_cubeTextureAsset = m_resources.load<TextureAsset>("resources/models/m1014.png");
+            m_cubeTextureAsset = m_resources.load<TextureResource>("res://textures/texel_checker.png");
             if (m_cubeTextureAsset)
-            {
-                m_cubeTexture = m_textureCache.acquireRef("demo/cube_diffuse", m_cubeTextureAsset->source.data());
-            }
+                m_cubeTexture = m_textureCache.acquireRef("demo/cube_diffuse", m_cubeTextureAsset->image);
 
             if (!m_cubeTexture)
             {
-                ImageSourceData checker{};
-                checker.width = 2;
-                checker.height = 2;
-                checker.format = "rgba8";
-                checker.pixels = {
-                    255,
-                    255,
-                    255,
-                    255,
-                    32,
-                    32,
-                    32,
-                    255,
-                    32,
-                    32,
-                    32,
-                    255,
-                    255,
-                    255,
-                    255,
-                    255,
-                };
-                m_checkerTexture = m_textureCache.acquireRef("demo/checker", checker);
+                auto checkerResource = m_resources.load<TextureResource>("builtin://checker");
+                if (checkerResource)
+                    m_checkerTexture = m_textureCache.acquireRef("demo/checker", checkerResource->image);
             }
 
             m_sceneManager.addSystem(std::make_unique<TransformSystem>());
@@ -282,10 +254,8 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            if (auto *scene = m_sceneManager.currentScene())
-            {
+            if (auto* scene = m_sceneManager.currentScene())
                 scene->setInputState(&getInput());
-            }
 
             m_sceneManager.update(deltaTime);
         }
@@ -293,13 +263,11 @@ namespace Zenith
         void onRender() override
         {
             if (!m_renderer || !m_renderContext)
-            {
                 return;
-            }
 
             m_renderContext->beginFrame();
             m_frame.begin();
-            if (auto *scene = m_sceneManager.currentScene())
+            if (auto* scene = m_sceneManager.currentScene())
             {
                 scene->setFramebufferSize(m_renderContext->framebufferSize());
                 scene->setInputState(&getInput());
@@ -333,9 +301,9 @@ namespace Zenith
         ResourceManager m_resources;
         Render::RenderMeshCache m_meshCache;
         Render::TextureCache m_textureCache;
-        ResourceHandle<TextSource> m_vertexShaderSource{};
-        ResourceHandle<BakedMeshAsset> m_cubeMeshAsset{};
-        ResourceHandle<TextureAsset> m_cubeTextureAsset{};
+        std::shared_ptr<ShaderResource> m_vertexShaderSource{};
+        std::shared_ptr<ModelResource> m_cubeMeshAsset{};
+        std::shared_ptr<TextureResource> m_cubeTextureAsset{};
         Render::MeshRef m_cubeMesh{};
         Render::TextureRef m_cubeTexture{};
         Render::TextureRef m_checkerTexture{};
@@ -345,10 +313,10 @@ namespace Zenith
 
 } // namespace Zenith
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     Zenith::Log::Init();
-    Zenith::GameApplication app{Zenith::parseApplicationConfig(argc, argv)};
+    Zenith::GameApplication app{ Zenith::parseApplicationConfig(argc, argv) };
     app.run();
     return 0;
 }

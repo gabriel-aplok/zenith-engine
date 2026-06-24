@@ -2,16 +2,16 @@
 
 #include <utility>
 
-#include "resource/image_source.hpp"
+#include "resource/resource.hpp"
 
 namespace Zenith::Render
 {
-    void TextureCache::setUploader(ITextureUploader *uploader)
+    void TextureCache::setUploader(ITextureUploader* uploader)
     {
         m_uploader = uploader;
     }
 
-    TextureHandle TextureCache::acquire(const std::string &key, const ImageSourceData &image)
+    TextureHandle TextureCache::acquire(const std::string& key, const ImageSourceData& image)
     {
         auto it = m_entries.find(key);
         if (it != m_entries.end())
@@ -31,16 +31,16 @@ namespace Zenith::Render
             return {};
         }
 
-        m_entries.emplace(key, Entry{handle, 1});
+        m_entries.emplace(key, Entry{ handle, 1 });
         return handle;
     }
 
-    TextureRef TextureCache::acquireRef(const std::string &key, const ImageSourceData &image)
+    TextureRef TextureCache::acquireRef(const std::string& key, const ImageSourceData& image)
     {
-        return TextureRef{this, key, acquire(key, image)};
+        return TextureRef{ this, key, acquire(key, image) };
     }
 
-    void TextureCache::release(const std::string &key)
+    void TextureCache::release(const std::string& key)
     {
         auto it = m_entries.find(key);
         if (it == m_entries.end())
@@ -65,7 +65,7 @@ namespace Zenith::Render
 
     void TextureCache::clear()
     {
-        for (auto &[_, entry] : m_entries)
+        for (auto& [_, entry] : m_entries)
         {
             if (m_uploader && entry.handle.id != 0)
             {
@@ -75,12 +75,12 @@ namespace Zenith::Render
         m_entries.clear();
     }
 
-    bool TextureCache::has(const std::string &key) const
+    bool TextureCache::has(const std::string& key) const
     {
         return m_entries.find(key) != m_entries.end();
     }
 
-    TextureRef::TextureRef(TextureCache *cache, std::string key, TextureHandle handle)
+    TextureRef::TextureRef(TextureCache* cache, std::string key, TextureHandle handle)
         : m_cache(cache), m_key(std::move(key)), m_handle(handle)
     {
     }
@@ -90,14 +90,14 @@ namespace Zenith::Render
         reset();
     }
 
-    TextureRef::TextureRef(TextureRef &&other) noexcept
+    TextureRef::TextureRef(TextureRef&& other) noexcept
         : m_cache(other.m_cache), m_key(std::move(other.m_key)), m_handle(other.m_handle)
     {
         other.m_cache = nullptr;
         other.m_handle = {};
     }
 
-    TextureRef &TextureRef::operator=(TextureRef &&other) noexcept
+    TextureRef& TextureRef::operator=(TextureRef&& other) noexcept
     {
         if (this != &other)
         {
