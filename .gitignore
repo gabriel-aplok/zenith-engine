@@ -63,5 +63,6 @@ Desktop.ini
 *.tmp
 *.temp
 
-# sorry aislan
+# stuff I don't want to commit
 files/sage
+files/examples
