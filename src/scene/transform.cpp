@@ -11,13 +11,13 @@ namespace Zenith
 {
     namespace
     {
-        void decomposeTransform(const glm::mat4 &matrix, glm::vec3 &translation, glm::quat &rotation, glm::vec3 &scale)
+        void decomposeTransform(const glm::mat4 &matrix, Vector3 &translation, glm::quat &rotation, Vector3 &scale)
         {
-            glm::vec3 skew{0.0f};
+            Vector3 skew{0.0f};
             glm::vec4 perspective{0.0f};
             glm::quat orientation{1.0f, 0.0f, 0.0f, 0.0f};
-            glm::vec3 tmpScale{1.0f};
-            glm::vec3 tmpTranslation{0.0f};
+            Vector3 tmpScale{1.0f};
+            Vector3 tmpTranslation{0.0f};
 
             if (glm::decompose(matrix, tmpScale, orientation, tmpTranslation, skew, perspective))
             {
@@ -27,9 +27,9 @@ namespace Zenith
                 return;
             }
 
-            translation = glm::vec3(matrix[3]);
+            translation = Vector3(matrix[3]);
             rotation = glm::quat_cast(matrix);
-            scale = glm::vec3{1.0f};
+            scale = Vector3{1.0f};
         }
 
         glm::mat4 inverseOrIdentity(const glm::mat4 &matrix)
@@ -50,13 +50,13 @@ namespace Zenith
         updateWorldMatrix();
     }
 
-    void Transform::setLocalPosition(const glm::vec3 &position)
+    void Transform::setLocalPosition(const Vector3 &position)
     {
         m_position = position;
         markLocalDirty();
     }
 
-    void Transform::setWorldPosition(const glm::vec3 &position)
+    void Transform::setWorldPosition(const Vector3 &position)
     {
         if (m_parent == nullptr)
         {
@@ -66,7 +66,7 @@ namespace Zenith
 
         const glm::mat4 parentWorldInverse = inverseOrIdentity(m_parent->worldMatrix());
         const glm::vec4 localPosition = parentWorldInverse * glm::vec4(position, 1.0f);
-        setLocalPosition(glm::vec3(localPosition));
+        setLocalPosition(Vector3(localPosition));
     }
 
     void Transform::setLocalRotation(const glm::quat &rotation)
@@ -83,40 +83,40 @@ namespace Zenith
             return;
         }
 
-        glm::vec3 parentPosition{0.0f};
+        Vector3 parentPosition{0.0f};
         glm::quat parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
-        glm::vec3 parentScale{1.0f};
+        Vector3 parentScale{1.0f};
         decomposeTransform(m_parent->worldMatrix(), parentPosition, parentRotation, parentScale);
         setLocalRotation(glm::normalize(glm::inverse(parentRotation) * rotation));
     }
 
-    void Transform::setLocalRotationEulerRadians(const glm::vec3 &eulerRadians)
+    void Transform::setLocalRotationEulerRadians(const Vector3 &eulerRadians)
     {
         setLocalRotation(glm::quat(eulerRadians));
     }
 
-    void Transform::setWorldRotationEulerRadians(const glm::vec3 &eulerRadians)
+    void Transform::setWorldRotationEulerRadians(const Vector3 &eulerRadians)
     {
         setWorldRotation(glm::quat(eulerRadians));
     }
 
-    void Transform::setLocalRotationEulerDegrees(const glm::vec3 &eulerDegrees)
+    void Transform::setLocalRotationEulerDegrees(const Vector3 &eulerDegrees)
     {
         setLocalRotationEulerRadians(glm::radians(eulerDegrees));
     }
 
-    void Transform::setWorldRotationEulerDegrees(const glm::vec3 &eulerDegrees)
+    void Transform::setWorldRotationEulerDegrees(const Vector3 &eulerDegrees)
     {
         setWorldRotationEulerRadians(glm::radians(eulerDegrees));
     }
 
-    void Transform::setLocalScale(const glm::vec3 &scale)
+    void Transform::setLocalScale(const Vector3 &scale)
     {
         m_scale = scale;
         markLocalDirty();
     }
 
-    void Transform::setWorldScale(const glm::vec3 &scale)
+    void Transform::setWorldScale(const Vector3 &scale)
     {
         if (m_parent == nullptr)
         {
@@ -124,12 +124,12 @@ namespace Zenith
             return;
         }
 
-        glm::vec3 parentPosition{0.0f};
+        Vector3 parentPosition{0.0f};
         glm::quat parentRotation{1.0f, 0.0f, 0.0f, 0.0f};
-        glm::vec3 parentScale{1.0f};
+        Vector3 parentScale{1.0f};
         decomposeTransform(m_parent->worldMatrix(), parentPosition, parentRotation, parentScale);
 
-        glm::vec3 localScale = scale;
+        Vector3 localScale = scale;
         if (parentScale.x != 0.0f)
         {
             localScale.x /= parentScale.x;
@@ -191,7 +191,7 @@ namespace Zenith
         markWorldDirty();
     }
 
-    void Transform::translate(const glm::vec3 &delta)
+    void Transform::translate(const Vector3 &delta)
     {
         m_position += delta;
         markLocalDirty();
@@ -203,42 +203,42 @@ namespace Zenith
         markLocalDirty();
     }
 
-    void Transform::rotateEulerRadians(const glm::vec3 &eulerRadians)
+    void Transform::rotateEulerRadians(const Vector3 &eulerRadians)
     {
         rotate(glm::quat(eulerRadians));
     }
 
-    void Transform::rotateEulerDegrees(const glm::vec3 &eulerDegrees)
+    void Transform::rotateEulerDegrees(const Vector3 &eulerDegrees)
     {
         rotateEulerRadians(glm::radians(eulerDegrees));
     }
 
-    void Transform::rescale(const glm::vec3 &deltaScale)
+    void Transform::rescale(const Vector3 &deltaScale)
     {
         m_scale += deltaScale;
         markLocalDirty();
     }
 
-    void Transform::lookAt(const glm::vec3 &target, const glm::vec3 &worldUp)
+    void Transform::lookAt(const Vector3 &target, const Vector3 &worldUp)
     {
         const glm::mat4 view = glm::lookAt(m_position, target, worldUp);
         m_rotation = glm::normalize(glm::quat_cast(glm::inverse(view)));
         markLocalDirty();
     }
 
-    glm::vec3 Transform::right() const
+    Vector3 Transform::right() const
     {
-        return glm::normalize(glm::vec3{worldMatrix()[0]});
+        return glm::normalize(Vector3{worldMatrix()[0]});
     }
 
-    glm::vec3 Transform::up() const
+    Vector3 Transform::up() const
     {
-        return glm::normalize(glm::vec3{worldMatrix()[1]});
+        return glm::normalize(Vector3{worldMatrix()[1]});
     }
 
-    glm::vec3 Transform::forward() const
+    Vector3 Transform::forward() const
     {
-        return glm::normalize(glm::vec3{worldMatrix()[2]});
+        return glm::normalize(Vector3{worldMatrix()[2]});
     }
 
     const glm::mat4 &Transform::localMatrix() const

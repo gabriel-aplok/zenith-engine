@@ -11,8 +11,8 @@ namespace Zenith::MeshBuilder
             return {};
         }
 
-        glm::vec3 minPoint{std::numeric_limits<float>::max()};
-        glm::vec3 maxPoint{std::numeric_limits<float>::lowest()};
+        Vector3 minPoint{std::numeric_limits<float>::max()};
+        Vector3 maxPoint{std::numeric_limits<float>::lowest()};
         for (const auto &vertex : vertices)
         {
             minPoint = glm::min(minPoint, vertex.position);

@@ -13,7 +13,7 @@ namespace Zenith
     {
         struct FrustumPlane
         {
-            glm::vec3 normal{0.0f};
+            Vector3 normal{0.0f};
             float distance = 0.0f;
         };
 
@@ -28,7 +28,7 @@ namespace Zenith
             std::array<FrustumPlane, 6> planes{};
             for (std::size_t i = 0; i < planes.size(); ++i)
             {
-                const glm::vec3 normal = glm::vec3(rawPlanes[i]);
+                const Vector3 normal = Vector3(rawPlanes[i]);
                 const float length = glm::length(normal);
                 if (length > 0.0f)
                 {
@@ -39,7 +39,7 @@ namespace Zenith
             return planes;
         }
 
-        bool sphereInFrustum(const std::array<FrustumPlane, 6> &planes, const glm::vec3 &center, float radius)
+        bool sphereInFrustum(const std::array<FrustumPlane, 6> &planes, const Vector3 &center, float radius)
         {
             for (const FrustumPlane &plane : planes)
             {
@@ -53,9 +53,9 @@ namespace Zenith
 
         float maxWorldScale(const glm::mat4 &worldMatrix)
         {
-            const float sx = glm::length(glm::vec3(worldMatrix[0]));
-            const float sy = glm::length(glm::vec3(worldMatrix[1]));
-            const float sz = glm::length(glm::vec3(worldMatrix[2]));
+            const float sx = glm::length(Vector3(worldMatrix[0]));
+            const float sy = glm::length(Vector3(worldMatrix[1]));
+            const float sz = glm::length(Vector3(worldMatrix[2]));
             return glm::max(sx, glm::max(sy, sz));
         }
     } // namespace
@@ -79,7 +79,7 @@ namespace Zenith
             {
                 const Matrix4 &world = object.transform().localToWorld();
                 const Render::Bounds &meshBounds = *bounds;
-                const glm::vec3 center = glm::vec3(world * glm::vec4(meshBounds.center, 1.0f));
+                const Vector3 center = Vector3(world * glm::vec4(meshBounds.center, 1.0f));
                 const float radius = meshBounds.radius() * maxWorldScale(world);
                 if (!sphereInFrustum(frustum, center, radius))
                 {

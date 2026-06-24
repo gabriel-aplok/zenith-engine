@@ -64,7 +64,7 @@ namespace Zenith
             return std::nullopt;
         }
 
-        std::vector<glm::vec3> positions;
+        std::vector<Vector3> positions;
         std::vector<glm::vec2> texCoords;
         std::vector<Render::MeshVertex> vertices;
         std::vector<uint16_t> indices;
@@ -122,7 +122,7 @@ namespace Zenith
                         continue;
                     }
 
-                    const glm::vec3 position = positions[static_cast<std::size_t>(resolved)];
+                    const Vector3 position = positions[static_cast<std::size_t>(resolved)];
                     glm::vec2 uv{(position.x + 1.0f) * 0.5f, (position.z + 1.0f) * 0.5f};
                     if (texCoordIndex > 0)
                     {
