@@ -110,7 +110,7 @@ namespace Zenith
             controllerScript.setBehaviour<SceneSwitchBehaviour>(
                 [this]()
                 {
-                    m_sceneManager.pushScene(buildCubeScene());
+                    m_sceneManager.requestScene(buildCubeScene());
                 },
                 []() {});
 
@@ -151,7 +151,7 @@ namespace Zenith
             controllerScript.setBehaviour<SceneSwitchBehaviour>(
                 [this]()
                 {
-                    m_sceneManager.popScene();
+                    m_sceneManager.requestScene(buildMainScene());
                 },
                 []() {});
 

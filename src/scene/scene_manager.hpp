@@ -21,21 +21,20 @@ namespace Zenith
         SceneManager &operator=(const SceneManager &) = delete;
 
         bool hasScene() const { return static_cast<bool>(m_activeScene); }
-        bool hasSceneStack() const { return !m_sceneStack.empty(); }
         Scene *currentScene();
         const Scene *currentScene() const;
 
         void setScene(std::unique_ptr<Scene> scene);
         void addSystem(std::unique_ptr<System> system);
-        void pushScene(std::unique_ptr<Scene> scene);
-        bool popScene();
+        void requestScene(std::unique_ptr<Scene> scene);
         void update(float deltaTime);
         void render(RenderFrame &frame);
         void clear();
 
     private:
+        void commitPendingScene();
         std::unique_ptr<Scene> m_activeScene;
         std::unique_ptr<SystemRegistry> m_systems;
-        std::vector<std::unique_ptr<Scene>> m_sceneStack;
+        std::unique_ptr<Scene> m_pendingScene;
     };
 } // namespace Zenith
