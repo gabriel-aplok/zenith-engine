@@ -8,7 +8,8 @@
     },
     "glm",
     "rgfw",
+    "sol2",
     "stb",
-    "sol2"
+    "nlohmann-json"
   ]
 }
