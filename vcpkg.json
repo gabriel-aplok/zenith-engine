@@ -6,10 +6,12 @@
       "name": "bgfx",
       "features": ["tools"]
     },
+    "fastgltf",
     "glm",
+    "simdjson",
     "rgfw",
     "sol2",
     "stb",
-    "nlohmann-json"
+    "rapidobj"
   ]
 }
