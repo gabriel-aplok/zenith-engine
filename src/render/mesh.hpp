@@ -3,22 +3,22 @@
 #include <cstdint>
 #include <vector>
 
-#include <glm/glm.hpp>
+#include "math/math.hpp"
 
 namespace Zenith::Render
 {
 
     struct MeshVertex
     {
-        glm::vec3 position{0.0f};
-        glm::vec2 uv{0.0f};
-        glm::vec4 color{1.0f};
+        Vector3 position{0.0f};
+        Vector2 uv{0.0f};
+        Vector4 color{1.0f};
     };
 
     struct Bounds
     {
-        glm::vec3 center{0.0f};
-        glm::vec3 extents{0.5f};
+        Vector3 center{0.0f};
+        Vector3 extents{0.5f};
 
         float radius() const
         {
@@ -35,7 +35,7 @@ namespace Zenith::Render
 
     struct MaterialState
     {
-        glm::vec4 tint{1.0f};
+        Vector4 tint{1.0f};
         uint32_t textureId = 0;
     };
 
@@ -62,7 +62,7 @@ namespace Zenith::Render
         RenderCommandType type = RenderCommandType::DrawIndexed;
         MeshHandle mesh{};
         TextureHandle texture{};
-        glm::mat4 transform{1.0f};
+        Matrix4 transform{1.0f};
         MaterialState material{};
         uint32_t firstIndex = 0;
         uint32_t indexCount = 0;
@@ -72,7 +72,7 @@ namespace Zenith::Render
     {
         MeshHandle mesh{};
         TextureHandle texture{};
-        glm::mat4 transform{1.0f};
+        Matrix4 transform{1.0f};
         MaterialState material{};
         uint32_t firstIndex = 0;
         uint32_t indexCount = 0;
@@ -89,15 +89,15 @@ namespace Zenith::Render
     struct RenderClearState
     {
         uint8_t flags = 0;
-        glm::vec4 color{0.08f, 0.09f, 0.11f, 1.0f};
+        Vector4 color{0.08f, 0.09f, 0.11f, 1.0f};
         float depth = 1.0f;
         uint8_t stencil = 0;
     };
 
     struct RenderViewState
     {
-        glm::mat4 view{1.0f};
-        glm::mat4 projection{1.0f};
+        Matrix4 view{1.0f};
+        Matrix4 projection{1.0f};
     };
 
 } // namespace Zenith::Render

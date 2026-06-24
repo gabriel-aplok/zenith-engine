@@ -5,6 +5,7 @@
 #include <bgfx/embedded_shader.h>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "math/math.hpp"
 #include "engine/window_backend.hpp"
 #include "log/log.hpp"
 #include "render/render_context.hpp"
@@ -33,7 +34,7 @@ namespace Zenith::Render
             uint32_t color;
         };
 
-        uint32_t packColor(const glm::vec4 &color)
+        uint32_t packColor(const Vector4 &color)
         {
             const uint32_t r = static_cast<uint32_t>(glm::clamp(color.r, 0.0f, 1.0f) * 255.0f + 0.5f);
             const uint32_t g = static_cast<uint32_t>(glm::clamp(color.g, 0.0f, 1.0f) * 255.0f + 0.5f);
@@ -180,7 +181,7 @@ namespace Zenith::Render
         m_initialized = false;
     }
 
-    void BgfxRenderer::resize(const glm::ivec2 &framebufferSize)
+    void BgfxRenderer::resize(const IVector2 &framebufferSize)
     {
         m_framebufferSize = framebufferSize;
     }

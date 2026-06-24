@@ -41,8 +41,8 @@ namespace Zenith
         const std::vector<std::unique_ptr<GameObject>> &gameObjects() const { return m_gameObjects; }
         std::vector<std::unique_ptr<GameObject>> &gameObjects() { return m_gameObjects; }
 
-        const glm::ivec2 &framebufferSize() const { return m_framebufferSize; }
-        void setFramebufferSize(const glm::ivec2 &framebufferSize);
+        const IVector2 &framebufferSize() const { return m_framebufferSize; }
+        void setFramebufferSize(const IVector2 &framebufferSize);
 
         const InputState *input() const { return m_inputState; }
         void setInputState(const InputState *inputState);
@@ -120,7 +120,7 @@ namespace Zenith
         };
         Components::Camera *findCamera();
         const Components::Camera *findCamera() const;
-        glm::ivec2 m_framebufferSize{0, 0};
+        IVector2 m_framebufferSize{0, 0};
         const InputState *m_inputState = nullptr;
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
         std::unordered_map<GameObject *, std::unordered_map<std::type_index, std::unique_ptr<Component>>> m_componentRegistry;

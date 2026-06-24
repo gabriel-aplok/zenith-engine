@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 #include <bgfx/bgfx.h>
-#include <glm/glm.hpp>
+#include "math/math.hpp"
 
 #include "render/irenderer.hpp"
 
@@ -16,7 +16,7 @@ namespace Zenith::Render
     public:
         bool initialize(RenderContext &context) override;
         void shutdown() override;
-        void resize(const glm::ivec2 &framebufferSize) override;
+        void resize(const IVector2 &framebufferSize) override;
         void render(const RenderFrame &frame) override;
 
         Render::MeshHandle uploadMesh(const Render::MeshData &mesh) override;
@@ -39,7 +39,7 @@ namespace Zenith::Render
         };
 
         bool m_initialized = false;
-        glm::ivec2 m_framebufferSize{0, 0};
+        IVector2 m_framebufferSize{0, 0};
         uint32_t m_nextMeshId = 1;
         std::unordered_map<uint32_t, MeshResource> m_meshes;
         std::unordered_map<uint32_t, TextureResource> m_textures;

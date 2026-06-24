@@ -77,7 +77,7 @@ namespace Zenith
             const auto bounds = filter->bounds();
             if (bounds.has_value())
             {
-                const glm::mat4 &world = object.transform().localToWorld();
+                const Matrix4 &world = object.transform().localToWorld();
                 const Render::Bounds &meshBounds = *bounds;
                 const glm::vec3 center = glm::vec3(world * glm::vec4(meshBounds.center, 1.0f));
                 const float radius = meshBounds.radius() * maxWorldScale(world);

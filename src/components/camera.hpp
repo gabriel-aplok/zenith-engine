@@ -1,7 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
-
+#include "math/math.hpp"
 #include "render/mesh.hpp"
 #include "scene/component.hpp"
 
@@ -42,10 +41,10 @@ namespace Zenith::Components
         ClearFlags clearFlags() const { return m_clearFlags; }
         void setClearFlags(ClearFlags clearFlags) { m_clearFlags = clearFlags; }
 
-        const glm::vec4 &backgroundColor() const { return m_backgroundColor; }
-        void setBackgroundColor(const glm::vec4 &backgroundColor) { m_backgroundColor = backgroundColor; }
+        const Vector4 &backgroundColor() const { return m_backgroundColor; }
+        void setBackgroundColor(const Vector4 &backgroundColor) { m_backgroundColor = backgroundColor; }
 
-        bool buildViewState(const glm::mat4 &worldMatrix, const glm::ivec2 &framebufferSize, Render::RenderViewState &outView) const;
+        bool buildViewState(const Matrix4 &worldMatrix, const IVector2 &framebufferSize, Render::RenderViewState &outView) const;
 
     private:
         float m_fieldOfView = 60.0f;
@@ -55,6 +54,6 @@ namespace Zenith::Components
         float m_orthographicSize = 5.0f;
         float m_depth = 0.0f;
         ClearFlags m_clearFlags = ClearFlags::SolidColor;
-        glm::vec4 m_backgroundColor{0.08f, 0.09f, 0.11f, 1.0f};
+        Vector4 m_backgroundColor{0.08f, 0.09f, 0.11f, 1.0f};
     };
 } // namespace Zenith::Components

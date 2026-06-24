@@ -24,7 +24,6 @@
 #include "systems/transform_system.hpp"
 #include "systems/script_system.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
 #include <functional>
 
 namespace Zenith
@@ -34,7 +33,7 @@ namespace Zenith
     public:
         void onUpdate(GameObject &owner, float deltaTime) override
         {
-            owner.transform().rotateEulerDegrees(glm::vec3{0.0f, 45.0f * deltaTime, 0.0f});
+            owner.transform().rotateEulerDegrees(Vector3{0.0f, 45.0f * deltaTime, 0.0f});
         }
     };
 
@@ -78,7 +77,7 @@ namespace Zenith
 
     namespace
     {
-        void applyCubeMaterial(Components::MeshRenderer &renderer, const Render::TextureRef &primaryTexture, const Render::TextureRef &fallbackTexture, const glm::vec4 &tint)
+        void applyCubeMaterial(Components::MeshRenderer &renderer, const Render::TextureRef &primaryTexture, const Render::TextureRef &fallbackTexture, const Vector4 &tint)
         {
             Render::MaterialState material{};
             material.tint = tint;
@@ -115,29 +114,29 @@ namespace Zenith
                 []() {});
 
             GameObject &cameraObject = scene->createGameObject("Main Camera");
-            cameraObject.transform().setPosition(glm::vec3{-10.0f, 0.0f, 6.0f});
-            cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+            cameraObject.transform().setPosition(Vector3{-10.0f, 0.0f, 6.0f});
+            cameraObject.transform().lookAt(Vector3{0.0f, 0.0f, 0.0f});
 
             auto &camera = cameraObject.add_component<Components::Camera>();
             camera.setFieldOfView(45.0f);
             camera.setNearClipPlane(0.1f);
             camera.setFarClipPlane(100.0f);
             camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
-            camera.setBackgroundColor(glm::vec4{0.08f, 0.09f, 0.11f, 1.0f});
+            camera.setBackgroundColor(Vector4{0.08f, 0.09f, 0.11f, 1.0f});
 
             GameObject &marker = scene->createGameObject("Pivot");
-            marker.transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
+            marker.transform().setPosition(Vector3{0.0f, 0.0f, 0.0f});
             auto &script = marker.add_component<Components::ScriptComponent>();
             script.setBehaviour<DemoRotateBehaviour>();
 
             GameObject &cube = scene->createGameObject("Cube");
             cube.setParent(&marker);
-            cube.transform().setPosition(glm::vec3{1.75f, 0.0f, 0.0f});
+            cube.transform().setPosition(Vector3{1.75f, 0.0f, 0.0f});
             auto &filter = cube.add_component<Components::MeshFilter>();
             filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
 
             auto &renderer = cube.add_component<Components::MeshRenderer>();
-            applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
+            applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
             return scene;
         }
@@ -156,15 +155,15 @@ namespace Zenith
                 []() {});
 
             GameObject &cameraObject = scene->createGameObject("Cube Camera");
-            cameraObject.transform().setPosition(glm::vec3{-15.0f, 10.0f, 16.0f});
-            cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
+            cameraObject.transform().setPosition(Vector3{-15.0f, 10.0f, 16.0f});
+            cameraObject.transform().lookAt(Vector3{0.0f, 0.0f, 0.0f});
 
             auto &camera = cameraObject.add_component<Components::Camera>();
             camera.setFieldOfView(50.0f);
             camera.setNearClipPlane(0.1f);
             camera.setFarClipPlane(200.0f);
             camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
-            camera.setBackgroundColor(glm::vec4{0.05f, 0.05f, 0.08f, 1.0f});
+            camera.setBackgroundColor(Vector4{0.05f, 0.05f, 0.08f, 1.0f});
 
             for (int x = -3; x <= 3; ++x)
             {
@@ -173,12 +172,12 @@ namespace Zenith
                     for (int z = -3; z <= 3; ++z)
                     {
                         GameObject &cube = scene->createGameObject("Cube");
-                        cube.transform().setPosition(glm::vec3{static_cast<float>(x) * 2.5f, static_cast<float>(y) * 2.0f, static_cast<float>(z) * 2.5f});
+                        cube.transform().setPosition(Vector3{static_cast<float>(x) * 2.5f, static_cast<float>(y) * 2.0f, static_cast<float>(z) * 2.5f});
                         auto &filter = cube.add_component<Components::MeshFilter>();
                         filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->mesh.bounds);
 
                         auto &renderer = cube.add_component<Components::MeshRenderer>();
-                        applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, glm::vec4{0.35f + 0.1f * static_cast<float>((x + 3) % 4), 0.45f + 0.1f * static_cast<float>((y + 2) % 3), 0.65f + 0.05f * static_cast<float>((z + 3) % 4), 1.0f});
+                        applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{0.35f + 0.1f * static_cast<float>((x + 3) % 4), 0.45f + 0.1f * static_cast<float>((y + 2) % 3), 0.65f + 0.05f * static_cast<float>((z + 3) % 4), 1.0f});
                     }
                 }
             }

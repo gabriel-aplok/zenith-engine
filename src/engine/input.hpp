@@ -3,7 +3,7 @@
 #include <array>
 #include <cstddef>
 
-#include <glm/vec2.hpp>
+#include "math/math.hpp"
 
 namespace Zenith
 {
@@ -138,9 +138,9 @@ namespace Zenith
         bool isMouseButtonHeld(MouseButton button) const;
         bool isMouseButtonDown(MouseButton button) const;
 
-        glm::dvec2 getMousePosition() const;
-        glm::dvec2 getMouseDelta() const;
-        glm::dvec2 getScrollDelta() const;
+        DVector2 getMousePosition() const;
+        DVector2 getMouseDelta() const;
+        DVector2 getScrollDelta() const;
 
         bool isFocused() const;
 
@@ -153,9 +153,9 @@ namespace Zenith
 
         std::array<ButtonState, static_cast<std::size_t>(KeyCode::Count)> m_keyStates{};
         std::array<ButtonState, static_cast<std::size_t>(MouseButton::Count)> m_mouseButtonStates{};
-        glm::dvec2 m_mousePosition{0.0, 0.0};
-        glm::dvec2 m_mouseDelta{0.0, 0.0};
-        glm::dvec2 m_scrollDelta{0.0, 0.0};
+        DVector2 m_mousePosition{0.0, 0.0};
+        DVector2 m_mouseDelta{0.0, 0.0};
+        DVector2 m_scrollDelta{0.0, 0.0};
         bool m_hasMousePosition = false;
         bool m_focused = true;
     };

@@ -4,7 +4,7 @@
 
 namespace Zenith::Components
 {
-    bool Camera::buildViewState(const glm::mat4 &worldMatrix, const glm::ivec2 &framebufferSize, Render::RenderViewState &outView) const
+    bool Camera::buildViewState(const Matrix4 &worldMatrix, const IVector2 &framebufferSize, Render::RenderViewState &outView) const
     {
         const float aspect = framebufferSize.y > 0 ? static_cast<float>(framebufferSize.x) / static_cast<float>(framebufferSize.y) : 1.0f;
 

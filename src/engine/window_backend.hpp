@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include <glm/vec2.hpp>
+#include "math/math.hpp"
 
 namespace Zenith
 {
@@ -61,7 +61,7 @@ namespace Zenith
     struct WindowEvent
     {
         WindowEventType type = WindowEventType::Resized;
-        glm::ivec2 size{0, 0};
+        IVector2 size{0, 0};
         bool focused = true;
     };
 
@@ -78,8 +78,8 @@ namespace Zenith
         virtual void setShouldClose(bool close) = 0;
         virtual void setTitle(const std::string &title) = 0;
         virtual void setVSync(bool enabled) = 0;
-        virtual glm::ivec2 getSize() const = 0;
-        virtual glm::ivec2 getFramebufferSize() const = 0;
+        virtual IVector2 getSize() const = 0;
+        virtual IVector2 getFramebufferSize() const = 0;
         virtual float getAspectRatio() const = 0;
         virtual void *getNativeHandle() const = 0;
         virtual void setCursorMode(CursorMode mode) = 0;

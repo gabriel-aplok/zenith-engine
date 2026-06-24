@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "math/math.hpp"
 #include "render/mesh.hpp"
 
 namespace Zenith::Render
@@ -15,12 +16,12 @@ namespace Zenith::Render
         void clear();
         void reserve(std::size_t drawCount);
         void setView(const RenderViewState &view);
-        void setTransform(const glm::mat4 &transform);
+        void setTransform(const Matrix4 &transform);
         void setMaterial(const MaterialState &material);
         void bindMesh(MeshHandle mesh);
         void drawIndexed(uint32_t firstIndex = 0, uint32_t indexCount = 0);
-        void drawIndexed(MeshHandle mesh, uint32_t firstIndex = 0, uint32_t indexCount = 0, const glm::mat4 &transform = glm::mat4{1.0f}, const MaterialState &material = MaterialState{});
-        void drawMesh(MeshHandle mesh, const glm::mat4 &transform = glm::mat4{1.0f}) { drawIndexed(mesh, 0, 0, transform); }
+        void drawIndexed(MeshHandle mesh, uint32_t firstIndex = 0, uint32_t indexCount = 0, const Matrix4 &transform = Matrix4{1.0f}, const MaterialState &material = MaterialState{});
+        void drawMesh(MeshHandle mesh, const Matrix4 &transform = Matrix4{1.0f}) { drawIndexed(mesh, 0, 0, transform); }
         void finalize();
 
         const RenderViewState &view() const;
