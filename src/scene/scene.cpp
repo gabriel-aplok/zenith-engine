@@ -23,15 +23,7 @@ namespace Zenith
             const glm::vec4 row2 = glm::vec4(viewProjection[0][2], viewProjection[1][2], viewProjection[2][2], viewProjection[3][2]);
             const glm::vec4 row3 = glm::vec4(viewProjection[0][3], viewProjection[1][3], viewProjection[2][3], viewProjection[3][3]);
 
-            const glm::vec4 rawPlanes[6] = {
-                row3 + row0,
-                row3 - row0,
-                row3 + row1,
-                row3 - row1,
-                row3 + row2,
-                row3 - row2,
-            };
-
+            const glm::vec4 rawPlanes[6] = {row3 + row0, row3 - row0, row3 + row1, row3 - row1, row3 + row2, row3 - row2};
             std::array<FrustumPlane, 6> planes{};
             for (std::size_t i = 0; i < planes.size(); ++i)
             {
@@ -43,7 +35,6 @@ namespace Zenith
                     planes[i].distance = rawPlanes[i].w / length;
                 }
             }
-
             return planes;
         }
 
@@ -56,7 +47,6 @@ namespace Zenith
                     return false;
                 }
             }
-
             return true;
         }
 
@@ -154,7 +144,6 @@ namespace Zenith
         {
             return std::nullopt;
         }
-
         return m_meshMetadataProvider->meshBounds(filter.mesh());
     }
 
@@ -189,17 +178,15 @@ namespace Zenith
             if (filter != nullptr && renderer != nullptr)
             {
                 const std::optional<Render::Bounds> bounds = meshBoundsFor(*filter);
-                if (!bounds.has_value())
+                if (bounds.has_value())
                 {
-                    continue;
-                }
-
-                const glm::mat4 &world = object->transform().localToWorld();
-                const glm::vec3 center = glm::vec3(world * glm::vec4(bounds->center, 1.0f));
-                const float radius = bounds->radius() * maxWorldScale(world);
-                if (!sphereInFrustum(frustum, center, radius))
-                {
-                    continue;
+                    const glm::mat4 &world = object->transform().localToWorld();
+                    const glm::vec3 center = glm::vec3(world * glm::vec4(bounds->center, 1.0f));
+                    const float radius = bounds->radius() * maxWorldScale(world);
+                    if (!sphereInFrustum(frustum, center, radius))
+                    {
+                        continue;
+                    }
                 }
             }
 
@@ -213,7 +200,6 @@ namespace Zenith
         {
             return;
         }
-
         render(frame);
     }
 } // namespace Zenith

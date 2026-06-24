@@ -4,6 +4,7 @@
 #include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
 #include "log/log.hpp"
+#include "resource/baked_mesh_asset.hpp"
 #include "resource/image_source.hpp"
 #include "resource/resource_loaders.hpp"
 #include "resource/resource_manager.hpp"
@@ -58,12 +59,12 @@ namespace Zenith
                 Log::Info("Loaded vertex shader source: {} bytes", m_vertexShaderSource->data().size());
             }
 
-            m_cubeMeshData = m_resources.load<Render::MeshData>("resources/models/obj/cube.obj");
-            if (!m_cubeMeshData)
+            m_cubeMeshAsset = m_resources.load<BakedMeshAsset>("resources/models/obj/cube.obj");
+            if (!m_cubeMeshAsset)
             {
                 Log::Error("Failed to load file-backed cube resource; falling back to builtin");
-                m_cubeMeshData = m_resources.load<Render::MeshData>("builtin://cube");
-                if (!m_cubeMeshData)
+                m_cubeMeshAsset = m_resources.load<BakedMeshAsset>("builtin://cube");
+                if (!m_cubeMeshAsset)
                 {
                     Log::Error("Failed to load demo cube resource");
                     requestQuit();
@@ -71,7 +72,7 @@ namespace Zenith
                 }
             }
 
-            m_cubeMesh = m_meshCache.acquireRef("demo/cube", *m_cubeMeshData);
+            m_cubeMesh = m_meshCache.acquireRef("demo/cube", m_cubeMeshAsset->mesh);
             if (!m_cubeMesh)
             {
                 Log::Error("Failed to create demo meshes");
@@ -92,16 +93,28 @@ namespace Zenith
                 checker.height = 2;
                 checker.format = "rgba8";
                 checker.pixels = {
-                    255, 255, 255, 255,
-                    32, 32, 32, 255,
-                    32, 32, 32, 255,
-                    255, 255, 255, 255,
+                    255,
+                    255,
+                    255,
+                    255,
+                    32,
+                    32,
+                    32,
+                    255,
+                    32,
+                    32,
+                    32,
+                    255,
+                    255,
+                    255,
+                    255,
+                    255,
                 };
                 m_checkerTexture = m_textureCache.acquireRef("demo/checker", checker);
             }
 
             GameObject &cameraObject = m_scene.createGameObject("Main Camera");
-            cameraObject.transform().setPosition(glm::vec3{0.0f, 2.5f, 6.0f});
+            cameraObject.transform().setPosition(glm::vec3{-10.0f, 0.0f, 6.0f});
             cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
 
             auto &camera = cameraObject.add_component<Components::Camera>();
@@ -191,7 +204,7 @@ namespace Zenith
         Render::RenderMeshCache m_meshCache;
         Render::TextureCache m_textureCache;
         ResourceHandle<TextSource> m_vertexShaderSource{};
-        ResourceHandle<Render::MeshData> m_cubeMeshData{};
+        ResourceHandle<BakedMeshAsset> m_cubeMeshAsset{};
         ResourceHandle<TextureAsset> m_cubeTextureAsset{};
         Render::MeshRef m_cubeMesh{};
         Render::TextureRef m_cubeTexture{};
