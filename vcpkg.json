@@ -8,10 +8,10 @@
     },
     "fastgltf",
     "glm",
-    "simdjson",
+    "rapidobj",
     "rgfw",
     "sol2",
     "stb",
-    "rapidobj"
+    "rapidjson"
   ]
 }

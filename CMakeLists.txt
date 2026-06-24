@@ -34,7 +34,7 @@ find_package(Stb REQUIRED)
 find_package(sol2 CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 find_package(RapidObj CONFIG REQUIRED)
-find_package(simdjson CONFIG REQUIRED)
+find_package(RapidJSON CONFIG REQUIRED)
 
 set(ZENITH_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
@@ -151,7 +151,8 @@ target_link_libraries(zenith-lib
 		sol2::sol2
 		fastgltf::fastgltf
 		rapidobj::rapidobj
-		simdjson::simdjson
+		RapidJSON
+		rapidjson
 )
 
 add_dependencies(zenith-lib bgfx-shaders)
