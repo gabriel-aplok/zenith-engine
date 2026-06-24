@@ -3,6 +3,7 @@
 namespace Zenith
 {
     class GameObject;
+    class Scene;
 
     class Component
     {
@@ -14,6 +15,8 @@ namespace Zenith
 
         GameObject &gameObject();
         const GameObject &gameObject() const;
+        Scene *scene();
+        const Scene *scene() const;
 
     protected:
         Component() = default;

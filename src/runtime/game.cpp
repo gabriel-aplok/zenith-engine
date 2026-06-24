@@ -110,11 +110,7 @@ namespace Zenith
             controllerScript.setBehaviour<SceneSwitchBehaviour>(
                 [this]()
                 {
-                    if (!m_cubeSceneLoadJob)
-                    {
-                        m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>([this]()
-                                                                                          { return buildCubeScene(); });
-                    }
+                    m_sceneManager.pushScene(buildCubeScene());
                 },
                 []() {});
 
@@ -287,12 +283,6 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            if (m_cubeSceneLoadJob && m_cubeSceneLoadJob->ready())
-            {
-                m_sceneManager.pushScene(m_cubeSceneLoadJob->takeScene());
-                m_cubeSceneLoadJob.reset();
-            }
-
             if (auto *scene = m_sceneManager.currentScene())
             {
                 scene->setInputState(&getInput());
@@ -323,11 +313,6 @@ namespace Zenith
 
         void onShutdown() override
         {
-            if (m_cubeSceneLoadJob)
-            {
-                m_cubeSceneLoadJob->wait();
-                m_cubeSceneLoadJob.reset();
-            }
             m_sceneManager.clear();
             m_cubeMesh.reset();
             m_cubeTexture.reset();
@@ -356,7 +341,6 @@ namespace Zenith
         Render::TextureRef m_cubeTexture{};
         Render::TextureRef m_checkerTexture{};
         SceneManager m_sceneManager{};
-        std::unique_ptr<SceneManager::SceneLoadJob> m_cubeSceneLoadJob{};
         RenderFrame m_frame{};
     };
 

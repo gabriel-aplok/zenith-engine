@@ -50,6 +50,38 @@ namespace Zenith
         Component *getComponent(GameObject &object, std::type_index type);
         const Component *getComponent(const GameObject &object, std::type_index type) const;
 
+        template <typename T, typename... Args>
+        T &addComponent(GameObject &object, Args &&...args)
+        {
+            static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
+            auto component = std::make_unique<T>(std::forward<Args>(args)...);
+            T &componentRef = *component;
+            queueComponentAddition(object, std::type_index(typeid(T)), std::move(component));
+            return componentRef;
+        }
+
+        template <typename T>
+        T *getComponent(GameObject &object)
+        {
+            static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
+            return dynamic_cast<T *>(getComponent(object, std::type_index(typeid(T))));
+        }
+
+        template <typename T>
+        const T *getComponent(const GameObject &object) const
+        {
+            static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
+            return dynamic_cast<const T *>(getComponent(object, std::type_index(typeid(T))));
+        }
+
+        template <typename T>
+        bool removeComponent(GameObject &object)
+        {
+            static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
+            queueComponentRemoval(object, std::type_index(typeid(T)));
+            return true;
+        }
+
         template <typename T>
         T *tryGetComponent(GameObject &object)
         {
