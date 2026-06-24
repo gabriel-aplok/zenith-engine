@@ -1,34 +1,55 @@
 #pragma once
 
-#include <functional>
+#include <memory>
+#include <type_traits>
+#include <utility>
 
 #include "scene/component.hpp"
-#include "render/render_submission.hpp"
+#include "components/script_behaviour.hpp"
 
-namespace Zenith::Components
+namespace Zenith
 {
-    class ScriptComponent final : public Component
+    namespace Components
     {
-    public:
-        using EventFn = std::function<void()>;
-        using UpdateFn = std::function<void(float)>;
-        using RenderFn = std::function<void(RenderFrame &)>;
+        class ScriptComponent final : public Component
+        {
+        public:
+            ScriptComponent() = default;
+            ~ScriptComponent() override = default;
 
-        ScriptComponent() = default;
-        ~ScriptComponent() override = default;
+            ScriptBehaviour *behaviour() { return m_behaviour.get(); }
+            const ScriptBehaviour *behaviour() const { return m_behaviour.get(); }
 
-        EventFn onAdd;
-        EventFn onRemove;
-        EventFn onStart;
-        UpdateFn onUpdate;
-        UpdateFn onPreUpdate;
-        UpdateFn onPostUpdate;
-        UpdateFn onFixedUpdate;
-        RenderFn onRender;
-        EventFn onDispose;
+            template <typename T, typename... Args>
+            T &setBehaviour(Args &&...args)
+            {
+                static_assert(std::is_base_of_v<ScriptBehaviour, T>, "T must derive from ScriptBehaviour");
+                auto behaviour = std::make_unique<T>(std::forward<Args>(args)...);
+                T &behaviourRef = *behaviour;
+                m_behaviour = std::move(behaviour);
+                return behaviourRef;
+            }
 
-        bool started = false;
+            template <typename T>
+            T *getBehaviour()
+            {
+                static_assert(std::is_base_of_v<ScriptBehaviour, T>, "T must derive from ScriptBehaviour");
+                return dynamic_cast<T *>(m_behaviour.get());
+            }
 
-    private:
-    };
-} // namespace Zenith::Components
+            template <typename T>
+            const T *getBehaviour() const
+            {
+                static_assert(std::is_base_of_v<ScriptBehaviour, T>, "T must derive from ScriptBehaviour");
+                return dynamic_cast<const T *>(m_behaviour.get());
+            }
+
+            void clearBehaviour() { m_behaviour.reset(); }
+
+            bool started = false;
+
+        private:
+            std::unique_ptr<ScriptBehaviour> m_behaviour;
+        };
+    } // namespace Components
+} // namespace Zenith

@@ -1,6 +1,7 @@
 #include "systems/script_system.hpp"
 
 #include "components/script_component.hpp"
+#include "components/script_behaviour.hpp"
 #include "scene/scene.hpp"
 
 namespace Zenith
@@ -9,10 +10,9 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            auto *script = object->get_component<Components::ScriptComponent>();
-            if (script && script->onAdd)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onAdd();
+                script->behaviour()->onAdd(*object);
             }
         }
     }
@@ -21,9 +21,9 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->onRemove)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onRemove();
+                script->behaviour()->onRemove(*object);
             }
         }
     }
@@ -32,13 +32,10 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && !script->started)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour() && !script->started)
             {
                 script->started = true;
-                if (script->onStart)
-                {
-                    script->onStart();
-                }
+                script->behaviour()->onStart(*object);
             }
         }
     }
@@ -47,9 +44,10 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->onDispose)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onDispose();
+                script->behaviour()->onStop(*object);
+                script->behaviour()->onDispose(*object);
             }
         }
     }
@@ -58,9 +56,9 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->onPreUpdate)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onPreUpdate(deltaTime);
+                script->behaviour()->onPreUpdate(*object, deltaTime);
             }
         }
     }
@@ -69,9 +67,9 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->onUpdate)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onUpdate(deltaTime);
+                script->behaviour()->onUpdate(*object, deltaTime);
             }
         }
     }
@@ -80,9 +78,9 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->onPostUpdate)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onPostUpdate(deltaTime);
+                script->behaviour()->onPostUpdate(*object, deltaTime);
             }
         }
     }
@@ -91,9 +89,9 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->onFixedUpdate)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onFixedUpdate(fixedDeltaTime);
+                script->behaviour()->onFixedUpdate(*object, fixedDeltaTime);
             }
         }
     }
@@ -102,9 +100,9 @@ namespace Zenith
     {
         for (auto &object : scene.gameObjects())
         {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->onRender)
+            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
-                script->onRender(frame);
+                script->behaviour()->onRender(*object, frame);
             }
         }
     }

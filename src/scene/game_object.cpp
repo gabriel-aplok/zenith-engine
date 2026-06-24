@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "components/script_component.hpp"
+#include "components/script_behaviour.hpp"
 
 namespace Zenith
 {
@@ -68,9 +69,9 @@ namespace Zenith
     {
         if (auto *script = dynamic_cast<Components::ScriptComponent *>(&component))
         {
-            if (script->onAdd)
+            if (auto *behaviour = script->behaviour())
             {
-                script->onAdd();
+                behaviour->onAdd(*this);
             }
         }
     }
@@ -79,13 +80,10 @@ namespace Zenith
     {
         if (auto *script = dynamic_cast<Components::ScriptComponent *>(&component))
         {
-            if (script->onRemove)
+            if (auto *behaviour = script->behaviour())
             {
-                script->onRemove();
-            }
-            if (script->onDispose)
-            {
-                script->onDispose();
+                behaviour->onRemove(*this);
+                behaviour->onDispose(*this);
             }
         }
     }

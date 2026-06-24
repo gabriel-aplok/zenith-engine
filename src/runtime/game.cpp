@@ -4,6 +4,7 @@
 #include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
 #include "components/script_component.hpp"
+#include "components/script_behaviour.hpp"
 #include "log/log.hpp"
 #include "resource/baked_mesh_asset.hpp"
 #include "resource/image_source.hpp"
@@ -27,6 +28,14 @@
 
 namespace Zenith
 {
+    class DemoRotateBehaviour final : public ScriptBehaviour
+    {
+    public:
+        void onUpdate(GameObject &owner, float deltaTime) override
+        {
+            owner.transform().rotateEulerDegrees(glm::vec3{0.0f, 45.0f * deltaTime, 0.0f});
+        }
+    };
 
     class GameApplication final : public Application
     {
@@ -136,13 +145,7 @@ namespace Zenith
             m_pivotObject = &m_scene.createGameObject("Pivot");
             m_pivotObject->transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
             auto &script = m_pivotObject->add_component<Components::ScriptComponent>();
-            script.onUpdate = [this](float deltaTime)
-            {
-                if (m_pivotObject)
-                {
-                    m_pivotObject->transform().rotateEulerDegrees(glm::vec3{0.0f, 45.0f * deltaTime, 0.0f});
-                }
-            };
+            script.setBehaviour<DemoRotateBehaviour>();
 
             GameObject &cube = m_scene.createGameObject("Cube");
             cube.setParent(m_pivotObject);
