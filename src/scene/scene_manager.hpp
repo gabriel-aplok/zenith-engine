@@ -6,6 +6,9 @@
 namespace Zenith
 {
     class Scene;
+    class System;
+    class SystemRegistry;
+    class RenderFrame;
 
     class SceneManager
     {
@@ -19,8 +22,8 @@ namespace Zenith
             Entering,
         };
 
-        SceneManager() = default;
-        ~SceneManager() = default;
+        SceneManager();
+        ~SceneManager();
 
         SceneManager(const SceneManager &) = delete;
         SceneManager &operator=(const SceneManager &) = delete;
@@ -34,9 +37,11 @@ namespace Zenith
         void setScene(std::unique_ptr<Scene> scene);
         void requestScene(std::unique_ptr<Scene> scene);
         void requestSceneFactory(std::function<std::unique_ptr<Scene>()> factory);
+        void addSystem(std::unique_ptr<System> system);
         bool canCommitScene() const { return hasPendingScene(); }
         bool commitScene();
-        void update();
+        void update(float deltaTime);
+        void render(RenderFrame &frame);
         void clear();
 
     private:
@@ -44,5 +49,6 @@ namespace Zenith
         std::unique_ptr<Scene> m_activeScene;
         std::unique_ptr<Scene> m_pendingScene;
         std::function<std::unique_ptr<Scene>()> m_pendingFactory;
+        std::unique_ptr<SystemRegistry> m_systems;
     };
 } // namespace Zenith
