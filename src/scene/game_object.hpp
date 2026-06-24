@@ -16,6 +16,8 @@ namespace Zenith
     class Scene;
     void queueComponentAddition(Scene &scene, GameObject &object, std::type_index type, std::unique_ptr<Component> component);
     void queueComponentRemoval(Scene &scene, GameObject &object, std::type_index type);
+    Component *sceneGetComponent(Scene &scene, GameObject &object, std::type_index type);
+    const Component *sceneGetComponent(const Scene &scene, const GameObject &object, std::type_index type);
 
     class GameObject
     {
@@ -46,17 +48,12 @@ namespace Zenith
         T &add_component(Args &&...args)
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-
             auto component = std::make_unique<T>(std::forward<Args>(args)...);
             T &componentRef = *component;
             componentRef.setOwner(this);
             if (m_scene)
             {
                 queueComponentAddition(*m_scene, *this, std::type_index(typeid(T)), std::move(component));
-            }
-            else
-            {
-                m_components.emplace_back(std::move(component));
             }
             return componentRef;
         }
@@ -65,12 +62,11 @@ namespace Zenith
         T *get_component()
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-
-            for (const auto &component : m_components)
+            if (m_scene)
             {
-                if (auto *typed = dynamic_cast<T *>(component.get()))
+                if (auto *component = sceneGetComponent(*m_scene, *this, std::type_index(typeid(T))))
                 {
-                    return typed;
+                    return dynamic_cast<T *>(component);
                 }
             }
             return nullptr;
@@ -80,12 +76,11 @@ namespace Zenith
         const T *get_component() const
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-
-            for (const auto &component : m_components)
+            if (m_scene)
             {
-                if (auto *typed = dynamic_cast<const T *>(component.get()))
+                if (auto *component = sceneGetComponent(*m_scene, *this, std::type_index(typeid(T))))
                 {
-                    return typed;
+                    return dynamic_cast<const T *>(component);
                 }
             }
             return nullptr;
@@ -95,20 +90,10 @@ namespace Zenith
         bool remove_component()
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
-
             if (m_scene)
             {
                 queueComponentRemoval(*m_scene, *this, std::type_index(typeid(T)));
                 return true;
-            }
-
-            for (auto it = m_components.begin(); it != m_components.end(); ++it)
-            {
-                if (dynamic_cast<T *>(it->get()) != nullptr)
-                {
-                    m_components.erase(it);
-                    return true;
-                }
             }
             return false;
         }
@@ -119,7 +104,6 @@ namespace Zenith
         Scene *m_scene = nullptr;
         GameObject *m_parent = nullptr;
         std::vector<GameObject *> m_children;
-        std::vector<std::unique_ptr<Component>> m_components;
 
         friend class Scene;
     };

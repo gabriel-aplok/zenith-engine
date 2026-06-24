@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <typeindex>
+#include <unordered_map>
+#include <type_traits>
 #include <vector>
 
 #include "components/camera.hpp"
@@ -28,6 +30,9 @@ namespace Zenith
 
         GameObject &createGameObject(std::string name = {});
         void destroyGameObject(GameObject &object);
+        void onEnter();
+        void onExit();
+        void onUnload();
         void clear();
         void addSystem(std::unique_ptr<System> system);
         const std::vector<std::unique_ptr<GameObject>> &gameObjects() const { return m_gameObjects; }
@@ -41,6 +46,22 @@ namespace Zenith
 
         void queueComponentAddition(GameObject &object, std::type_index type, std::unique_ptr<Component> component);
         void queueComponentRemoval(GameObject &object, std::type_index type);
+        Component *getComponent(GameObject &object, std::type_index type);
+        const Component *getComponent(const GameObject &object, std::type_index type) const;
+
+        template <typename T>
+        T *tryGetComponent(GameObject &object)
+        {
+            static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
+            return dynamic_cast<T *>(getComponent(object, std::type_index(typeid(T))));
+        }
+
+        template <typename T>
+        const T *tryGetComponent(const GameObject &object) const
+        {
+            static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
+            return dynamic_cast<const T *>(getComponent(object, std::type_index(typeid(T))));
+        }
 
         std::size_t gameObjectCount() const { return m_gameObjects.size(); }
 
@@ -57,6 +78,7 @@ namespace Zenith
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
         std::vector<std::unique_ptr<System>> m_systems;
         std::vector<PendingComponentAddition> m_pendingComponentAdditions;
+        std::unordered_map<GameObject *, std::unordered_map<std::type_index, std::unique_ptr<Component>>> m_componentRegistry;
         struct PendingComponentRemoval
         {
             GameObject *object;
@@ -64,6 +86,7 @@ namespace Zenith
         };
         std::vector<GameObject *> m_pendingGameObjectDestruction;
         std::vector<PendingComponentRemoval> m_pendingComponentRemovals;
+        bool m_isEntered = false;
         friend class RenderSystem;
         friend class CameraSystem;
     };

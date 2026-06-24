@@ -16,6 +16,16 @@ namespace Zenith
         scene.queueComponentRemoval(object, type);
     }
 
+    Component *sceneGetComponent(Scene &scene, GameObject &object, std::type_index type)
+    {
+        return scene.getComponent(object, type);
+    }
+
+    const Component *sceneGetComponent(const Scene &scene, const GameObject &object, std::type_index type)
+    {
+        return scene.getComponent(object, type);
+    }
+
     GameObject &Scene::createGameObject(std::string name)
     {
         auto object = std::make_unique<GameObject>(std::move(name));
@@ -30,7 +40,29 @@ namespace Zenith
         m_pendingGameObjectDestruction.push_back(&object);
     }
 
-    void Scene::clear()
+    void Scene::onEnter()
+    {
+        if (m_isEntered)
+        {
+            return;
+        }
+
+        m_isEntered = true;
+        flushCommands();
+    }
+
+    void Scene::onExit()
+    {
+        if (!m_isEntered)
+        {
+            return;
+        }
+
+        flushCommands();
+        m_isEntered = false;
+    }
+
+    void Scene::onUnload()
     {
         flushCommands();
         for (auto &system : m_systems)
@@ -42,6 +74,14 @@ namespace Zenith
         m_pendingComponentAdditions.clear();
         m_pendingGameObjectDestruction.clear();
         m_pendingComponentRemovals.clear();
+        m_componentRegistry.clear();
+        m_isEntered = false;
+    }
+
+    void Scene::clear()
+    {
+        onExit();
+        onUnload();
     }
 
     void Scene::addSystem(std::unique_ptr<System> system)
@@ -128,6 +168,40 @@ namespace Zenith
         m_pendingComponentAdditions.push_back(PendingComponentAddition{&object, type, std::move(component)});
     }
 
+    Component *Scene::getComponent(GameObject &object, std::type_index type)
+    {
+        auto storageIt = m_componentRegistry.find(&object);
+        if (storageIt == m_componentRegistry.end())
+        {
+            return nullptr;
+        }
+
+        auto componentIt = storageIt->second.find(type);
+        if (componentIt == storageIt->second.end())
+        {
+            return nullptr;
+        }
+
+        return componentIt->second.get();
+    }
+
+    const Component *Scene::getComponent(const GameObject &object, std::type_index type) const
+    {
+        auto storageIt = m_componentRegistry.find(const_cast<GameObject *>(&object));
+        if (storageIt == m_componentRegistry.end())
+        {
+            return nullptr;
+        }
+
+        auto componentIt = storageIt->second.find(type);
+        if (componentIt == storageIt->second.end())
+        {
+            return nullptr;
+        }
+
+        return componentIt->second.get();
+    }
+
     void Scene::flushCommands()
     {
         for (auto &addition : m_pendingComponentAdditions)
@@ -137,11 +211,8 @@ namespace Zenith
                 continue;
             }
 
-            auto &components = addition.object->m_components;
-            auto existing = std::find_if(components.begin(), components.end(), [&addition](const auto &ptr) {
-                return typeid(*ptr) == addition.type;
-            });
-            if (existing != components.end())
+            auto &storage = m_componentRegistry[addition.object];
+            if (storage.find(addition.type) != storage.end())
             {
                 continue;
             }
@@ -152,7 +223,7 @@ namespace Zenith
                 script->markAttached();
             }
 
-            components.emplace_back(std::move(addition.component));
+            storage.emplace(addition.type, std::move(addition.component));
         }
         m_pendingComponentAdditions.clear();
 
@@ -163,18 +234,21 @@ namespace Zenith
                 continue;
             }
 
-            auto &components = removal.object->m_components;
-            for (auto it = components.begin(); it != components.end(); ++it)
+            auto storageIt = m_componentRegistry.find(removal.object);
+            if (storageIt == m_componentRegistry.end())
             {
-                if (typeid(**it) == removal.type)
+                continue;
+            }
+
+            auto &storage = storageIt->second;
+            auto componentIt = storage.find(removal.type);
+            if (componentIt != storage.end())
+            {
+                if (auto *script = dynamic_cast<Components::ScriptComponent *>(componentIt->second.get()))
                 {
-                    if (auto *script = dynamic_cast<Components::ScriptComponent *>(it->get()))
-                    {
-                        script->markDetached();
-                    }
-                    components.erase(it);
-                    break;
+                    script->markDetached();
                 }
+                storage.erase(componentIt);
             }
         }
         m_pendingComponentRemovals.clear();
@@ -193,6 +267,7 @@ namespace Zenith
                 if (it != m_gameObjects.end())
                 {
                     (*it)->m_scene = nullptr;
+                    m_componentRegistry.erase(object);
                     m_gameObjects.erase(it);
                 }
             }

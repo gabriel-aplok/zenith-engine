@@ -18,6 +18,7 @@
 #include "render/texture_cache.hpp"
 #include "render/render_context.hpp"
 #include "scene/scene.hpp"
+#include "scene/scene_manager.hpp"
 #include "systems/camera_system.hpp"
 #include "systems/render_system.hpp"
 #include "systems/transform_system.hpp"
@@ -64,10 +65,19 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_textureCache.setUploader(m_renderer.get());
-            m_scene.addSystem(std::make_unique<TransformSystem>());
-            m_scene.addSystem(std::make_unique<ScriptSystem>());
-            m_scene.addSystem(std::make_unique<CameraSystem>());
-            m_scene.addSystem(std::make_unique<RenderSystem>());
+            m_sceneManager.setScene(std::make_unique<Scene>());
+            m_scene = m_sceneManager.currentScene();
+            if (!m_scene)
+            {
+                Log::Error("Failed to create initial scene");
+                requestQuit();
+                return;
+            }
+
+            m_scene->addSystem(std::make_unique<TransformSystem>());
+            m_scene->addSystem(std::make_unique<ScriptSystem>());
+            m_scene->addSystem(std::make_unique<CameraSystem>());
+            m_scene->addSystem(std::make_unique<RenderSystem>());
             registerStandardResourceLoaders(m_resources);
 
             m_vertexShaderSource = m_resources.load<TextSource>("resources/shaders/mesh_vs.sc");
@@ -130,7 +140,7 @@ namespace Zenith
                 m_checkerTexture = m_textureCache.acquireRef("demo/checker", checker);
             }
 
-            GameObject &cameraObject = m_scene.createGameObject("Main Camera");
+            GameObject &cameraObject = m_scene->createGameObject("Main Camera");
             cameraObject.transform().setPosition(glm::vec3{-10.0f, 0.0f, 6.0f});
             cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
 
@@ -141,12 +151,12 @@ namespace Zenith
             camera.setClearFlags(Components::Camera::ClearFlags::SolidColor);
             camera.setBackgroundColor(glm::vec4{0.08f, 0.09f, 0.11f, 1.0f});
 
-            m_pivotObject = &m_scene.createGameObject("Pivot");
+            m_pivotObject = &m_scene->createGameObject("Pivot");
             m_pivotObject->transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
             auto &script = m_pivotObject->add_component<Components::ScriptComponent>();
             script.setBehaviour<DemoRotateBehaviour>();
 
-            GameObject &cube = m_scene.createGameObject("Cube");
+            GameObject &cube = m_scene->createGameObject("Cube");
             cube.setParent(m_pivotObject);
             cube.transform().setPosition(glm::vec3{1.75f, 0.0f, 0.0f});
 
@@ -169,7 +179,12 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            m_scene.update(deltaTime);
+            m_sceneManager.update();
+            m_scene = m_sceneManager.currentScene();
+            if (m_scene)
+            {
+                m_scene->update(deltaTime);
+            }
         }
 
         void onRender() override
@@ -181,8 +196,11 @@ namespace Zenith
 
             m_renderContext->beginFrame();
             m_frame.begin();
-            m_scene.setFramebufferSize(m_renderContext->framebufferSize());
-            m_scene.render(m_frame);
+            if (m_scene)
+            {
+                m_scene->setFramebufferSize(m_renderContext->framebufferSize());
+                m_scene->render(m_frame);
+            }
             m_frame.finalize();
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
@@ -190,7 +208,7 @@ namespace Zenith
 
         void onShutdown() override
         {
-            m_scene.clear();
+            m_sceneManager.clear();
             m_cubeMesh.reset();
             m_cubeTexture.reset();
             m_checkerTexture.reset();
@@ -217,7 +235,8 @@ namespace Zenith
         Render::MeshRef m_cubeMesh{};
         Render::TextureRef m_cubeTexture{};
         Render::TextureRef m_checkerTexture{};
-        Scene m_scene{};
+        SceneManager m_sceneManager{};
+        Scene *m_scene = nullptr;
         RenderFrame m_frame{};
         GameObject *m_pivotObject = nullptr;
     };
