@@ -7,9 +7,7 @@ namespace Zenith
     void SystemRegistry::addSystem(std::unique_ptr<System> system)
     {
         if (!system)
-        {
             return;
-        }
 
         if (m_activeScene)
         {
@@ -23,9 +21,7 @@ namespace Zenith
     void SystemRegistry::bindScene(Scene *scene)
     {
         if (m_activeScene == scene)
-        {
             return;
-        }
 
         if (m_activeScene)
         {

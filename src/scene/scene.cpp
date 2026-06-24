@@ -26,6 +26,14 @@ namespace Zenith
         flushCommands();
     }
 
+    void Scene::onUnload()
+    {
+        flushCommands();
+        m_gameObjects.clear();
+        m_componentRegistry.clear();
+        m_pendingCommands.clear();
+    }
+
     void Scene::onEnter()
     {
         flushCommands();
@@ -34,14 +42,6 @@ namespace Zenith
     void Scene::onExit()
     {
         flushCommands();
-    }
-
-    void Scene::onUnload()
-    {
-        flushCommands();
-        m_gameObjects.clear();
-        m_componentRegistry.clear();
-        m_pendingCommands.clear();
     }
 
     void Scene::clear()
@@ -70,9 +70,7 @@ namespace Zenith
             if (auto *camera = object->get_component<Components::Camera>())
             {
                 if (!camera->enabled())
-                {
                     continue;
-                }
 
                 if (!bestCamera || camera->depth() < bestDepth)
                 {

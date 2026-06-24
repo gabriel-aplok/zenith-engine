@@ -31,22 +31,27 @@ namespace Zenith
 
         GameObject &createGameObject(std::string name = {});
         void destroyGameObject(GameObject &object);
+
         void onLoad();
+        void onUnload();
         void onEnter();
         void onExit();
-        void onUnload();
         void clear();
+
         const std::vector<std::unique_ptr<GameObject>> &gameObjects() const { return m_gameObjects; }
         std::vector<std::unique_ptr<GameObject>> &gameObjects() { return m_gameObjects; }
-        const glm::ivec2 &framebufferSize() const { return m_framebufferSize; }
-        const InputState *input() const { return m_inputState; }
 
+        const glm::ivec2 &framebufferSize() const { return m_framebufferSize; }
         void setFramebufferSize(const glm::ivec2 &framebufferSize);
+
+        const InputState *input() const { return m_inputState; }
         void setInputState(const InputState *inputState);
+
         void flushCommands();
 
         void queueComponentAddition(GameObject &object, std::type_index type, std::unique_ptr<Component> component);
         void queueComponentRemoval(GameObject &object, std::type_index type);
+
         Component *getComponent(GameObject &object, std::type_index type);
         const Component *getComponent(const GameObject &object, std::type_index type) const;
 

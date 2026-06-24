@@ -161,16 +161,12 @@ namespace Zenith
     void Transform::setParent(Transform *parent, bool keepWorldPosition)
     {
         if (m_parent == parent || parent == this)
-        {
             return;
-        }
 
         for (Transform *ancestor = parent; ancestor != nullptr; ancestor = ancestor->m_parent)
         {
             if (ancestor == this)
-            {
                 return;
-            }
         }
 
         const glm::mat4 worldBeforeReparent = keepWorldPosition ? worldMatrix() : glm::mat4{1.0f};
@@ -183,9 +179,7 @@ namespace Zenith
 
         m_parent = parent;
         if (m_parent != nullptr)
-        {
             m_parent->m_children.push_back(this);
-        }
 
         if (keepWorldPosition)
         {
