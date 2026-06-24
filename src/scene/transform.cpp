@@ -284,14 +284,10 @@ namespace Zenith
     void Transform::markWorldDirty()
     {
         if (!m_worldDirty)
-        {
             m_worldDirty = true;
-        }
 
         for (Transform *child : m_children)
-        {
             child->markWorldDirty();
-        }
     }
 
     void Transform::updateLocalMatrix() const
@@ -306,23 +302,16 @@ namespace Zenith
     void Transform::updateWorldMatrix() const
     {
         if (m_localDirty)
-        {
             updateLocalMatrix();
-        }
 
         if (!m_worldDirty)
-        {
             return;
-        }
 
         if (m_parent != nullptr)
-        {
             m_localToWorld = m_parent->worldMatrix() * m_localMatrix;
-        }
+
         else
-        {
             m_localToWorld = m_localMatrix;
-        }
 
         m_worldDirty = false;
     }
