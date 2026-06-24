@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace Zenith
 {
@@ -77,6 +78,7 @@ namespace Zenith
         SceneManager &operator=(const SceneManager &) = delete;
 
         bool hasScene() const { return static_cast<bool>(m_activeScene); }
+        bool hasSceneStack() const { return m_sceneStack.size() > 1; }
         TransitionState transitionState() const { return m_transitionState; }
         bool hasPendingScene() const { return static_cast<bool>(m_pendingScene) || static_cast<bool>(m_pendingFactory) || static_cast<bool>(m_pendingLoadJob); }
         Scene *currentScene();
@@ -87,7 +89,11 @@ namespace Zenith
         void prepareSceneFactory(std::function<std::unique_ptr<Scene>()> factory);
         SceneLoadJob prepareSceneAsync(std::function<std::unique_ptr<Scene>()> factory);
         void acceptPreparedScene(SceneLoadJob &job);
+        void pushPreparedScene(SceneLoadJob &job);
         void addSystem(std::unique_ptr<System> system);
+        void pushScene(std::unique_ptr<Scene> scene);
+        void pushSceneFactory(std::function<std::unique_ptr<Scene>()> factory);
+        bool popScene();
         bool commitScene();
         void update(float deltaTime);
         void render(RenderFrame &frame);
@@ -100,5 +106,7 @@ namespace Zenith
         std::function<std::unique_ptr<Scene>()> m_pendingFactory;
         std::unique_ptr<SceneLoadJob> m_pendingLoadJob;
         std::unique_ptr<SystemRegistry> m_systems;
+        std::vector<std::unique_ptr<Scene>> m_sceneStack;
+        bool m_pendingPush = false;
     };
 } // namespace Zenith

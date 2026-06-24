@@ -101,6 +101,7 @@ namespace Zenith
         m_pendingFactory = {};
         m_pendingLoadJob.reset();
         m_pendingScene = std::move(scene);
+        m_pendingPush = false;
         m_transitionState = TransitionState::Loading;
         commitScene();
     }
@@ -110,6 +111,7 @@ namespace Zenith
         m_pendingFactory = {};
         m_pendingLoadJob.reset();
         m_pendingScene = std::move(scene);
+        m_pendingPush = false;
         m_transitionState = TransitionState::PendingCommit;
     }
 
@@ -118,6 +120,7 @@ namespace Zenith
         m_pendingScene.reset();
         m_pendingLoadJob.reset();
         m_pendingFactory = std::move(factory);
+        m_pendingPush = false;
         m_transitionState = TransitionState::Loading;
     }
 
@@ -138,6 +141,63 @@ namespace Zenith
         m_pendingFactory = {};
         m_pendingLoadJob.reset();
         m_transitionState = TransitionState::PendingCommit;
+    }
+
+    void SceneManager::pushPreparedScene(SceneLoadJob &job)
+    {
+        if (!job.valid())
+        {
+            return;
+        }
+
+        job.wait();
+        m_pendingScene = job.token()->takeScene();
+        m_pendingFactory = {};
+        m_pendingLoadJob.reset();
+        m_pendingPush = true;
+        m_transitionState = TransitionState::PendingCommit;
+    }
+
+    void SceneManager::pushScene(std::unique_ptr<Scene> scene)
+    {
+        m_pendingFactory = {};
+        m_pendingLoadJob.reset();
+        m_pendingScene = std::move(scene);
+        m_pendingPush = true;
+        m_transitionState = TransitionState::PendingCommit;
+    }
+
+    void SceneManager::pushSceneFactory(std::function<std::unique_ptr<Scene>()> factory)
+    {
+        m_pendingScene.reset();
+        m_pendingLoadJob.reset();
+        m_pendingFactory = std::move(factory);
+        m_pendingPush = true;
+        m_transitionState = TransitionState::Loading;
+    }
+
+    bool SceneManager::popScene()
+    {
+        if (m_sceneStack.empty())
+        {
+            return false;
+        }
+
+        if (m_activeScene)
+        {
+            m_transitionState = TransitionState::Exiting;
+            m_systems->bindScene(nullptr);
+            m_activeScene->onExit();
+            m_activeScene->onUnload();
+            m_activeScene.reset();
+        }
+
+        m_activeScene = std::move(m_sceneStack.back());
+        m_sceneStack.pop_back();
+        m_activeScene->onEnter();
+        m_systems->bindScene(m_activeScene.get());
+        m_transitionState = TransitionState::Idle;
+        return true;
     }
 
     void SceneManager::addSystem(std::unique_ptr<System> system)
@@ -172,15 +232,28 @@ namespace Zenith
             m_transitionState = TransitionState::Exiting;
             m_systems->bindScene(nullptr);
             m_activeScene->onExit();
-            m_activeScene->onUnload();
-            m_activeScene.reset();
+            if (!m_pendingPush)
+            {
+                m_activeScene->onUnload();
+                m_activeScene.reset();
+                m_sceneStack.clear();
+            }
+            else
+            {
+                m_sceneStack.push_back(std::move(m_activeScene));
+            }
         }
 
         m_transitionState = TransitionState::Entering;
         m_activeScene = std::move(m_pendingScene);
         m_activeScene->onEnter();
         m_systems->bindScene(m_activeScene.get());
+        if (!m_pendingPush)
+        {
+            m_sceneStack.clear();
+        }
         m_transitionState = TransitionState::Idle;
+        m_pendingPush = false;
         return true;
     }
 
@@ -213,6 +286,7 @@ namespace Zenith
         m_pendingFactory = {};
         m_pendingLoadJob.reset();
         m_pendingScene.reset();
+        m_pendingPush = false;
         if (m_activeScene)
         {
             m_transitionState = TransitionState::Exiting;
@@ -221,6 +295,13 @@ namespace Zenith
             m_activeScene->onUnload();
             m_activeScene.reset();
         }
+        while (!m_sceneStack.empty())
+        {
+            m_sceneStack.back()->onExit();
+            m_sceneStack.back()->onUnload();
+            m_sceneStack.pop_back();
+        }
+        m_sceneStack.clear();
         if (m_systems)
         {
             m_systems->clear();

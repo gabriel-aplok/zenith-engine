@@ -241,16 +241,25 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            if (m_isMainScene && getInput().isKeyPressed(KeyCode::Space) && !m_sceneManager.hasPendingScene() && !m_cubeSceneLoadJob)
+            if (getInput().isKeyPressed(KeyCode::Space) && !m_sceneManager.hasPendingScene() && !m_cubeSceneLoadJob)
             {
-                m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>(
-                    m_sceneManager.prepareSceneAsync([this]()
-                                                     { return buildCubeScene(); }));
+                if (m_isMainScene)
+                {
+                    m_cubeSceneLoadJob = std::make_unique<SceneManager::SceneLoadJob>(
+                        m_sceneManager.prepareSceneAsync([this]()
+                                                         { return buildCubeScene(); }));
+                }
+                else if (m_sceneManager.hasSceneStack())
+                {
+                    m_sceneManager.popScene();
+                    m_scene = m_sceneManager.currentScene();
+                    m_isMainScene = true;
+                }
             }
 
             if (m_cubeSceneLoadJob && m_cubeSceneLoadJob->ready())
             {
-                m_sceneManager.acceptPreparedScene(*m_cubeSceneLoadJob);
+                m_sceneManager.pushPreparedScene(*m_cubeSceneLoadJob);
                 m_sceneManager.commitScene();
                 m_scene = m_sceneManager.currentScene();
                 m_isMainScene = false;
