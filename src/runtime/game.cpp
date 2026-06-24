@@ -79,7 +79,7 @@ namespace Zenith
                 return;
             }
 
-            m_cubeTextureAsset = m_resources.load<TextureAsset>("resources/textures/texel_checker.png");
+            m_cubeTextureAsset = m_resources.load<TextureAsset>("resources/models/obj/cube_diffuse.png");
             if (m_cubeTextureAsset)
             {
                 m_cubeTexture = m_textureCache.acquireRef("demo/cube_diffuse", m_cubeTextureAsset->source.data());
@@ -92,22 +92,10 @@ namespace Zenith
                 checker.height = 2;
                 checker.format = "rgba8";
                 checker.pixels = {
-                    255,
-                    255,
-                    255,
-                    255,
-                    32,
-                    32,
-                    32,
-                    255,
-                    32,
-                    32,
-                    32,
-                    255,
-                    255,
-                    255,
-                    255,
-                    255,
+                    255, 255, 255, 255,
+                    32, 32, 32, 255,
+                    32, 32, 32, 255,
+                    255, 255, 255, 255,
                 };
                 m_checkerTexture = m_textureCache.acquireRef("demo/checker", checker);
             }

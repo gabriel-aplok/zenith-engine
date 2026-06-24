@@ -25,7 +25,7 @@ namespace Zenith
             return -1;
         }
 
-        bool parseFaceVertex(const std::string &token, int &vertexIndex)
+        bool parseFaceVertex(const std::string &token, int &vertexIndex, int &texCoordIndex)
         {
             const std::size_t slash = token.find('/');
             const std::string indexText = slash == std::string::npos ? token : token.substr(0, slash);
@@ -37,6 +37,16 @@ namespace Zenith
             try
             {
                 vertexIndex = std::stoi(indexText);
+                texCoordIndex = -1;
+                if (slash != std::string::npos)
+                {
+                    const std::size_t secondSlash = token.find('/', slash + 1);
+                    const std::string texCoordText = token.substr(slash + 1, secondSlash == std::string::npos ? std::string::npos : secondSlash - slash - 1);
+                    if (!texCoordText.empty())
+                    {
+                        texCoordIndex = std::stoi(texCoordText);
+                    }
+                }
                 return true;
             }
             catch (...)
@@ -55,6 +65,7 @@ namespace Zenith
         }
 
         std::vector<glm::vec3> positions;
+        std::vector<glm::vec2> texCoords;
         std::vector<Render::MeshVertex> vertices;
         std::vector<uint16_t> indices;
 
@@ -81,6 +92,17 @@ namespace Zenith
                 continue;
             }
 
+            if (kind == "vt")
+            {
+                float u = 0.0f;
+                float v = 0.0f;
+                if (stream >> u >> v)
+                {
+                    texCoords.emplace_back(u, 1.0f - v);
+                }
+                continue;
+            }
+
             if (kind == "f")
             {
                 std::vector<uint16_t> faceIndices;
@@ -88,7 +110,8 @@ namespace Zenith
                 while (stream >> token)
                 {
                     int objIndex = 0;
-                    if (!parseFaceVertex(token, objIndex))
+                    int texCoordIndex = -1;
+                    if (!parseFaceVertex(token, objIndex, texCoordIndex))
                     {
                         continue;
                     }
@@ -100,7 +123,15 @@ namespace Zenith
                     }
 
                     const glm::vec3 position = positions[static_cast<std::size_t>(resolved)];
-                    const glm::vec2 uv{(position.x + 1.0f) * 0.5f, (position.z + 1.0f) * 0.5f};
+                    glm::vec2 uv{(position.x + 1.0f) * 0.5f, (position.z + 1.0f) * 0.5f};
+                    if (texCoordIndex > 0)
+                    {
+                        const int resolvedUv = resolveObjIndex(texCoordIndex, texCoords.size());
+                        if (resolvedUv >= 0 && resolvedUv < static_cast<int>(texCoords.size()))
+                        {
+                            uv = texCoords[static_cast<std::size_t>(resolvedUv)];
+                        }
+                    }
                     vertices.push_back(Render::MeshVertex{position, uv, glm::vec4{1.0f}});
                     faceIndices.push_back(static_cast<uint16_t>(vertices.size() - 1));
                 }
