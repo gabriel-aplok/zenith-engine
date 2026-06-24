@@ -9,7 +9,7 @@
 
 #include "components/camera.hpp"
 #include "scene/game_object.hpp"
-#include "scene/system.hpp"
+#include "render/render_submission.hpp"
 #include "render/mesh_cache.hpp"
 
 namespace Zenith
@@ -30,11 +30,11 @@ namespace Zenith
 
         GameObject &createGameObject(std::string name = {});
         void destroyGameObject(GameObject &object);
+        void onLoad();
         void onEnter();
         void onExit();
         void onUnload();
         void clear();
-        void addSystem(std::unique_ptr<System> system);
         const std::vector<std::unique_ptr<GameObject>> &gameObjects() const { return m_gameObjects; }
         std::vector<std::unique_ptr<GameObject>> &gameObjects() { return m_gameObjects; }
         const glm::ivec2 &framebufferSize() const { return m_framebufferSize; }
@@ -76,7 +76,6 @@ namespace Zenith
         const Components::Camera *findCamera() const;
         glm::ivec2 m_framebufferSize{0, 0};
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
-        std::vector<std::unique_ptr<System>> m_systems;
         std::vector<PendingComponentAddition> m_pendingComponentAdditions;
         std::unordered_map<GameObject *, std::unordered_map<std::type_index, std::unique_ptr<Component>>> m_componentRegistry;
         struct PendingComponentRemoval

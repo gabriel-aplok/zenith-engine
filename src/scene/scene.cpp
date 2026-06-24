@@ -40,6 +40,11 @@ namespace Zenith
         m_pendingGameObjectDestruction.push_back(&object);
     }
 
+    void Scene::onLoad()
+    {
+        flushCommands();
+    }
+
     void Scene::onEnter()
     {
         if (m_isEntered)
@@ -65,11 +70,6 @@ namespace Zenith
     void Scene::onUnload()
     {
         flushCommands();
-        for (auto &system : m_systems)
-        {
-            system->onStop(*this);
-            system->onRemove(*this);
-        }
         m_gameObjects.clear();
         m_pendingComponentAdditions.clear();
         m_pendingGameObjectDestruction.clear();
@@ -84,13 +84,6 @@ namespace Zenith
         onUnload();
     }
 
-    void Scene::addSystem(std::unique_ptr<System> system)
-    {
-        system->onAdd(*this);
-        system->onStart(*this);
-        m_systems.emplace_back(std::move(system));
-    }
-
     void Scene::setFramebufferSize(const glm::ivec2 &framebufferSize)
     {
         m_framebufferSize = framebufferSize;
@@ -98,12 +91,6 @@ namespace Zenith
 
     void Scene::update(float deltaTime)
     {
-        for (auto &system : m_systems)
-        {
-            system->preUpdate(*this, deltaTime);
-            system->update(*this, deltaTime);
-            system->postUpdate(*this, deltaTime);
-        }
         flushCommands();
     }
 
@@ -140,12 +127,6 @@ namespace Zenith
     void Scene::render(RenderFrame &frame)
     {
         flushCommands();
-        for (auto &system : m_systems)
-        {
-            system->preRender(*this, frame);
-            system->render(*this, frame);
-            system->postRender(*this, frame);
-        }
         flushCommands();
     }
 

@@ -19,6 +19,7 @@
 #include "render/render_context.hpp"
 #include "scene/scene.hpp"
 #include "scene/scene_manager.hpp"
+#include "scene/system_registry.hpp"
 #include "systems/camera_system.hpp"
 #include "systems/render_system.hpp"
 #include "systems/transform_system.hpp"
@@ -65,19 +66,25 @@ namespace Zenith
 
             m_meshCache.setUploader(m_renderer.get());
             m_textureCache.setUploader(m_renderer.get());
-            m_sceneManager.setScene(std::make_unique<Scene>());
+            m_sceneManager.requestScene(std::make_unique<Scene>());
+            if (!m_sceneManager.commitScene())
+            {
+                Log::Error("Failed to create initial scene");
+                requestQuit();
+                return;
+            }
             m_scene = m_sceneManager.currentScene();
+            m_systems.bindScene(m_scene);
             if (!m_scene)
             {
                 Log::Error("Failed to create initial scene");
                 requestQuit();
                 return;
             }
-
-            m_scene->addSystem(std::make_unique<TransformSystem>());
-            m_scene->addSystem(std::make_unique<ScriptSystem>());
-            m_scene->addSystem(std::make_unique<CameraSystem>());
-            m_scene->addSystem(std::make_unique<RenderSystem>());
+            m_systems.addSystem(std::make_unique<TransformSystem>());
+            m_systems.addSystem(std::make_unique<ScriptSystem>());
+            m_systems.addSystem(std::make_unique<CameraSystem>());
+            m_systems.addSystem(std::make_unique<RenderSystem>());
             registerStandardResourceLoaders(m_resources);
 
             m_vertexShaderSource = m_resources.load<TextSource>("resources/shaders/mesh_vs.sc");
@@ -180,9 +187,15 @@ namespace Zenith
         void onUpdate(float deltaTime) override
         {
             m_sceneManager.update();
-            m_scene = m_sceneManager.currentScene();
+            if (m_sceneManager.canCommitScene())
+            {
+                m_sceneManager.commitScene();
+                m_scene = m_sceneManager.currentScene();
+                m_systems.bindScene(m_scene);
+            }
             if (m_scene)
             {
+                m_systems.update(*m_scene, deltaTime);
                 m_scene->update(deltaTime);
             }
         }
@@ -199,6 +212,7 @@ namespace Zenith
             if (m_scene)
             {
                 m_scene->setFramebufferSize(m_renderContext->framebufferSize());
+                m_systems.render(*m_scene, m_frame);
                 m_scene->render(m_frame);
             }
             m_frame.finalize();
@@ -209,6 +223,7 @@ namespace Zenith
         void onShutdown() override
         {
             m_sceneManager.clear();
+            m_systems.clear();
             m_cubeMesh.reset();
             m_cubeTexture.reset();
             m_checkerTexture.reset();
@@ -236,6 +251,7 @@ namespace Zenith
         Render::TextureRef m_cubeTexture{};
         Render::TextureRef m_checkerTexture{};
         SceneManager m_sceneManager{};
+        SystemRegistry m_systems{};
         Scene *m_scene = nullptr;
         RenderFrame m_frame{};
         GameObject *m_pivotObject = nullptr;

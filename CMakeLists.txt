@@ -119,6 +119,7 @@ add_library(zenith-lib
 	"src/scene/transform.cpp"
 	"src/scene/scene.cpp"
 	"src/scene/scene_manager.cpp"
+	"src/scene/system_registry.cpp"
 	"src/components/camera.cpp"
 	"src/components/mesh_filter.cpp"
 	"src/components/mesh_renderer.cpp"
