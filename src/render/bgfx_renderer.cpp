@@ -34,7 +34,7 @@ namespace Zenith::Render
             uint32_t color;
         };
 
-        uint32_t packColor(const Vector4 &color)
+        uint32_t packColor(const Vector4& color)
         {
             const uint32_t r = static_cast<uint32_t>(glm::clamp(color.r, 0.0f, 1.0f) * 255.0f + 0.5f);
             const uint32_t g = static_cast<uint32_t>(glm::clamp(color.g, 0.0f, 1.0f) * 255.0f + 0.5f);
@@ -43,22 +43,22 @@ namespace Zenith::Render
             return (a << 24) | (b << 16) | (g << 8) | r;
         }
 
-        VertexGpu toGpuVertex(const MeshVertex &vertex)
+        VertexGpu toGpuVertex(const MeshVertex& vertex)
         {
-            return {{vertex.position.x, vertex.position.y, vertex.position.z}, {vertex.uv.x, vertex.uv.y}, packColor(vertex.color)};
+            return { {vertex.position.x, vertex.position.y, vertex.position.z}, {vertex.uv.x, vertex.uv.y}, packColor(vertex.color) };
         }
 
-        bgfx::ShaderHandle loadShader(const uint8_t *bytes, size_t size)
+        bgfx::ShaderHandle loadShader(const uint8_t* bytes, size_t size)
         {
-            const bgfx::Memory *memory = bgfx::copy(bytes, static_cast<uint32_t>(size));
+            const bgfx::Memory* memory = bgfx::copy(bytes, static_cast<uint32_t>(size));
             return bgfx::createShader(memory);
         }
 
         struct ShaderVariant
         {
-            const uint8_t *vertexBytes = nullptr;
+            const uint8_t* vertexBytes = nullptr;
             size_t vertexSize = 0;
-            const uint8_t *fragmentBytes = nullptr;
+            const uint8_t* fragmentBytes = nullptr;
             size_t fragmentSize = 0;
         };
 
@@ -67,11 +67,11 @@ namespace Zenith::Render
             switch (rendererType)
             {
             case bgfx::RendererType::OpenGL:
-                return {mesh_vs_glsl430, sizeof(mesh_vs_glsl430), mesh_fs_glsl430, sizeof(mesh_fs_glsl430)};
+                return { mesh_vs_glsl430, sizeof(mesh_vs_glsl430), mesh_fs_glsl430, sizeof(mesh_fs_glsl430) };
             case bgfx::RendererType::OpenGLES:
-                return {mesh_vs_gles300, sizeof(mesh_vs_gles300), mesh_fs_gles300, sizeof(mesh_fs_gles300)};
+                return { mesh_vs_gles300, sizeof(mesh_vs_gles300), mesh_fs_gles300, sizeof(mesh_fs_gles300) };
             case bgfx::RendererType::Vulkan:
-                return {mesh_vs_spirv, sizeof(mesh_vs_spirv), mesh_fs_spirv, sizeof(mesh_fs_spirv)};
+                return { mesh_vs_spirv, sizeof(mesh_vs_spirv), mesh_fs_spirv, sizeof(mesh_fs_spirv) };
             case bgfx::RendererType::Direct3D11:
             case bgfx::RendererType::Direct3D12:
             case bgfx::RendererType::Noop:
@@ -81,13 +81,13 @@ namespace Zenith::Render
             case bgfx::RendererType::Nvn:
             case bgfx::RendererType::Count:
             default:
-                return {mesh_vs_dx11, sizeof(mesh_vs_dx11), mesh_fs_dx11, sizeof(mesh_fs_dx11)};
+                return { mesh_vs_dx11, sizeof(mesh_vs_dx11), mesh_fs_dx11, sizeof(mesh_fs_dx11) };
             }
         }
 
     } // namespace
 
-    bool BgfxRenderer::initialize(RenderContext &context)
+    bool BgfxRenderer::initialize(RenderContext& context)
     {
         if (m_initialized)
         {
@@ -138,7 +138,7 @@ namespace Zenith::Render
 
     void BgfxRenderer::shutdown()
     {
-        for (auto &[_, mesh] : m_meshes)
+        for (auto& [_, mesh] : m_meshes)
         {
             if (bgfx::isValid(mesh.vertexBuffer))
             {
@@ -169,7 +169,7 @@ namespace Zenith::Render
             m_textureUniform = BGFX_INVALID_HANDLE;
         }
 
-        for (auto &[_, texture] : m_textures)
+        for (auto& [_, texture] : m_textures)
         {
             if (bgfx::isValid(texture.texture))
             {
@@ -181,12 +181,12 @@ namespace Zenith::Render
         m_initialized = false;
     }
 
-    void BgfxRenderer::resize(const IVector2 &framebufferSize)
+    void BgfxRenderer::resize(const IVector2& framebufferSize)
     {
         m_framebufferSize = framebufferSize;
     }
 
-    Render::MeshHandle BgfxRenderer::uploadMesh(const Render::MeshData &mesh)
+    Render::MeshHandle BgfxRenderer::uploadMesh(const Render::MeshData& mesh)
     {
         if (!m_initialized || mesh.vertices.empty() || mesh.indices.empty())
         {
@@ -195,13 +195,13 @@ namespace Zenith::Render
 
         std::vector<VertexGpu> vertices;
         vertices.reserve(mesh.vertices.size());
-        for (const auto &vertex : mesh.vertices)
+        for (const auto& vertex : mesh.vertices)
         {
             vertices.push_back(toGpuVertex(vertex));
         }
 
-        const bgfx::Memory *vertexMemory = bgfx::copy(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexGpu)));
-        const bgfx::Memory *indexMemory = bgfx::copy(mesh.indices.data(), static_cast<uint32_t>(mesh.indices.size() * sizeof(uint16_t)));
+        const bgfx::Memory* vertexMemory = bgfx::copy(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexGpu)));
+        const bgfx::Memory* indexMemory = bgfx::copy(mesh.indices.data(), static_cast<uint32_t>(mesh.indices.size() * sizeof(uint16_t)));
 
         const bgfx::VertexBufferHandle vertexBuffer = bgfx::createVertexBuffer(vertexMemory, m_vertexLayout);
         const bgfx::IndexBufferHandle indexBuffer = bgfx::createIndexBuffer(indexMemory);
@@ -219,11 +219,11 @@ namespace Zenith::Render
         }
 
         const uint32_t meshId = m_nextMeshId++;
-        m_meshes.emplace(meshId, MeshResource{vertexBuffer, indexBuffer, static_cast<uint32_t>(mesh.indices.size())});
-        return Render::MeshHandle{meshId};
+        m_meshes.emplace(meshId, MeshResource{ vertexBuffer, indexBuffer, static_cast<uint32_t>(mesh.indices.size()) });
+        return Render::MeshHandle{ meshId };
     }
 
-    bool BgfxRenderer::updateMesh(Render::MeshHandle meshHandle, const Render::MeshData &mesh)
+    bool BgfxRenderer::updateMesh(Render::MeshHandle meshHandle, const Render::MeshData& mesh)
     {
         if (!m_initialized || meshHandle.id == 0 || mesh.vertices.empty() || mesh.indices.empty())
         {
@@ -238,13 +238,13 @@ namespace Zenith::Render
 
         std::vector<VertexGpu> vertices;
         vertices.reserve(mesh.vertices.size());
-        for (const auto &vertex : mesh.vertices)
+        for (const auto& vertex : mesh.vertices)
         {
             vertices.push_back(toGpuVertex(vertex));
         }
 
-        const bgfx::Memory *vertexMemory = bgfx::copy(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexGpu)));
-        const bgfx::Memory *indexMemory = bgfx::copy(mesh.indices.data(), static_cast<uint32_t>(mesh.indices.size() * sizeof(uint16_t)));
+        const bgfx::Memory* vertexMemory = bgfx::copy(vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexGpu)));
+        const bgfx::Memory* indexMemory = bgfx::copy(mesh.indices.data(), static_cast<uint32_t>(mesh.indices.size() * sizeof(uint16_t)));
 
         const bgfx::VertexBufferHandle vertexBuffer = bgfx::createVertexBuffer(vertexMemory, m_vertexLayout);
         const bgfx::IndexBufferHandle indexBuffer = bgfx::createIndexBuffer(indexMemory);
@@ -295,28 +295,43 @@ namespace Zenith::Render
         m_meshes.erase(it);
     }
 
-    void BgfxRenderer::render(const RenderFrame &frame)
+    void BgfxRenderer::renderGraph(const Render::RenderGraph& graph)
     {
-        if (!m_initialized)
+        for (const Render::RenderPass& pass : graph.passes())
         {
-            return;
+            renderPass(pass);
         }
+    }
 
-        const RenderViewState &view = frame.view;
-        const uint64_t clearFlags =
-            ((frame.clear.flags & ClearColorFlag) != 0 ? BGFX_CLEAR_COLOR : 0u) |
-            ((frame.clear.flags & ClearDepthFlag) != 0 ? BGFX_CLEAR_DEPTH : 0u) |
-            ((frame.clear.flags & ClearStencilFlag) != 0 ? BGFX_CLEAR_STENCIL : 0u);
-        bgfx::setViewClear(0, clearFlags, packColor(frame.clear.color), frame.clear.depth, frame.clear.stencil);
-        bgfx::setViewRect(0, 0, 0, static_cast<uint16_t>(m_framebufferSize.x), static_cast<uint16_t>(m_framebufferSize.y));
-        bgfx::setViewTransform(0, glm::value_ptr(view.view), glm::value_ptr(view.projection));
-        bgfx::touch(0);
+    void BgfxRenderer::renderPass(const Render::RenderPass& pass)
+    {
+        switch (pass.desc.kind)
+        {
+        case Render::RenderPassKind::Opaque:
+        case Render::RenderPassKind::Transparent:
+            renderOpaquePass(pass);
+            break;
+        case Render::RenderPassKind::Shadow:
+        case Render::RenderPassKind::PostProcess:
+        case Render::RenderPassKind::Debug:
+        case Render::RenderPassKind::Compute:
+        default:
+            break;
+        }
+    }
 
-        const RenderStats &stats = frame.commands.stats();
+    void BgfxRenderer::renderOpaquePass(const Render::RenderPass& pass)
+    {
+        bgfx::setViewRect(static_cast<uint16_t>(pass.desc.viewId), 0, 0, static_cast<uint16_t>(m_framebufferSize.x), static_cast<uint16_t>(m_framebufferSize.y));
+        bgfx::setViewClear(static_cast<uint16_t>(pass.desc.viewId), BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, packColor(Vector4{ 0.08f, 0.09f, 0.11f, 1.0f }), 1.0f, 0);
+        bgfx::setViewTransform(static_cast<uint16_t>(pass.desc.viewId), glm::value_ptr(pass.commands.view().view), glm::value_ptr(pass.commands.view().projection));
+        bgfx::touch(static_cast<uint16_t>(pass.desc.viewId));
+
+        const Render::RenderStats& stats = pass.commands.stats();
         bgfx::dbgTextPrintf(0, 1, 0x0f, "frame: commands %u  batches %u  draws %u  indices %u", stats.commandCount, stats.batchCount, stats.drawCount, stats.indexCount);
 
         const uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_CULL_CCW;
-        for (const RenderBatch &batch : frame.commands.batches())
+        for (const RenderBatch& batch : pass.commands.batches())
         {
             const auto meshIt = m_meshes.find(batch.mesh.id);
             if (meshIt == m_meshes.end())
@@ -324,7 +339,7 @@ namespace Zenith::Render
                 continue;
             }
 
-            const MeshResource &mesh = meshIt->second;
+            const MeshResource& mesh = meshIt->second;
             const uint32_t firstIndex = batch.firstIndex;
             const uint32_t indexCount = batch.indexCount == 0 ? mesh.indexCount - firstIndex : batch.indexCount;
             if (indexCount == 0 || firstIndex >= mesh.indexCount)
@@ -332,7 +347,7 @@ namespace Zenith::Render
                 continue;
             }
 
-            const float tint[4] = {batch.material.tint.r, batch.material.tint.g, batch.material.tint.b, batch.material.tint.a};
+            const float tint[4] = { batch.material.tint.r, batch.material.tint.g, batch.material.tint.b, batch.material.tint.a };
             bgfx::setTransform(glm::value_ptr(batch.transform));
             bgfx::setVertexBuffer(0, mesh.vertexBuffer);
             bgfx::setIndexBuffer(mesh.indexBuffer, firstIndex, indexCount);
@@ -346,18 +361,39 @@ namespace Zenith::Render
                 }
             }
             bgfx::setState(state);
-            bgfx::submit(0, m_program);
+            bgfx::submit(static_cast<uint16_t>(pass.desc.viewId), m_program);
         }
     }
 
-    Render::TextureHandle BgfxRenderer::uploadTexture(uint32_t width, uint32_t height, const uint8_t *rgbaPixels)
+    void BgfxRenderer::render(const RenderFrame& frame)
+    {
+        if (!m_initialized)
+        {
+            return;
+        }
+
+        if (!frame.graph.passes().empty())
+        {
+            renderGraph(frame.graph);
+            return;
+        }
+
+        Render::RenderPass fallbackPass{};
+        fallbackPass.desc.kind = Render::RenderPassKind::Opaque;
+        fallbackPass.desc.viewId = 0;
+        fallbackPass.commands = frame.commands;
+        fallbackPass.commands.setView(frame.view);
+        renderOpaquePass(fallbackPass);
+    }
+
+    Render::TextureHandle BgfxRenderer::uploadTexture(uint32_t width, uint32_t height, const uint8_t* rgbaPixels)
     {
         if (rgbaPixels == nullptr || width == 0 || height == 0)
         {
             return {};
         }
 
-            const bgfx::Memory *memory = bgfx::copy(rgbaPixels, static_cast<uint32_t>(width * height * 4));
+        const bgfx::Memory* memory = bgfx::copy(rgbaPixels, static_cast<uint32_t>(width * height * 4));
         const bgfx::TextureHandle texture = bgfx::createTexture2D(static_cast<uint16_t>(width), static_cast<uint16_t>(height), false, 1, bgfx::TextureFormat::RGBA8, 0, memory);
         if (!bgfx::isValid(texture))
         {
@@ -365,8 +401,8 @@ namespace Zenith::Render
         }
 
         const uint32_t id = texture.idx + 1;
-        m_textures.emplace(id, TextureResource{texture});
-        return Render::TextureHandle{id};
+        m_textures.emplace(id, TextureResource{ texture });
+        return Render::TextureHandle{ id };
     }
 
     void BgfxRenderer::destroyTexture(Render::TextureHandle texture)

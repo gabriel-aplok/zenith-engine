@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "render/mesh.hpp"
+#include "render/lighting.hpp"
 #include "render/render_commands.hpp"
 
 namespace Zenith::Render
@@ -50,6 +51,7 @@ namespace Zenith::Render
         uint32_t viewId = 0;
         RenderAttachment color{};
         RenderAttachment depth{};
+        ClusteredLightingFrame clusteredLighting{};
     };
 
     struct RenderPass

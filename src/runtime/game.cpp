@@ -275,6 +275,8 @@ namespace Zenith
             }
             m_sceneManager.render(m_frame);
             m_frame.finalize();
+            auto& opaquePass = m_frame.addPass(Render::RenderPassDesc{ .kind = Render::RenderPassKind::Opaque, .viewId = 0 });
+            opaquePass.commands = m_frame.commands;
             m_renderer->render(m_frame);
             m_renderContext->endFrame();
         }
