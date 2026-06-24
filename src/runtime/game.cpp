@@ -160,7 +160,7 @@ namespace Zenith
                 []() {});
 
             GameObject &cameraObject = scene->createGameObject("Cube Camera");
-            cameraObject.transform().setPosition(glm::vec3{-16.0f, 10.0f, 16.0f});
+            cameraObject.transform().setPosition(glm::vec3{-15.0f, 10.0f, 16.0f});
             cameraObject.transform().lookAt(glm::vec3{0.0f, 0.0f, 0.0f});
 
             auto &camera = cameraObject.add_component<Components::Camera>();
@@ -218,7 +218,7 @@ namespace Zenith
                 Log::Info("Loaded vertex shader source: {} bytes", m_vertexShaderSource->data().size());
             }
 
-            m_cubeMeshAsset = m_resources.load<BakedMeshAsset>("resources/models/obj/cube.obj");
+            m_cubeMeshAsset = m_resources.load<BakedMeshAsset>("resources/models/m1014.obj");
             if (!m_cubeMeshAsset)
             {
                 Log::Error("Failed to load file-backed cube resource; falling back to builtin");
@@ -239,7 +239,7 @@ namespace Zenith
                 return;
             }
 
-            m_cubeTextureAsset = m_resources.load<TextureAsset>("resources/models/obj/cube_diffuse.png");
+            m_cubeTextureAsset = m_resources.load<TextureAsset>("resources/models/m1014.png");
             if (m_cubeTextureAsset)
             {
                 m_cubeTexture = m_textureCache.acquireRef("demo/cube_diffuse", m_cubeTextureAsset->source.data());
