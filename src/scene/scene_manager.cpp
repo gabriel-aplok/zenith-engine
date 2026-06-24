@@ -5,6 +5,80 @@
 
 namespace Zenith
 {
+    bool SceneManager::SceneLoadToken::ready() const
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_ready;
+    }
+
+    std::unique_ptr<Scene> SceneManager::SceneLoadToken::takeScene()
+    {
+        std::scoped_lock lock(m_mutex);
+        m_ready = false;
+        return std::move(m_scene);
+    }
+
+    void SceneManager::SceneLoadToken::setScene(std::unique_ptr<Scene> scene)
+    {
+        {
+            std::scoped_lock lock(m_mutex);
+            m_scene = std::move(scene);
+            m_ready = true;
+        }
+        m_readyCondition.notify_all();
+    }
+
+    SceneManager::SceneLoadJob::SceneLoadJob(std::function<std::unique_ptr<Scene>()> factory)
+    {
+        start(std::move(factory));
+    }
+
+    SceneManager::SceneLoadJob::~SceneLoadJob()
+    {
+        stop();
+    }
+
+    SceneManager::SceneLoadJob::SceneLoadJob(SceneLoadJob &&other) noexcept
+        : m_token(std::move(other.m_token)), m_worker(std::move(other.m_worker))
+    {
+    }
+
+    SceneManager::SceneLoadJob &SceneManager::SceneLoadJob::operator=(SceneLoadJob &&other) noexcept
+    {
+        if (this != &other)
+        {
+            stop();
+            m_token = std::move(other.m_token);
+            m_worker = std::move(other.m_worker);
+        }
+        return *this;
+    }
+
+    void SceneManager::SceneLoadJob::wait()
+    {
+        if (m_worker.joinable())
+        {
+            m_worker.join();
+        }
+    }
+
+    void SceneManager::SceneLoadJob::start(std::function<std::unique_ptr<Scene>()> factory)
+    {
+        m_token = std::make_unique<SceneLoadToken>();
+        m_worker = std::thread([token = m_token.get(), factory = std::move(factory)]() mutable
+                               {
+                                   auto scene = factory ? factory() : nullptr;
+                                   token->setScene(std::move(scene)); });
+    }
+
+    void SceneManager::SceneLoadJob::stop()
+    {
+        if (m_worker.joinable())
+        {
+            m_worker.join();
+        }
+    }
+
     SceneManager::SceneManager()
         : m_systems(std::make_unique<SystemRegistry>())
     {
@@ -25,6 +99,7 @@ namespace Zenith
     void SceneManager::setScene(std::unique_ptr<Scene> scene)
     {
         m_pendingFactory = {};
+        m_pendingLoadJob.reset();
         m_pendingScene = std::move(scene);
         m_transitionState = TransitionState::Loading;
         commitScene();
@@ -33,6 +108,7 @@ namespace Zenith
     void SceneManager::prepareScene(std::unique_ptr<Scene> scene)
     {
         m_pendingFactory = {};
+        m_pendingLoadJob.reset();
         m_pendingScene = std::move(scene);
         m_transitionState = TransitionState::PendingCommit;
     }
@@ -40,8 +116,28 @@ namespace Zenith
     void SceneManager::prepareSceneFactory(std::function<std::unique_ptr<Scene>()> factory)
     {
         m_pendingScene.reset();
+        m_pendingLoadJob.reset();
         m_pendingFactory = std::move(factory);
         m_transitionState = TransitionState::Loading;
+    }
+
+    SceneManager::SceneLoadJob SceneManager::prepareSceneAsync(std::function<std::unique_ptr<Scene>()> factory)
+    {
+        return SceneLoadJob(std::move(factory));
+    }
+
+    void SceneManager::acceptPreparedScene(SceneLoadJob &job)
+    {
+        if (!job.valid())
+        {
+            return;
+        }
+
+        job.wait();
+        m_pendingScene = job.token()->takeScene();
+        m_pendingFactory = {};
+        m_pendingLoadJob.reset();
+        m_transitionState = TransitionState::PendingCommit;
     }
 
     void SceneManager::addSystem(std::unique_ptr<System> system)
@@ -56,6 +152,12 @@ namespace Zenith
             m_transitionState = TransitionState::Loading;
             m_pendingScene = m_pendingFactory();
             m_pendingFactory = {};
+        }
+
+        if (m_pendingLoadJob && m_pendingLoadJob->ready())
+        {
+            m_pendingScene = m_pendingLoadJob->token()->takeScene();
+            m_pendingLoadJob.reset();
         }
 
         if (!m_pendingScene)
@@ -109,6 +211,7 @@ namespace Zenith
     void SceneManager::clear()
     {
         m_pendingFactory = {};
+        m_pendingLoadJob.reset();
         m_pendingScene.reset();
         if (m_activeScene)
         {
