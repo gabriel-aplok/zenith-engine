@@ -10,7 +10,6 @@
 #include "components/camera.hpp"
 #include "scene/game_object.hpp"
 #include "render/render_submission.hpp"
-#include "render/mesh_cache.hpp"
 
 namespace Zenith
 {

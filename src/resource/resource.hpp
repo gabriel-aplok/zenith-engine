@@ -69,6 +69,7 @@ namespace Zenith
         std::string name;
         Render::MeshData mesh;
         std::string materialPath;
+        Render::MeshHandle handle{};
     };
 
     struct Resource
@@ -102,6 +103,7 @@ namespace Zenith
         TextureResource() : Resource(ResourceKind::Texture) {}
         ImageData image;
         TextureImportSettings importSettings{};
+        Render::TextureHandle handle{};
     };
 
     struct MeshResource final : public Resource

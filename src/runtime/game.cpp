@@ -10,8 +10,6 @@
 #include "resource/resource_manager.hpp"
 #include "render/bgfx_renderer.hpp"
 #include "render/irenderer.hpp"
-#include "render/mesh_cache.hpp"
-#include "render/texture_cache.hpp"
 #include "render/render_context.hpp"
 #include "scene/scene.hpp"
 #include "scene/scene_manager.hpp"
@@ -70,15 +68,15 @@ namespace Zenith
 
     namespace
     {
-        void applyCubeMaterial(Components::MeshRenderer& renderer, const Render::TextureRef& primaryTexture, const Render::TextureRef& fallbackTexture, const Vector4& tint)
+        void applyCubeMaterial(Components::MeshRenderer& renderer, Render::TextureHandle primaryTexture, Render::TextureHandle fallbackTexture, const Vector4& tint)
         {
             Render::MaterialState material{};
             material.tint = tint;
 
-            if (primaryTexture)
-                material.textureId = primaryTexture.handle().id;
-            else if (fallbackTexture)
-                material.textureId = fallbackTexture.handle().id;
+            if (primaryTexture.id != 0)
+                material.textureId = primaryTexture.id;
+            else if (fallbackTexture.id != 0)
+                material.textureId = fallbackTexture.id;
 
             renderer.setMaterial(material);
         }
@@ -125,7 +123,7 @@ namespace Zenith
             cube.setParent(&marker);
             cube.transform().setPosition(Vector3{ 1.75f, 0.0f, 0.0f });
             auto& filter = cube.add_component<Components::MeshFilter>();
-            filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->meshes.front().mesh.bounds);
+            filter.setMesh(m_cubeMesh, m_cubeMeshAsset->meshes.front().mesh.bounds);
 
             auto& renderer = cube.add_component<Components::MeshRenderer>();
             applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
@@ -134,7 +132,7 @@ namespace Zenith
             car.setParent(&marker);
             car.transform().setPosition(Vector3{ 1.75f, 0.0f, 3.0f });
             auto& filter2 = car.add_component<Components::MeshFilter>();
-            filter2.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->meshes.front().mesh.bounds);
+            filter2.setMesh(m_cubeMesh, m_cubeMeshAsset->meshes.front().mesh.bounds);
 
             auto& renderer2 = car.add_component<Components::MeshRenderer>();
             applyCubeMaterial(renderer2, m_cubeTexture, m_checkerTexture, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
@@ -175,7 +173,7 @@ namespace Zenith
                         GameObject& cube = scene->createGameObject("Cube");
                         cube.transform().setPosition(Vector3{ static_cast<float>(x) * 2.5f, static_cast<float>(y) * 2.0f, static_cast<float>(z) * 2.5f });
                         auto& filter = cube.add_component<Components::MeshFilter>();
-                        filter.setMesh(m_cubeMesh.handle(), m_cubeMeshAsset->meshes.front().mesh.bounds);
+                        filter.setMesh(m_cubeMesh, m_cubeMeshAsset->meshes.front().mesh.bounds);
 
                         auto& renderer = cube.add_component<Components::MeshRenderer>();
                         applyCubeMaterial(renderer, m_cubeTexture, m_checkerTexture, Vector4{ 0.35f + 0.1f * static_cast<float>((x + 3) % 4), 0.45f + 0.1f * static_cast<float>((y + 2) % 3), 0.65f + 0.05f * static_cast<float>((z + 3) % 4), 1.0f });
@@ -204,8 +202,7 @@ namespace Zenith
                 return;
             }
 
-            m_meshCache.setUploader(m_renderer.get());
-            m_textureCache.setUploader(m_renderer.get());
+            m_resources.setRenderer(m_renderer.get());
             m_resources.importAllStaleAssets();
 
             m_vertexShaderSource = m_resources.load<ShaderResource>("res://shaders/mesh_vs.sc");
@@ -220,23 +217,27 @@ namespace Zenith
                 return;
             }
 
-            m_cubeMesh = m_meshCache.acquireRef("demo/cube", m_cubeMeshAsset->meshes.front().mesh);
-            if (!m_cubeMesh)
+            if (m_cubeMeshAsset->meshes.empty() || m_cubeMeshAsset->meshes.front().handle.id == 0)
             {
                 Log::Error("Failed to create demo meshes");
                 requestQuit();
                 return;
             }
 
-            m_cubeTextureAsset = m_resources.load<TextureResource>("res://textures/texel_checker.png");
-            if (m_cubeTextureAsset)
-                m_cubeTexture = m_textureCache.acquireRef("demo/cube_diffuse", m_cubeTextureAsset->image);
+            m_cubeMesh = m_cubeMeshAsset->meshes.front().handle;
 
-            if (!m_cubeTexture)
+            m_cubeTextureAsset = m_resources.load<TextureResource>("res://textures/texel_checker.png");
+            if (!m_cubeTextureAsset || m_cubeTextureAsset->handle.id == 0)
             {
                 auto checkerResource = m_resources.load<TextureResource>("builtin://checker");
                 if (checkerResource)
-                    m_checkerTexture = m_textureCache.acquireRef("demo/checker", checkerResource->image);
+                    m_checkerTexture = checkerResource->handle;
+            }
+
+            m_cubeTexture = m_cubeTextureAsset ? m_cubeTextureAsset->handle : Render::TextureHandle{};
+            if (m_cubeTexture.id == 0 && m_checkerTexture.id != 0)
+            {
+                m_cubeTexture = m_checkerTexture;
             }
 
             m_sceneManager.addSystem(std::make_unique<TransformSystem>());
@@ -281,13 +282,11 @@ namespace Zenith
         void onShutdown() override
         {
             m_sceneManager.clear();
-            m_cubeMesh.reset();
-            m_cubeTexture.reset();
-            m_checkerTexture.reset();
+            m_cubeMesh = {};
+            m_cubeTexture = {};
+            m_checkerTexture = {};
             if (m_renderer)
             {
-                m_meshCache.clear();
-                m_textureCache.clear();
                 m_renderer->shutdown();
             }
 
@@ -299,14 +298,12 @@ namespace Zenith
         std::unique_ptr<RenderContext> m_renderContext;
         std::unique_ptr<IRenderer> m_renderer;
         ResourceManager m_resources;
-        Render::RenderMeshCache m_meshCache;
-        Render::TextureCache m_textureCache;
         std::shared_ptr<ShaderResource> m_vertexShaderSource{};
         std::shared_ptr<ModelResource> m_cubeMeshAsset{};
         std::shared_ptr<TextureResource> m_cubeTextureAsset{};
-        Render::MeshRef m_cubeMesh{};
-        Render::TextureRef m_cubeTexture{};
-        Render::TextureRef m_checkerTexture{};
+        Render::MeshHandle m_cubeMesh{};
+        Render::TextureHandle m_cubeTexture{};
+        Render::TextureHandle m_checkerTexture{};
         SceneManager m_sceneManager{};
         RenderFrame m_frame{};
     };

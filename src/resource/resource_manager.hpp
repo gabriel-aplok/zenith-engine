@@ -15,6 +15,8 @@
 
 namespace Zenith
 {
+    class IRenderer;
+
     class ResourceManager
     {
     public:
@@ -23,6 +25,9 @@ namespace Zenith
         VirtualFileSystem& vfs() { return m_vfs; }
         const VirtualFileSystem& vfs() const { return m_vfs; }
 
+        void setRenderer(IRenderer* renderer);
+        IRenderer* renderer() { return m_renderer; }
+        const IRenderer* renderer() const { return m_renderer; }
         ModelLoaderRegistry& modelLoaders() { return m_modelLoaders; }
         const ModelLoaderRegistry& modelLoaders() const { return m_modelLoaders; }
 
@@ -88,6 +93,7 @@ namespace Zenith
         const CacheBucket& cacheBucket(std::type_index typeIndex) const;
 
         VirtualFileSystem m_vfs;
+        IRenderer* m_renderer = nullptr;
         ModelLoaderRegistry m_modelLoaders;
         std::unordered_map<std::type_index, CacheBucket> m_cache;
     };

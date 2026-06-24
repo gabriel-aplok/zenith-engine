@@ -19,6 +19,7 @@
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 
+#include "render/irenderer.hpp"
 #include "render/mesh_builder.hpp"
 
 namespace Zenith
@@ -463,6 +464,39 @@ namespace Zenith
             resource.loaded = true;
         }
 
+        void uploadMeshAsset(IRenderer* renderer, MeshAssetData& meshAsset)
+        {
+            if (renderer == nullptr || meshAsset.handle.id != 0)
+            {
+                return;
+            }
+
+            meshAsset.handle = renderer->uploadMesh(meshAsset.mesh);
+        }
+
+        void uploadModelResources(IRenderer* renderer, ModelResource& model)
+        {
+            if (renderer == nullptr)
+            {
+                return;
+            }
+
+            for (auto& mesh : model.meshes)
+            {
+                uploadMeshAsset(renderer, mesh);
+            }
+        }
+
+        void uploadTextureResource(IRenderer* renderer, TextureResource& texture)
+        {
+            if (renderer == nullptr || texture.handle.id != 0 || texture.image.pixels.empty())
+            {
+                return;
+            }
+
+            texture.handle = renderer->uploadTexture(texture.image.width, texture.image.height, texture.image.pixels.data());
+        }
+
         std::string cacheKeyFor(const ResourcePath& path)
         {
             return path.string();
@@ -529,6 +563,11 @@ namespace Zenith
         m_vfs.setCacheRoot(std::filesystem::current_path() / ".imports");
         m_vfs.setBuiltinRoot(std::filesystem::current_path() / "resources");
         registerStandardModelLoaders(m_modelLoaders);
+    }
+
+    void ResourceManager::setRenderer(IRenderer* renderer)
+    {
+        m_renderer = renderer;
     }
 
     void ResourceManager::setProjectRoot(std::filesystem::path root)
@@ -638,12 +677,15 @@ namespace Zenith
                     resource->virtualPath = path.string();
                     resource->stableId = path.string();
                     resource->loaded = true;
+                    uploadModelResources(m_renderer, *resource);
                     return resource;
                 }
 
                 if (!model->meshes.empty())
                 {
-                    return makeMeshResource(path, {}, {}, {}, 0, model->meshes.front());
+                    auto resource = makeMeshResource(path, {}, {}, {}, 0, model->meshes.front());
+                    uploadMeshAsset(m_renderer, resource->mesh);
+                    return resource;
                 }
             }
         }
@@ -659,6 +701,7 @@ namespace Zenith
                 texture->virtualPath = path.string();
                 texture->stableId = path.string();
                 texture->loaded = true;
+                uploadTextureResource(m_renderer, *texture);
                 return texture;
             }
 
@@ -685,6 +728,7 @@ namespace Zenith
                 applyResourceMetadata(*resource, path, sourcePath, bakedPath, m_vfs.metadataPathFor(path, metadata.sourceHash, ".modelbin"), metadata.sourceHash);
                 resource->importSettings = {};
                 resource->dependencies = metadata.dependencies;
+                uploadModelResources(m_renderer, *resource);
                 return resource;
             }
             return nullptr;
@@ -697,6 +741,7 @@ namespace Zenith
                 {
                     auto resource = makeMeshResource(path, sourcePath, bakedPath, m_vfs.metadataPathFor(path, metadata.sourceHash, ".modelbin"), metadata.sourceHash, model->meshes.front());
                     resource->dependencies = metadata.dependencies;
+                    uploadMeshAsset(m_renderer, resource->mesh);
                     return resource;
                 }
             }
@@ -720,6 +765,7 @@ namespace Zenith
             {
                 auto resource = makeTextureResource(path, sourcePath, bakedPath, m_vfs.metadataPathFor(path, metadata.sourceHash, ".texturebin"), metadata.sourceHash, *image, {});
                 resource->dependencies = metadata.dependencies;
+                uploadTextureResource(m_renderer, *resource);
                 return resource;
             }
 
@@ -877,6 +923,7 @@ namespace Zenith
                 auto resource = std::make_shared<ModelResource>(std::move(*model));
                 resource->importSettings = settings;
                 applyResourceMetadata(*resource, path, sourcePath, bakedPath, metadataPath, metadata.sourceHash);
+                uploadModelResources(m_renderer, *resource);
                 return resource;
             }
 
@@ -887,6 +934,7 @@ namespace Zenith
 
             auto resource = makeMeshResource(path, sourcePath, bakedPath, metadataPath, metadata.sourceHash, model->meshes.front());
             resource->importSettings = settings;
+            uploadMeshAsset(m_renderer, resource->mesh);
             return resource;
         }
         default:
