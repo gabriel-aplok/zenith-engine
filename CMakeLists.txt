@@ -83,6 +83,15 @@ function(zenith_configure_app TARGET_NAME)
 	set_target_properties(${TARGET_NAME}
 		PROPERTIES FOLDER "Zenith/Apps"
 	)
+
+	add_custom_command(
+		TARGET ${TARGET_NAME}
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+			"${CMAKE_CURRENT_SOURCE_DIR}/resources"
+			"$<TARGET_FILE_DIR:${TARGET_NAME}>/resources"
+		COMMENT "Copying resources for ${TARGET_NAME}"
+	)
 endfunction()
 
 # ============================================================
