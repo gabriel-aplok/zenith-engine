@@ -30,14 +30,14 @@ namespace Zenith
         commitScene();
     }
 
-    void SceneManager::requestScene(std::unique_ptr<Scene> scene)
+    void SceneManager::prepareScene(std::unique_ptr<Scene> scene)
     {
         m_pendingFactory = {};
         m_pendingScene = std::move(scene);
         m_transitionState = TransitionState::PendingCommit;
     }
 
-    void SceneManager::requestSceneFactory(std::function<std::unique_ptr<Scene>()> factory)
+    void SceneManager::prepareSceneFactory(std::function<std::unique_ptr<Scene>()> factory)
     {
         m_pendingScene.reset();
         m_pendingFactory = std::move(factory);
@@ -88,11 +88,11 @@ namespace Zenith
         {
             commitScene();
         }
-
         if (m_activeScene)
         {
+            m_activeScene->flushCommands();
             m_systems->update(*m_activeScene, deltaTime);
-            m_activeScene->update(deltaTime);
+            m_activeScene->flushCommands();
         }
     }
 
@@ -100,8 +100,9 @@ namespace Zenith
     {
         if (m_activeScene)
         {
+            m_activeScene->flushCommands();
             m_systems->render(*m_activeScene, frame);
-            m_activeScene->render(frame);
+            m_activeScene->flushCommands();
         }
     }
 

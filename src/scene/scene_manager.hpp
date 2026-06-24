@@ -35,10 +35,9 @@ namespace Zenith
         const Scene *currentScene() const;
 
         void setScene(std::unique_ptr<Scene> scene);
-        void requestScene(std::unique_ptr<Scene> scene);
-        void requestSceneFactory(std::function<std::unique_ptr<Scene>()> factory);
+        void prepareScene(std::unique_ptr<Scene> scene);
+        void prepareSceneFactory(std::function<std::unique_ptr<Scene>()> factory);
         void addSystem(std::unique_ptr<System> system);
-        bool canCommitScene() const { return hasPendingScene(); }
         bool commitScene();
         void update(float deltaTime);
         void render(RenderFrame &frame);

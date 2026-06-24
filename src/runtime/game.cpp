@@ -69,7 +69,7 @@ namespace Zenith
             m_sceneManager.addSystem(std::make_unique<ScriptSystem>());
             m_sceneManager.addSystem(std::make_unique<CameraSystem>());
             m_sceneManager.addSystem(std::make_unique<RenderSystem>());
-            m_sceneManager.requestScene(std::make_unique<Scene>());
+            m_sceneManager.prepareScene(std::make_unique<Scene>());
             if (!m_sceneManager.commitScene())
             {
                 Log::Error("Failed to create initial scene");
@@ -184,7 +184,7 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            if (m_sceneManager.canCommitScene())
+            if (m_sceneManager.hasPendingScene())
             {
                 m_sceneManager.commitScene();
                 m_scene = m_sceneManager.currentScene();

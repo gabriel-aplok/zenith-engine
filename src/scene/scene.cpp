@@ -89,11 +89,6 @@ namespace Zenith
         m_framebufferSize = framebufferSize;
     }
 
-    void Scene::update(float deltaTime)
-    {
-        flushCommands();
-    }
-
     Components::Camera *Scene::findCamera()
     {
         Components::Camera *bestCamera = nullptr;
@@ -122,12 +117,6 @@ namespace Zenith
     const Components::Camera *Scene::findCamera() const
     {
         return const_cast<Scene *>(this)->findCamera();
-    }
-
-    void Scene::render(RenderFrame &frame)
-    {
-        flushCommands();
-        flushCommands();
     }
 
     void Scene::queueComponentRemoval(GameObject &object, std::type_index type)
