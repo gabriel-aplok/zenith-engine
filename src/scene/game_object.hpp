@@ -43,7 +43,6 @@ namespace Zenith
             auto component = std::make_unique<T>(std::forward<Args>(args)...);
             T &componentRef = *component;
             componentRef.setOwner(this);
-            notifyComponentAdded(componentRef);
             m_components.emplace_back(std::move(component));
             return componentRef;
         }
@@ -87,7 +86,6 @@ namespace Zenith
             {
                 if (dynamic_cast<T *>(it->get()) != nullptr)
                 {
-                    notifyComponentRemoved(*it->get());
                     m_components.erase(it);
                     return true;
                 }
@@ -101,8 +99,5 @@ namespace Zenith
         GameObject *m_parent = nullptr;
         std::vector<GameObject *> m_children;
         std::vector<std::unique_ptr<Component>> m_components;
-
-        void notifyComponentAdded(Component &component);
-        void notifyComponentRemoved(Component &component);
     };
 } // namespace Zenith

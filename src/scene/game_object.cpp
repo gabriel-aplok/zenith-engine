@@ -2,9 +2,6 @@
 
 #include <algorithm>
 
-#include "components/script_component.hpp"
-#include "components/script_behaviour.hpp"
-
 namespace Zenith
 {
     GameObject::GameObject(std::string name)
@@ -64,28 +61,4 @@ namespace Zenith
 
         return false;
     }
-
-    void GameObject::notifyComponentAdded(Component &component)
-    {
-        if (auto *script = dynamic_cast<Components::ScriptComponent *>(&component))
-        {
-            if (auto *behaviour = script->behaviour())
-            {
-                behaviour->onAdd(*this);
-            }
-        }
-    }
-
-    void GameObject::notifyComponentRemoved(Component &component)
-    {
-        if (auto *script = dynamic_cast<Components::ScriptComponent *>(&component))
-        {
-            if (auto *behaviour = script->behaviour())
-            {
-                behaviour->onRemove(*this);
-                behaviour->onDispose(*this);
-            }
-        }
-    }
-
 } // namespace Zenith
