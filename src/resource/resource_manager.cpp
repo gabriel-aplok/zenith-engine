@@ -291,7 +291,7 @@ namespace Zenith
             return static_cast<bool>(stream);
         }
 
-        bool writeMesh(std::ofstream& stream, const MeshAssetData& mesh)
+        bool writeMesh(std::ofstream& stream, const MeshResource& mesh)
         {
             if (!writeString(stream, mesh.name) || !writeString(stream, mesh.materialPath))
             {
@@ -464,7 +464,7 @@ namespace Zenith
             resource.loaded = true;
         }
 
-        void uploadMeshAsset(IRenderer* renderer, MeshAssetData& meshAsset)
+        void uploadMeshAsset(IRenderer* renderer, MeshResource& meshAsset)
         {
             if (renderer == nullptr || meshAsset.handle.id != 0)
             {
@@ -542,14 +542,6 @@ namespace Zenith
             applyResourceMetadata(*resource, virtualPath, sourcePath, bakedPath, metadataPath, sourceHash);
             resource->source = std::move(source);
             resource->importSettings = std::move(settings);
-            return resource;
-        }
-
-        std::shared_ptr<MeshResource> makeMeshResource(const ResourcePath& virtualPath, const std::filesystem::path& sourcePath, const std::filesystem::path& bakedPath, const std::filesystem::path& metadataPath, std::uint64_t sourceHash, MeshAssetData mesh)
-        {
-            auto resource = std::make_shared<MeshResource>();
-            applyResourceMetadata(*resource, virtualPath, sourcePath, bakedPath, metadataPath, sourceHash);
-            resource->mesh = std::move(mesh);
             return resource;
         }
 
@@ -683,8 +675,11 @@ namespace Zenith
 
                 if (!model->meshes.empty())
                 {
-                    auto resource = makeMeshResource(path, {}, {}, {}, 0, model->meshes.front());
-                    uploadMeshAsset(m_renderer, resource->mesh);
+                    auto resource = std::make_shared<MeshResource>(std::move(model->meshes.front()));
+                    resource->virtualPath = path.string();
+                    resource->stableId = path.string();
+                    resource->loaded = true;
+                    uploadMeshAsset(m_renderer, *resource);
                     return resource;
                 }
             }
@@ -739,9 +734,10 @@ namespace Zenith
             {
                 if (!model->meshes.empty())
                 {
-                    auto resource = makeMeshResource(path, sourcePath, bakedPath, m_vfs.metadataPathFor(path, metadata.sourceHash, ".modelbin"), metadata.sourceHash, model->meshes.front());
+                    auto resource = std::make_shared<MeshResource>(std::move(model->meshes.front()));
+                    applyResourceMetadata(*resource, path, sourcePath, bakedPath, m_vfs.metadataPathFor(path, metadata.sourceHash, ".modelbin"), metadata.sourceHash);
                     resource->dependencies = metadata.dependencies;
-                    uploadMeshAsset(m_renderer, resource->mesh);
+                    uploadMeshAsset(m_renderer, *resource);
                     return resource;
                 }
             }
@@ -932,9 +928,10 @@ namespace Zenith
                 return nullptr;
             }
 
-            auto resource = makeMeshResource(path, sourcePath, bakedPath, metadataPath, metadata.sourceHash, model->meshes.front());
+            auto resource = std::make_shared<MeshResource>(std::move(model->meshes.front()));
+            applyResourceMetadata(*resource, path, sourcePath, bakedPath, metadataPath, metadata.sourceHash);
             resource->importSettings = settings;
-            uploadMeshAsset(m_renderer, resource->mesh);
+            uploadMeshAsset(m_renderer, *resource);
             return resource;
         }
         default:

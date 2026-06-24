@@ -64,14 +64,6 @@ namespace Zenith
         std::uint32_t importerVersion = 1;
     };
 
-    struct MeshAssetData
-    {
-        std::string name;
-        Render::MeshData mesh;
-        std::string materialPath;
-        Render::MeshHandle handle{};
-    };
-
     struct Resource
     {
         explicit Resource(ResourceKind resourceKind = ResourceKind::Unknown) noexcept
@@ -110,14 +102,17 @@ namespace Zenith
     {
         MeshResource() : Resource(ResourceKind::Mesh) {}
         ModelImportSettings importSettings{};
-        MeshAssetData mesh;
+        std::string name;
+        Render::MeshData mesh;
+        std::string materialPath;
+        Render::MeshHandle handle{};
     };
 
     struct ModelResource final : public Resource
     {
         ModelResource() : Resource(ResourceKind::Model) {}
         ModelImportSettings importSettings{};
-        std::vector<MeshAssetData> meshes;
+        std::vector<MeshResource> meshes;
     };
 
     struct ShaderResource final : public Resource

@@ -74,7 +74,7 @@ namespace Zenith
                 return;
             }
 
-            MeshAssetData mesh;
+            MeshResource mesh;
             mesh.name = std::move(name);
             mesh.mesh.vertices = std::move(vertices);
             mesh.mesh.indices = std::move(indices);
@@ -142,7 +142,7 @@ namespace Zenith
             return static_cast<bool>(stream);
         }
 
-        bool writeMesh(std::ofstream& stream, const MeshAssetData& mesh)
+        bool writeMesh(std::ofstream& stream, const MeshResource& mesh)
         {
             if (!writeString(stream, mesh.name) || !writeString(stream, mesh.materialPath))
             {
@@ -172,7 +172,7 @@ namespace Zenith
             return static_cast<bool>(stream);
         }
 
-        bool readMesh(std::ifstream& stream, MeshAssetData& mesh)
+        bool readMesh(std::ifstream& stream, MeshResource& mesh)
         {
             if (!readString(stream, mesh.name) || !readString(stream, mesh.materialPath))
             {
@@ -248,7 +248,7 @@ namespace Zenith
 
             for (std::uint32_t i = 0; i < meshCount; ++i)
             {
-                MeshAssetData mesh;
+                MeshResource mesh;
                 if (!readMesh(stream, mesh))
                 {
                     return std::nullopt;
