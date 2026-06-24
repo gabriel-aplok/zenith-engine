@@ -20,6 +20,7 @@ namespace Zenith
         GameObject *owner() const { return m_owner; }
 
     private:
+        friend class Scene;
         friend class GameObject;
 
         void setOwner(GameObject *owner);

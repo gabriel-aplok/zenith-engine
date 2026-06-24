@@ -14,6 +14,7 @@ namespace Zenith
 {
     class GameObject;
     class Scene;
+    void queueComponentAddition(Scene &scene, GameObject &object, std::type_index type, std::unique_ptr<Component> component);
     void queueComponentRemoval(Scene &scene, GameObject &object, std::type_index type);
 
     class GameObject
@@ -49,7 +50,14 @@ namespace Zenith
             auto component = std::make_unique<T>(std::forward<Args>(args)...);
             T &componentRef = *component;
             componentRef.setOwner(this);
-            m_components.emplace_back(std::move(component));
+            if (m_scene)
+            {
+                queueComponentAddition(*m_scene, *this, std::type_index(typeid(T)), std::move(component));
+            }
+            else
+            {
+                m_components.emplace_back(std::move(component));
+            }
             return componentRef;
         }
 

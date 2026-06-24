@@ -41,11 +41,18 @@ namespace Zenith
         void render(RenderFrame &frame);
         void flushCommands();
 
+        void queueComponentAddition(GameObject &object, std::type_index type, std::unique_ptr<Component> component);
         void queueComponentRemoval(GameObject &object, std::type_index type);
 
         std::size_t gameObjectCount() const { return m_gameObjects.size(); }
 
     private:
+        struct PendingComponentAddition
+        {
+            GameObject *object;
+            std::type_index type;
+            std::unique_ptr<Component> component;
+        };
         Components::Camera *findCamera();
         const Components::Camera *findCamera() const;
         std::optional<Render::Bounds> meshBoundsFor(const Components::MeshFilter &filter) const;
@@ -54,6 +61,7 @@ namespace Zenith
         glm::ivec2 m_framebufferSize{0, 0};
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
         std::vector<std::unique_ptr<System>> m_systems;
+        std::vector<PendingComponentAddition> m_pendingComponentAdditions;
         struct PendingComponentRemoval
         {
             GameObject *object;

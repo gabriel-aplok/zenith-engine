@@ -7,6 +7,11 @@
 
 namespace Zenith
 {
+    void queueComponentAddition(Scene &scene, GameObject &object, std::type_index type, std::unique_ptr<Component> component)
+    {
+        scene.queueComponentAddition(object, type, std::move(component));
+    }
+
     void queueComponentRemoval(Scene &scene, GameObject &object, std::type_index type)
     {
         scene.queueComponentRemoval(object, type);
@@ -35,6 +40,7 @@ namespace Zenith
             system->onRemove(*this);
         }
         m_gameObjects.clear();
+        m_pendingComponentAdditions.clear();
         m_pendingGameObjectDestruction.clear();
         m_pendingComponentRemovals.clear();
     }
@@ -123,8 +129,48 @@ namespace Zenith
         m_pendingComponentRemovals.push_back(PendingComponentRemoval{&object, type});
     }
 
+    void Scene::queueComponentAddition(GameObject &object, std::type_index type, std::unique_ptr<Component> component)
+    {
+        for (auto it = m_pendingComponentRemovals.begin(); it != m_pendingComponentRemovals.end(); ++it)
+        {
+            if (it->object == &object && it->type == type)
+            {
+                m_pendingComponentRemovals.erase(it);
+                return;
+            }
+        }
+
+        m_pendingComponentAdditions.push_back(PendingComponentAddition{&object, type, std::move(component)});
+    }
+
     void Scene::flushCommands()
     {
+        for (auto &addition : m_pendingComponentAdditions)
+        {
+            if (!addition.object || !addition.component)
+            {
+                continue;
+            }
+
+            auto &components = addition.object->m_components;
+            auto existing = std::find_if(components.begin(), components.end(), [&addition](const auto &ptr) {
+                return typeid(*ptr) == addition.type;
+            });
+            if (existing != components.end())
+            {
+                continue;
+            }
+
+            addition.component->setOwner(addition.object);
+            if (auto *script = dynamic_cast<Components::ScriptComponent *>(addition.component.get()))
+            {
+                script->markAttached();
+            }
+
+            components.emplace_back(std::move(addition.component));
+        }
+        m_pendingComponentAdditions.clear();
+
         for (const auto &removal : m_pendingComponentRemovals)
         {
             if (!removal.object)
@@ -139,7 +185,7 @@ namespace Zenith
                 {
                     if (auto *script = dynamic_cast<Components::ScriptComponent *>(it->get()))
                     {
-                        script->clearBehaviour();
+                        script->markDetached();
                     }
                     components.erase(it);
                     break;
