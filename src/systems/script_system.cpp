@@ -6,28 +6,6 @@
 
 namespace Zenith
 {
-    void ScriptSystem::onAdd(Scene &scene)
-    {
-        for (auto &object : scene.gameObjects())
-        {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
-            {
-                script->behaviour()->onAdd(*object);
-            }
-        }
-    }
-
-    void ScriptSystem::onRemove(Scene &scene)
-    {
-        for (auto &object : scene.gameObjects())
-        {
-            if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
-            {
-                script->behaviour()->onRemove(*object);
-            }
-        }
-    }
-
     void ScriptSystem::onStart(Scene &scene)
     {
         for (auto &object : scene.gameObjects())
@@ -47,7 +25,6 @@ namespace Zenith
             if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())
             {
                 script->behaviour()->onStop(*object);
-                script->behaviour()->onDispose(*object);
             }
         }
     }
@@ -65,6 +42,7 @@ namespace Zenith
 
     void ScriptSystem::update(Scene &scene, float deltaTime)
     {
+        onStart(scene);
         for (auto &object : scene.gameObjects())
         {
             if (auto *script = object->get_component<Components::ScriptComponent>(); script && script->behaviour())

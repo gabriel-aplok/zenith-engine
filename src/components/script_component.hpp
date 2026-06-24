@@ -4,8 +4,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "scene/component.hpp"
 #include "components/script_behaviour.hpp"
+#include "scene/component.hpp"
 
 namespace Zenith
 {
@@ -15,7 +15,7 @@ namespace Zenith
         {
         public:
             ScriptComponent() = default;
-            ~ScriptComponent() override = default;
+            ~ScriptComponent() override;
 
             ScriptBehaviour *behaviour() { return m_behaviour.get(); }
             const ScriptBehaviour *behaviour() const { return m_behaviour.get(); }
@@ -24,9 +24,14 @@ namespace Zenith
             T &setBehaviour(Args &&...args)
             {
                 static_assert(std::is_base_of_v<ScriptBehaviour, T>, "T must derive from ScriptBehaviour");
+                clearBehaviour();
                 auto behaviour = std::make_unique<T>(std::forward<Args>(args)...);
                 T &behaviourRef = *behaviour;
                 m_behaviour = std::move(behaviour);
+                if (auto *owner = this->owner())
+                {
+                    m_behaviour->onAdd(*owner);
+                }
                 return behaviourRef;
             }
 
@@ -44,7 +49,7 @@ namespace Zenith
                 return dynamic_cast<const T *>(m_behaviour.get());
             }
 
-            void clearBehaviour() { m_behaviour.reset(); }
+            void clearBehaviour();
 
             bool started = false;
 

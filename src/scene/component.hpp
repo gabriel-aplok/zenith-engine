@@ -17,6 +17,7 @@ namespace Zenith
 
     protected:
         Component() = default;
+        GameObject *owner() const { return m_owner; }
 
     private:
         friend class GameObject;
