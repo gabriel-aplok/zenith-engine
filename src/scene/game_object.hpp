@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <typeindex>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -11,6 +12,10 @@
 
 namespace Zenith
 {
+    class GameObject;
+    class Scene;
+    void queueComponentRemoval(Scene &scene, GameObject &object, std::type_index type);
+
     class GameObject
     {
     public:
@@ -30,6 +35,7 @@ namespace Zenith
         const Transform &transform() const { return m_transform; }
         GameObject *parent() const { return m_parent; }
         const std::vector<GameObject *> &children() const { return m_children; }
+        Scene *scene() const { return m_scene; }
 
         bool setParent(GameObject *parent, bool keepWorldPosition = true);
         bool addChild(GameObject &child, bool keepWorldPosition = true);
@@ -82,6 +88,12 @@ namespace Zenith
         {
             static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
 
+            if (m_scene)
+            {
+                queueComponentRemoval(*m_scene, *this, std::type_index(typeid(T)));
+                return true;
+            }
+
             for (auto it = m_components.begin(); it != m_components.end(); ++it)
             {
                 if (dynamic_cast<T *>(it->get()) != nullptr)
@@ -96,8 +108,11 @@ namespace Zenith
     private:
         std::string m_name;
         Transform m_transform;
+        Scene *m_scene = nullptr;
         GameObject *m_parent = nullptr;
         std::vector<GameObject *> m_children;
         std::vector<std::unique_ptr<Component>> m_components;
+
+        friend class Scene;
     };
 } // namespace Zenith

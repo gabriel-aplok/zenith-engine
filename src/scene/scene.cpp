@@ -1,25 +1,42 @@
 #include "scene/scene.hpp"
 
+#include <algorithm>
+
 #include "components/mesh_filter.hpp"
+#include "components/script_component.hpp"
 
 namespace Zenith
 {
+    void queueComponentRemoval(Scene &scene, GameObject &object, std::type_index type)
+    {
+        scene.queueComponentRemoval(object, type);
+    }
+
     GameObject &Scene::createGameObject(std::string name)
     {
         auto object = std::make_unique<GameObject>(std::move(name));
         GameObject &objectRef = *object;
+        objectRef.m_scene = this;
         m_gameObjects.emplace_back(std::move(object));
         return objectRef;
     }
 
+    void Scene::destroyGameObject(GameObject &object)
+    {
+        m_pendingGameObjectDestruction.push_back(&object);
+    }
+
     void Scene::clear()
     {
+        flushCommands();
         for (auto &system : m_systems)
         {
             system->onStop(*this);
             system->onRemove(*this);
         }
         m_gameObjects.clear();
+        m_pendingGameObjectDestruction.clear();
+        m_pendingComponentRemovals.clear();
     }
 
     void Scene::setMeshMetadataProvider(const Render::IMeshMetadataProvider *provider)
@@ -47,6 +64,7 @@ namespace Zenith
             system->update(*this, deltaTime);
             system->postUpdate(*this, deltaTime);
         }
+        flushCommands();
     }
 
     Components::Camera *Scene::findCamera()
@@ -90,11 +108,64 @@ namespace Zenith
 
     void Scene::render(RenderFrame &frame)
     {
+        flushCommands();
         for (auto &system : m_systems)
         {
             system->preRender(*this, frame);
             system->render(*this, frame);
             system->postRender(*this, frame);
+        }
+        flushCommands();
+    }
+
+    void Scene::queueComponentRemoval(GameObject &object, std::type_index type)
+    {
+        m_pendingComponentRemovals.push_back(PendingComponentRemoval{&object, type});
+    }
+
+    void Scene::flushCommands()
+    {
+        for (const auto &removal : m_pendingComponentRemovals)
+        {
+            if (!removal.object)
+            {
+                continue;
+            }
+
+            auto &components = removal.object->m_components;
+            for (auto it = components.begin(); it != components.end(); ++it)
+            {
+                if (typeid(**it) == removal.type)
+                {
+                    if (auto *script = dynamic_cast<Components::ScriptComponent *>(it->get()))
+                    {
+                        script->clearBehaviour();
+                    }
+                    components.erase(it);
+                    break;
+                }
+            }
+        }
+        m_pendingComponentRemovals.clear();
+
+        if (!m_pendingGameObjectDestruction.empty())
+        {
+            for (auto *object : m_pendingGameObjectDestruction)
+            {
+                if (!object)
+                {
+                    continue;
+                }
+
+                auto it = std::find_if(m_gameObjects.begin(), m_gameObjects.end(), [object](const auto &ptr)
+                                       { return ptr.get() == object; });
+                if (it != m_gameObjects.end())
+                {
+                    (*it)->m_scene = nullptr;
+                    m_gameObjects.erase(it);
+                }
+            }
+            m_pendingGameObjectDestruction.clear();
         }
     }
 } // namespace Zenith
