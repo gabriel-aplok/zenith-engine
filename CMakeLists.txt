@@ -26,16 +26,17 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Dependencies
 # ============================================================
 
-find_package(glfw3 CONFIG REQUIRED)
 find_package(bgfx CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(lodepng CONFIG REQUIRED)
+find_path(RGFW_INCLUDE_DIRS NAMES RGFW.h PATHS "${CMAKE_CURRENT_SOURCE_DIR}/files" REQUIRED)
 
 set(ZENITH_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # headers are currently colocated with source files.
 set(ZENITH_INCLUDE_DIRS
 	"${ZENITH_SOURCE_DIR}"
+	"${RGFW_INCLUDE_DIRS}"
 )
 
 set(ZENITH_SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders")
@@ -90,7 +91,7 @@ endfunction()
 add_library(zenith-lib
 	"src/engine/window.cpp"
 	"src/engine/startup.cpp"
-	"src/platform/glfw_window_backend.cpp"
+	"src/platform/rgfw_window_backend.cpp"
 	"src/engine/application.cpp"
 	"src/render/bgfx_debug.cpp"
 	"src/render/bgfx_render_context.cpp"
@@ -119,7 +120,6 @@ target_include_directories(zenith-lib
 
 target_link_libraries(zenith-lib
 	PUBLIC
-		glfw
 		glm::glm
 		bgfx::bx
 		bgfx::bgfx

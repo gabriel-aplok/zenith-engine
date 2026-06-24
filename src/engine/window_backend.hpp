@@ -40,7 +40,7 @@ namespace Zenith
 
     struct WindowConfig
     {
-        std::string title = "Zenith Engine";
+        std::string title = "Zenith Engine - Dev";
         int width = 1280;
         int height = 720;
         bool fullscreen = false;

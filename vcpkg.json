@@ -6,9 +6,9 @@
       "name": "bgfx",
       "features": ["tools"]
     },
-    "sdl2",
     "glfw3",
     "glm",
-    "lodepng"
+    "lodepng",
+    "rgfw"
   ]
 }
