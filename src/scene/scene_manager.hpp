@@ -78,7 +78,7 @@ namespace Zenith
         SceneManager &operator=(const SceneManager &) = delete;
 
         bool hasScene() const { return static_cast<bool>(m_activeScene); }
-        bool hasSceneStack() const { return m_sceneStack.size() > 1; }
+        bool hasSceneStack() const { return !m_sceneStack.empty(); }
         TransitionState transitionState() const { return m_transitionState; }
         bool hasPendingScene() const { return static_cast<bool>(m_pendingScene) || static_cast<bool>(m_pendingFactory) || static_cast<bool>(m_pendingLoadJob); }
         Scene *currentScene();
@@ -107,6 +107,5 @@ namespace Zenith
         std::unique_ptr<SceneLoadJob> m_pendingLoadJob;
         std::unique_ptr<SystemRegistry> m_systems;
         std::vector<std::unique_ptr<Scene>> m_sceneStack;
-        bool m_pendingPush = false;
     };
 } // namespace Zenith

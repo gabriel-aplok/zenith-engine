@@ -7,7 +7,7 @@ namespace Zenith
         bool enabled = true;
         bool logStartupInfo = true;
         bool bgfxText = true;
-        bool bgfxStats = true;
+        bool bgfxStats = false;
     };
 
 } // namespace Zenith
