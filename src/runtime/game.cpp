@@ -3,6 +3,7 @@
 #include "components/mesh_filter.hpp"
 #include "components/camera.hpp"
 #include "components/mesh_renderer.hpp"
+#include "components/script_component.hpp"
 #include "log/log.hpp"
 #include "resource/baked_mesh_asset.hpp"
 #include "resource/image_source.hpp"
@@ -16,6 +17,10 @@
 #include "render/texture_cache.hpp"
 #include "render/render_context.hpp"
 #include "scene/scene.hpp"
+#include "systems/camera_system.hpp"
+#include "systems/render_system.hpp"
+#include "systems/transform_system.hpp"
+#include "systems/script_system.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
@@ -51,6 +56,10 @@ namespace Zenith
             m_meshCache.setUploader(m_renderer.get());
             m_textureCache.setUploader(m_renderer.get());
             m_scene.setMeshMetadataProvider(&m_meshCache);
+            m_scene.addSystem(std::make_unique<TransformSystem>());
+            m_scene.addSystem(std::make_unique<ScriptSystem>());
+            m_scene.addSystem(std::make_unique<CameraSystem>());
+            m_scene.addSystem(std::make_unique<RenderSystem>());
             registerStandardResourceLoaders(m_resources);
 
             m_vertexShaderSource = m_resources.load<TextSource>("resources/shaders/mesh_vs.sc");
@@ -126,6 +135,14 @@ namespace Zenith
 
             m_pivotObject = &m_scene.createGameObject("Pivot");
             m_pivotObject->transform().setPosition(glm::vec3{0.0f, 0.0f, 0.0f});
+            auto &script = m_pivotObject->add_component<Components::ScriptComponent>();
+            script.onUpdate = [this](float deltaTime)
+            {
+                if (m_pivotObject)
+                {
+                    m_pivotObject->transform().rotateEulerDegrees(glm::vec3{0.0f, 45.0f * deltaTime, 0.0f});
+                }
+            };
 
             GameObject &cube = m_scene.createGameObject("Cube");
             cube.setParent(m_pivotObject);
@@ -150,11 +167,6 @@ namespace Zenith
 
         void onUpdate(float deltaTime) override
         {
-            if (m_pivotObject != nullptr)
-            {
-                m_pivotObject->transform().rotateEulerDegrees(glm::vec3{0.0f, 45.0f * deltaTime, 0.0f});
-            }
-
             m_scene.update(deltaTime);
         }
 
@@ -167,13 +179,7 @@ namespace Zenith
 
             m_renderContext->beginFrame();
             m_frame.begin();
-            if (!m_scene.buildRenderFrame(m_frame, m_renderContext->framebufferSize()))
-            {
-                m_frame.finalize();
-                m_renderContext->endFrame();
-                return;
-            }
-
+            m_scene.setFramebufferSize(m_renderContext->framebufferSize());
             m_scene.render(m_frame);
             m_frame.finalize();
             m_renderer->render(m_frame);

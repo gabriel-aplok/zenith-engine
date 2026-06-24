@@ -112,6 +112,11 @@ add_library(zenith-lib
 	"src/components/camera.cpp"
 	"src/components/mesh_filter.cpp"
 	"src/components/mesh_renderer.cpp"
+	"src/components/script_component.cpp"
+	"src/systems/script_system.cpp"
+	"src/systems/render_system.cpp"
+	"src/systems/transform_system.cpp"
+	"src/systems/camera_system.cpp"
 )
 
 target_include_directories(zenith-lib

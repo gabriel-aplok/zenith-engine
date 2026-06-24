@@ -1,7 +1,5 @@
 #pragma once
 
-#include "render/render_submission.hpp"
-
 namespace Zenith
 {
     class GameObject;
@@ -10,9 +8,6 @@ namespace Zenith
     {
     public:
         virtual ~Component();
-
-        virtual void update(float deltaTime) {}
-        virtual void render(RenderFrame &frame) {}
 
         bool enabled() const { return m_enabled; }
         void setEnabled(bool enabled) { m_enabled = enabled; }

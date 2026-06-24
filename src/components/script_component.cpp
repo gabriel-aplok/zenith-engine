@@ -1,4 +1,4 @@
-#include "components/mesh_renderer.hpp"
+#include "components/script_component.hpp"
 
 namespace Zenith::Components
 {

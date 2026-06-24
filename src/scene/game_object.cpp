@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "components/script_component.hpp"
+
 namespace Zenith
 {
     GameObject::GameObject(std::string name)
@@ -62,25 +64,30 @@ namespace Zenith
         return false;
     }
 
-    void GameObject::update(float deltaTime)
+    void GameObject::notifyComponentAdded(Component &component)
     {
-        for (auto &component : m_components)
+        if (auto *script = dynamic_cast<Components::ScriptComponent *>(&component))
         {
-            if (component->enabled())
+            if (script->onAdd)
             {
-                component->update(deltaTime);
+                script->onAdd();
             }
         }
     }
 
-    void GameObject::render(RenderFrame &frame)
+    void GameObject::notifyComponentRemoved(Component &component)
     {
-        for (auto &component : m_components)
+        if (auto *script = dynamic_cast<Components::ScriptComponent *>(&component))
         {
-            if (component->enabled())
+            if (script->onRemove)
             {
-                component->render(frame);
+                script->onRemove();
+            }
+            if (script->onDispose)
+            {
+                script->onDispose();
             }
         }
     }
+
 } // namespace Zenith

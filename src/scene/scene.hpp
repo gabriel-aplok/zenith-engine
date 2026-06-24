@@ -7,6 +7,7 @@
 
 #include "components/camera.hpp"
 #include "scene/game_object.hpp"
+#include "scene/system.hpp"
 #include "render/mesh_cache.hpp"
 
 namespace Zenith
@@ -28,11 +29,14 @@ namespace Zenith
         GameObject &createGameObject(std::string name = {});
         void clear();
         void setMeshMetadataProvider(const Render::IMeshMetadataProvider *provider);
+        void addSystem(std::unique_ptr<System> system);
+        const std::vector<std::unique_ptr<GameObject>> &gameObjects() const { return m_gameObjects; }
+        std::vector<std::unique_ptr<GameObject>> &gameObjects() { return m_gameObjects; }
+        const glm::ivec2 &framebufferSize() const { return m_framebufferSize; }
 
         void update(float deltaTime);
-        bool buildRenderFrame(RenderFrame &frame, const glm::ivec2 &framebufferSize);
+        void setFramebufferSize(const glm::ivec2 &framebufferSize);
         void render(RenderFrame &frame);
-        void render(RenderFrame &frame, const glm::ivec2 &framebufferSize);
 
         std::size_t gameObjectCount() const { return m_gameObjects.size(); }
 
@@ -42,6 +46,10 @@ namespace Zenith
         std::optional<Render::Bounds> meshBoundsFor(const Components::MeshFilter &filter) const;
 
         const Render::IMeshMetadataProvider *m_meshMetadataProvider = nullptr;
+        glm::ivec2 m_framebufferSize{0, 0};
         std::vector<std::unique_ptr<GameObject>> m_gameObjects;
+        std::vector<std::unique_ptr<System>> m_systems;
+        friend class RenderSystem;
+        friend class CameraSystem;
     };
 } // namespace Zenith

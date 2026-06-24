@@ -11,8 +11,6 @@ namespace Zenith::Components
         MeshRenderer() = default;
         ~MeshRenderer() override = default;
 
-        void render(RenderFrame &frame) override;
-
         void setMaterial(const Render::MaterialState &material) { m_material = material; }
         const Render::MaterialState &material() const { return m_material; }
         void setTexture(Render::TextureHandle texture) { m_material.textureId = texture.id; }
